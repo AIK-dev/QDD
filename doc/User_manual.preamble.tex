@@ -1,0 +1,203 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% PLEASE COMPILE WITH PDFLATEX %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\usepackage[xetex]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage{xcolor}
+\usepackage{parskip}
+\usepackage{mathtools}
+%\usepackage{physics}
+\usepackage{xr-hyper}
+%\usepackage[xetex]{hyperref}
+\usepackage{bm}
+\usepackage{hyperref}
+\usepackage{hypertoc}
+\usepackage{xr}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{fancyvrb}
+%\usepackage{mathspec}
+\usepackage{titlesec,titletoc}
+\usepackage[singlelinecheck=false,tableposition=top]{caption}
+\usepackage{tikz}
+\usepackage[nottoc]{tocbibind}
+\usepackage{longtable}
+%\usepackage{setspace,tocloft}
+
+\geometry{top=1in,bottom=1in,left=1in,right=1.375in}
+\graphicspath{{User_manual.figures/},{figures/}}
+
+
+%\titlespacing*{10pt}{10pt}{10pt}
+\def\theequation{M.\arabic{equation}}
+\def\thefigure{M.\arabic{figure}}
+\def\thetable{M.\arabic{table}}
+%\def\thesection{M.\arabic{section}\hspace*{1em}\textcolor{white}{.}}
+\def\thesection{M.\arabic{section}}
+%\setlength\cftsecnumwidth{8em}
+%\cftsetindents{section}{4em}{40em}
+%\renewcommand{\thesection}{M.\thesection}
+%\setlength\cftbeforesecskip{1.3pt}
+%\setlength\cftaftertoctitleskip{2pt}
+%\renewcommand{\cftsecafterpnum}{\hspace*{7.5em}}
+%\renewcommand{\cftsubsecafterpnum}{\hspace*{7.5em}}
+
+%\newcounter{denselistcounter}
+%\newenvironment{denselist}[1]
+%{ \begin{list}
+%  {#1{denselistcounter})}{\usecounter{denselistcounter}
+%  \setlength{\topsep}{-0pt}
+%  \setlength{\partopsep}{-0pt}
+%  \setlength{\itemsep}{-0pt}
+%  \setlength{\parsep}{-0pt}
+%  \setlength{\labelwidth}{6pt}
+%  \setlength{\labelsep}{4pt}
+%  \setlength{\leftmargin}{20pt}
+%  \setlength{\rightmargin}{20pt}
+%  }
+%}
+%{\end{list}}
+\setlength{\parskip}{4pt}
+\unitlength 1mm
+\thicklines
+
+%\setmathfont(Latin){Minion Pro}
+%\setmathrm{Minion Pro}
+%\setmathsf{Myriad Pro Light} %% Make this match the headline font
+%\exchangeforms{phi}			 %%   to get math in the headings right
+%\defaultfontfeatures{
+%	Ligatures={Required,Common,Contextual,Rare,Historic,TeX},
+%	Style=Swash,
+%	Contextuals={Swash,WordInitial,WordFinal}
+%}
+%\setmainfont{Minion Pro}
+%[
+%	UprightFeatures={
+%		SizeFeatures={
+%			{Size={-8.4},Font=* Caption},
+%			{Size={8.4-13},Font=*},
+%			{Size={13-19.9},Font=* Subhead},
+%			{Size={19.9-},Font=* Display}
+%		},
+%	},
+%	BoldFeatures={
+%		SizeFeatures={ 
+%			{Size={-8.4},Font=* Bold Caption},
+%			{Size={8.4-13},Font=* Bold},
+%			{Size={13-19.9},Font=* Bold Subhead},
+%			{Size={19.9-},Font=* Bold Display}
+%		},
+%	},
+%	ItalicFeatures={
+%		SizeFeatures={ 
+%			{Size={-8.4},Font=* Italic Caption},
+%			{Size={8.4-13},Font=* Italic},
+%			{Size={13-19.9},Font=* Italic Subhead},
+%			{Size={19.9-},Font=* Italic Display}
+%		},
+%	},
+%	BoldItalicFeatures={
+%		SizeFeatures={ 
+%			{Size={-8.4},Font=* Bold Italic Caption},
+%			{Size={8.4-13},Font=* Bold Italic},
+%			{Size={13-19.9},Font=* Bold Italic Subhead},
+%			{Size={19.9-},Font=* Bold Italic Display}
+%		},
+%	},
+%]
+%\setsansfont{Myriad Pro}
+%\newfontfamily\headlinefont{Myriad Pro Light}
+%\newfontfamily\headlinefont{Latin Modern Sans}
+
+%\linespread{1.3} % Only touch if the linespacing is insufficient
+
+\definecolor{niceBlue2}{RGB}{16,117,175}
+\colorlet{activeColor}{niceBlue2}
+\hypersetup{
+	colorlinks=true,
+	linkcolor=activeColor,
+	filecolor=activeColor,
+	urlcolor=activeColor,
+	citecolor=activeColor,
+}\urlstyle{same}
+
+\titleformat{\section}[hang]
+%	{\headlinefont\LARGE}
+	{\sffamily\LARGE}
+	{\thesection}
+	{12pt}
+	{\color{activeColor}}
+\titlespacing{\section}{0em}{4ex}{1ex}
+\titleformat{\subsection}[hang]
+%	{\headlinefont\large}
+	{\sffamily\large}
+	{\thesubsection}
+	{12pt}
+	{\color{activeColor}}
+\titlespacing{\subsection}{0em}{4ex}{1ex}
+\titleformat{\subsubsection}[hang]
+%	{\headlinefont\itshape}
+	{\sffamily\itshape}
+	{\thesubsubsection}
+	{12pt}
+	{\color{activeColor}}
+\titlespacing{\subsubsection}{0em}{4ex}{1ex}
+
+\titlecontents{section}[0em]
+%	{\addvspace{2ex}\headlinefont\large}
+	{\addvspace{2ex}\sffamily\large}
+	{\hspace*{1.5em}{\contentslabel{2.5em}}}
+	{\hspace*{1.5em}{\contentslabel{2.5em}}}
+	{\titlerule*[0.7em]{.}\contentspage}
+	[]
+\titlecontents{subsection}[2.025em]
+%	{\addvspace{1ex}\headlinefont\normalsize}
+	{\addvspace{1ex}\sffamily\normalsize}
+	{\hspace*{3.35em}{\contentslabel{3.5em}}\color{activeColor}}
+	{\hspace*{3.35em}{\contentslabel{3.5em}}\color{activeColor}}
+	{\titlerule*[0.7em]{.}\contentspage}
+	[]
+\titlecontents{subsubsection}[4.24em]
+%	{\headlinefont\itshape\small}
+	{\sffamily\itshape\small}
+	{\hspace*{5.5em}{\contentslabel{4em}}}
+	{\hspace*{5em}{\contentslabel{4em}}}
+	{\titlerule*[0.7em]{.}\contentspage}
+	[]
+
+\captionsetup[table]{labelfont={sc,color=activeColor},name=Table}
+\captionsetup[figure]{labelfont={sc,color=activeColor},name=Figure}
+
+\renewcommand{\texttt}[1]{{\bfseries\ttfamily #1}}
+\usetikzlibrary{shapes}
+\newcommand*\circled[1]{
+	\tikz[baseline=(char.base)]{
+		\node[shape=circle, draw, inner sep=2pt] (char) {#1};
+	}
+}
+\makeatletter
+	\newcommand{\showfontsize}{\f@size{} pt}
+\makeatother
+\newcommand{\cmnt}[1]{\color{red}\uppercase{#1}}
+\newcommand{\eq}[1]{Equation~(\ref{#1})}	   % \eq{label}  --> Equation (3)
+\newcommand{\scn}[1]{Sec.~\ref{#1}}	   % \scn{label} --> Section 1.2
+\newcommand{\fig}[1]{Fig.~\ref{#1}}	   % \fig{label} --> Figure 1.3
+\newcommand{\figs}[1]{Figs.~\ref{#1}}	   % \fig{label} --> Figure 1.3
+\newcommand{\rf}[1]{~Ref.$\!$\citen{#1}}	   % \rf{label}  --> ~Ref. [11]
+\newcommand{\rfs}[1]{~Refs.$\!$\citen{#1}} % \rfs{label} --> ~Refs. [11,15,21-23]
+\newcommand{\tab}[1]{Tab.~\ref{#1}}		   % \tab{label} --> Table 2.4
+\newcommand{\tabs}[1]{Tabs.~\ref{#1}}	   % \tabs{label},~{label} --> Tables 2.4, 1.3
+\newcommand{\refM}[1]{M.\ref{#1}}	   % \rf{label}  --> ~Ref. [11]
+
+\setcounter{totalnumber}{4}
+\renewcommand{\topfraction}{.95}
+\renewcommand{\bottomfraction}{.95}
+\renewcommand{\textfraction}{.05}
+\renewcommand{\floatpagefraction}{.66}
+\renewcommand{\dbltopfraction}{.66}
+\renewcommand{\dblfloatpagefraction}{.66}
+
+\definecolor{dgreen}{rgb}{0.0,0.7,0.0}
+\newcommand{\tgreen}[1]{\textcolor{dgreen}{#1}}

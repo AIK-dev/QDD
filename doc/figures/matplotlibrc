@@ -1,0 +1,32 @@
+backend      : Agg
+font.family         : STIXGeneral
+mathtext.fontset	: cm
+text.usetex			: true
+
+lines.linewidth		: 1.5
+axes.linewidth		: 1.5
+axes.labelsize      : 18
+axes.formatter.use_mathtext : True 
+
+xtick.direction		: in
+xtick.major.size     : 8
+xtick.minor.size     : 4
+xtick.major.width    : 1.5
+xtick.minor.width    : 1
+xtick.labelsize      : 18
+
+ytick.direction		: in
+ytick.major.size     : 8
+ytick.minor.size     : 4
+ytick.major.width    : 1.5
+ytick.minor.width    : 1
+ytick.labelsize      : 18
+
+figure.figsize   : 12,9
+figure.dpi       : 720
+
+legend.frameon       : False     
+legend.fontsize      : 18
+
+savefig.dpi         : figure
+savefig.format      : pdf

@@ -1,0 +1,82 @@
+\subsection{Storage of wavefunctions, densities and potentials}
+
+Naturally, wavefunctions and other fields in spatial 3D representation
+are would be handled as three-dimensional arrays, e.g. {\tt
+  chpcoul3D(1:kxbox,1:kybox,1:kzbox)} for the Coulomb potential. However, in
+order to simplify loops, all 3D fields are addressed as linear
+arrays, e.g., for the Coulomb field {\tt chpcoul(1:kxbox*kybox*kzbox)}
+where {\tt kxbox, kybox, kzbox} are the number of grid points in
+$x$, $y$, and $z$ direction. The parameters defining and handling the grid 
+are:
+\begin{center}
+\begin{tabular}{lcl}
+{\tt kxbox} &:& total number of grid points in $x$-direction
+\\
+{\tt kybox} &:& total number of grid points in $y$-direction
+\\
+{\tt kzbox} &:& total number of grid points in $z$-direction
+\\
+{\tt nx2}   &:& equivalent to {\tt kxbox}
+\\
+{\tt ny2}   &:& equivalent to {\tt kybox}
+\\
+{\tt nz2}   &:& equivalent to {\tt kzbox}
+\\
+{\tt nx} &:& ={\tt nx2/2}, number of grid points with $x>0$, see eq. (\ref{eq:gridpoints}) 
+\\
+{\tt ny} &:& ={\tt ny2/2}, number of grid points with $y>0$, see eq. (\ref{eq:gridpoints}) 
+\\
+{\tt nz} &:& ={\tt nz2/2}, number of grid points with $z>0$, see eq. (\ref{eq:gridpoints}) 
+\\
+{\tt kdfull2} &:& ={\tt kxbox*kybox*kzbox}, total number of grid points
+\\
+{\tt nxyz} &:& equivalent to {\tt kdfull2}
+\\
+{\tt ix} or {\tt i1} &:& running index for $x$ values
+\\
+{\tt iy} or {\tt i2} &:& running index for $y$ values
+\\
+{\tt iz} or {\tt i3} &:& running index for $z$ values
+\\
+{\tt ind} &:& ={\tt ix}+{\tt nx2}*({\tt iy}-1)+{\tt nx2}*{\tt ny2}*({\tt iz}-1),
+               running index for linear storage
+%\\
+%{\tt } &:&
+\end{tabular}
+\end{center}
+The basic arrays concern densities, potentials, and
+s.p. wavefunctions.  Densities and potentials distinguish spin which
+is denoted by $\uparrow=$ spin-up and $\downarrow=$ spin-down.
+Each s.p. wavefunction is associated with one unique spin
+carried in the array {\tt ispin(1:kstate)}.
+The fields are arranged the following way:
+%\begin{center}
+%\begin{tabular}{lcl}
+\begin{description}
+\item{\tt rho(2*kdfull2)} = density,
+linearly stored in two blocks of length {\tt kdfull2}:
+\\
+ {\tt rho(1:kdfull2)} = total density 
+  $\rho(\mathbf{r})=\rho_\uparrow(\mathbf{r})+\rho_\downarrow(\mathbf{r})$
+\\
+ {\tt rho(kdfull2+1:2*kdfull2)} = difference
+  $\rho(\mathbf{r})=\rho_\uparrow(\mathbf{r})-\rho_\downarrow(\mathbf{r})$
+
+\item{\tt aloc(2*kdfull2)} local Kohn-Sham potential,
+linearly stored in two blocks of length {\tt kdfull2}:
+\\
+ {\tt aloc(1:kdfull2)} = local KS potential for spin-up
+  $=U_\uparrow(\mathbf{r})$
+\\
+ {\tt aloc(kdfull2+1:2*kdfull2)} = local KS potential for spin-down
+  $=U_\downarrow(\mathbf{r})$
+
+\item{\tt chpcoul(kdfull2)} = Coulomb potential, linearly stored
+
+\item{\tt psi(kdfull2,kstate)} = set of complex s.p. wavefunctions 
+\\ 1. index for spatial disribution, 2. index counts the states
+\\ complex array {\tt psi} for dynamics, real array {\tt psir} for static case
+\\ each s.p. state has unique spin given in the array {\tt ispsin(1:kstate)}
+\end{description}
+%\end{tabular}
+%\end{center}

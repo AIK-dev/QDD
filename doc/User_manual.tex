@@ -1,0 +1,4255 @@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% PLEASE COMPILE WITH PDFLATEX %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[11pt,a4paper]{article}
+\input{User_manual.preamble.tex}
+
+\newcommand{\PGR}[1]{{\color{blue} #1}}
+\newcommand{\PGRcomm}[1]{{\color{blue}\small\em PGR2all: #1}}
+\newcommand{\PGRfoot}[1]{{\color{blue}\footnote{\color{blue} #1}}}
+\newcommand{\ES}[1]{{\color{red} #1}}
+\newcommand{\EScomm}[1]{{\color{red}\small\em ES2all: #1}}
+\newcommand{\ESfoot}[1]{{\color{red}\footnote{\color{red} #1}}}
+\newcommand{\MD}[1]{{\color{magenta} #1}}
+\newcommand{\MDcomm}[1]{{\color{magenta}\small\em MD2all: #1}}
+\newcommand{\MDfoot}[1]{{\color{magenta}\footnote{\color{magenta} #1}}}
+\newcommand{\FC}[1]{{\color{olive} #1}}
+\newcommand{\FCcomm}[1]{{\color{olive}\small\em FC2all: #1}}
+\newcommand{\FCfoot}[1]{{\color{olive}\footnote{\color{olive} #1}}}
+
+\externaldocument[cpc:]{CPC_RTA_v1}
+
+\title{\fontsize{50}{60}\selectfont{Quantum Dissipative Dynamics}\\\vspace{7ex}\fontsize{50}{60}\selectfont{\textsf{User manual}}\vspace{8ex}}
+\author{F.M.G.J. Coppens\\P.-G. Reinhard\\P. M. Dinh\\E. Suraud\\M. Vincendon}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+\clearpage
+\addtocontents{toc}{\hfill\small{\sffamily Page}\par}
+\section*{About this manual}
+
+This is the manual for the `Quantum Dissipative Dynamics' (QDD)
+code. It is developed in conjunction with the Computer Physics
+Communications (CPC) reference paper. The paper describes the basic
+physics dealt with in the QDD code. The manual will mainly address
+the technical aspects and add physics details which are not explained
+in the paper. It is roughly divided in the following four parts:\\
+\begin{itemize}
+\item Sections \ref{sec:prerequis} and \ref{sec:install} deal with the
+  hard- and software needs and what needs to be done to obtain a
+  working copy of QDD.
+\item Sections \ref{sec:stat_basics} and \ref{sec:stat_examples}
+  explain ground state and stationary calculations with some
+  illustrative examples.
+\item Section \ref{sec:dyn_basics} and \ref{sec:dyn_examples} explain
+  the dynamical aspects of the calculation with again some typical
+  example cases.
+\item Finally, section \ref{sec:mistakes}  deal
+  with common mistakes and pitfalls that are encountered frequently
+  and less frequently. 
+ \end{itemize}
+The last sections deal with more advanced use
+of the code and explain QDD's basic code structure.
+
+It is important to note that references to section and equation
+numbers in this manual are headed by a label ``M'' while numbers
+without initial ``M'' point to section and equation numbers in the
+reference paper. 
+
+
+
+\clearpage
+\begingroup 
+\hypersetup{hidelinks} 
+\tableofcontents 
+\endgroup
+
+
+% 0be00350db7ccd73db794a7dd9901aac317d782a
+
+
+\clearpage
+
+\section{Prerequisites}
+\label{sec:prerequis}
+
+To successfully obtain and install the QDD software package, one needs:
+\begin{itemize}
+\item a Fortran90 compiler, e.g. Intel Fortran (\texttt{ifort}) or GNU
+  Fortran (\texttt{gfortran}). The compiler should comply with the
+  Fortran2008 standard.
+\item the discrete Fourier Transform library Fastest Fourier Transform in the West (FFTW)
+   or its implementation on Intel's MKL library. 
+\item the Linux \texttt{make} program to build the code; other
+  \texttt{make} utilities can also be used, but may require
+  modification of the makefiles.
+\end{itemize}	
+The code was tested with the GNU Fortran compiler version 5.4.0
+togther with the FFTW3 package version 3.4.4 and the Intel Fortran
+compiler version 17.05 and the corresponding MKL version. It
+will work then for later versions as well. Earlier versions may also work, but
+have not been tested.  If you are working on a larger computing
+network, it may happen that Fortran compilers, FFTW3, or MKL are not
+immediately available. They are often supplied as a module which has
+to be loaded before use. To find out ask your system's manager.
+
+If you do not find the necessary software on your system, you find the
+freeware GNU Fortran compiler under
+\href{https://gcc.gnu.org/fortran}{https://gcc.gnu.org/fortran} and
+FFTW3 package under \href{http://www.fftw.org}{http://www.fftw.org}.
+The Intel compiler and MKL can be found at the vendors site
+\href{https://software.intel.com}{https://software.intel.com}$\;,$,
+both being also freely available.
+(The links were checked March 2021 and may change with the years.
+Alternatively, one can search the sites by keyword.)
+
+
+\clearpage
+
+\section{Installation}	
+\label{sec:install}
+
+This section is concerned with how to install the code
+and to compile it. For the examples treated here, the most basic
+settings are chosen so as to minimize the risk of complications. For
+the full list of compilation parameters and supported libraries,
+please consult \scn{sec:adv_compil}.
+
+		
+\subsection{Structure of sub-directories}
+
+After download of the compressed archive \texttt{QDD.zip} with the
+project, we assume that it is placed on the project directory with a
+name of the user's choice, We refer to it henceforth as
+\texttt{\$QDD\_ROOT}. After unpacking, one will find the following
+sub-directories:
+\begin{description}
+  \item[\texttt{\$QDD\_ROOT/bin}:] directory where the \texttt{qdd}
+    binary is installed in after compilation
+  \item[\texttt{\$QDD\_ROOT/doc}:] contains this user manual
+  \item[\texttt{\$QDD\_ROOT/examples}:] contains the examples presented in
+    the manual and in the reference paper with input files and typical output files;
+    each example is placed in a separate sub-directory with obvious name
+  \item[\texttt{\$QDD\_ROOT/src}:] contains 2 sub-directories where
+    source code is stored; the directory \texttt{\$QDD\_ROOT/src/qdd}
+    contains the QDD code and according make files (see
+    \scn{sec:compil}) while the directory
+    \texttt{\$QDD\_ROOT/src/auxiliary} contains auxiliary programs for
+    post-processing.
+\end{description}
+
+\subsection{Compilation}
+\label{sec:compil}
+
+		
+The first step to produce an executable by compiling and linking.  To
+that end, you have to go to directory where the source code is:
+\begin{verbatim}
+$ cd $QDD_ROOT/src/qdd
+\end{verbatim}
+Compilation is done by issuing a \texttt{make} in this directory.
+However, before doing that one has to adapt the compiler settings to
+the given situations and wanted options. To that end, edit the
+\texttt{Makefile} in the directory \texttt{\$QDD\_ROOT/src/qdd} and
+chose from the following specifications:
+\begin{description}
+\item[\texttt{COMPILER}:] This sets the compiler of your choice.
+  Presently provides are the instructions for invoking
+  \texttt{TYPE\_FFT = gfortran} if you use the GNU Fortran and
+  \texttt{TYPE\_FFT = ifort} if you use Intel Fortan.
+\item[\texttt{OS}:] This specifies the operating system of your
+  computer. Presently  available are 
+  \texttt{OS = LINUX} for Linux and
+  \texttt{OS = MAC} for a Mac operating system.
+\item[\texttt{TYPE\_FFT}:] There are two alternatives, set to
+  \texttt{TYPE\_FFT = FFTW} if you use a FFTW3 library or to
+  \texttt{TYPE\_FFT = MKL} if you have access to the MKL
+  implementation of FFTW3.
+\item[\texttt{OMP}:] Activates OpenMP parallelization if set to
+  \texttt{YES} and compiles sequential code if \texttt{NO}.
+\item[\texttt{DYNOMP}:] There are two variants within OpenMP
+  parallelization. The choice \texttt{DYNOMP = YES} operates with
+  parallelization of the s.p. wave functions while  \texttt{DYNOMP = NO}
+  exploits the OpenMP version of the FFTW3  to speed up the
+  Fourier transformations.
+\item[\texttt{LINK\_STATIC}:] Activates static linking is set to
+  \texttt{YES} and dynamic linking for \texttt{NO}.
+\item[\texttt{DEBUG}:] Compiles with debugging options if set to
+  \texttt{YES} and with optimization for \texttt{NO}.
+\item[\texttt{FFTW\_PATH} (optional):] This applies if the linker
+  option \texttt{-lfftw3} did not find automatically the right path
+  (most installations do that correctly).  Then you have to find the
+  path to the FFTW3 library on your system and to insert it here. The
+  path should point the top-level directory of your FFTW3
+  installation.
+\item[\texttt{MKL\_PATH} (optional):] This applies if the linker did
+  not find the MKL library (most installations provide the right
+  path).  Then you have to find the path to the FFTW3 library on your
+  system and to insert it here. The path should point the top-level
+  of your MKL installation
+\end{description}
+The \texttt{Makefile} points to compiler specific settings in
+the files \texttt{Makefiles/mfBody.gnu.mk} for GNU Fortran or
+\texttt{Makefiles/mfBody.intel.mk} for Intel Fortran. Both files
+contain standard compiler options which should  run on most systems.
+If that does not work immediately or if you dispose of particular
+optomization options, you have to edit the compiler options in the
+actually relevant of these both files. 
+
+Now your are ready for issuing a \texttt{make} command. However, you must run a
+\texttt{make clean} before if you have edited the \texttt{Makefile} of
+one of the included files in the sub-directory \texttt{Makefiles/}.
+After the \texttt{make}, you find the executable \texttt{qdd}
+in the directory \texttt{\$QDD\_ROOT/bin}.
+
+The \texttt{gfortran} and \texttt{ifort} are supplied as widely
+accessible examples.  Of course, you can also compile and link with
+other compilers.  In that case, you have go deeper into the
+makefiles. A safe way is to generate a new
+\texttt{mfBody.<your\_compiler>.mk} from copying one of the two
+\texttt{mfBody} files and edit that according to the command structure
+of your compiler. Then you need to point to your new
+\texttt{Makefiles/mfBody.<your\_compiler>.mk} in the
+\texttt{Makefile} and your are ready to go again.
+
+		
+\subsection{Launching a calculation}
+\label{sec:launch}
+
+After the build process is finished, the executable \texttt{qdd} will
+be in the \texttt{\$QDD\_root/bin} directory.
+		
+Each calculation uses its own set of input files and produces a bunch
+of output files. We therefore recommend the user to work in a
+dedicated directory for each single calculation.
+The code resides at the fixed position
+\begin{verbatim}
+ $QDD_ROOT/bin/qdd 
+\end{verbatim}
+and can be invoked from there. The user can, of course, copy it to the
+working directory, install a link, or rename it according to one's
+preferred working style.
+		
+There are 2-3 input files required to start a calculation. They are
+listed in \tab{tab:input-files}.
+%	
+\begin{table}[htbp!]
+  \caption{Minimum set of input files.}\label{tab:input-files}
+  \begin{tabular}{|p{3.2cm}|p{10.8cm}|}
+    \hline \texttt{for005} & Top level file containing the calculation
+    identifier `\texttt{<name>}'. This can be any string up to 13
+    characters, e.g. `\texttt{H2O}' or
+    `\texttt{Na8-ionmot}'. \\ \hline \texttt{for005.<name>} & Contains
+    the parameters of the calculation using Fortran's
+    \textit{namelist}-mechanism. Description of all these input
+    parameters is given in subsequent sections and summarized in
+    Tables~\ref{tab:input-params-sys-choice},
+    \ref{tab:input-params-global-initwf}, 
+    \ref{tab:input-params-global-initions}, 
+    \ref{tab:input-params-PsP}, 
+    \ref{tab:input-params-static},
+ %\ref{tab:input-params-static-dynamic},
+ \ref{tab:dyn-input-params-general},
+ \ref{tab:dyn-input-params-excitation},
+ \ref{tab:dyn-input-params-observables}, and \ref{tab:dyn-input-params-rta}.\\ \hline
+    \texttt{for005ion.<name>} & Locations and types of the ions in
+    case of detailed ionic background, read in if \texttt{nion2=1} in {\tt for005.<name>}.\\ \hline
+  \end{tabular}
+\end{table}
+%
+A complete list of the input parameters and their explanation will be
+covered in Secs.~\ref{sec:global}, \ref{sec:stat_basics}, and
+\ref{sec:dyn_basics}. Examples of input with corresponding output
+files can be found in the directory \texttt{\$QDD\_ROOT/examples/} and
+will be discussed in Secs.~\ref{sec:stat_examples}
+and~\ref{sec:dyn_examples}.
+		
+Provided that the input files are present in the working directory and
+correctly fulfilled, to launch a calculation, execute:
+\begin{verbatim}
+ $QDD_ROOT/bin/qdd 
+\end{verbatim}
+or whatever name and place you have given the executable.
+
+\clearpage
+
+\section{Basic input setting system, grid, and initialization parameters}
+\label{sec:init_basic}
+	
+This section explains the input parameters which define the system
+(number of electrons, number and sort of ions), the grid (number of
+grid points, spacing, options), and the way electronic wave functions
+and ionic background is initialized. This is all contained in the
+namelist groups \texttt{GLOBAL} and \texttt{PERIO}.  The latter is
+confined to the ionic pseudopotentials. The namelist \texttt{GLOBAL}
+is richer and will be presented in several portions.
+
+\fbox{\begin{minipage}{0.98\linewidth} {\bf Important note:} All
+    tables of input parameters, here and in subsequent sections, give
+    default values where they apply. These are distinguished by
+    \tgreen{green color} and shown in a separate column, usually
+    column 3 except for Tab.~\ref{tab:dyn-input-params-observables}
+    where it is column 2.  Parameters which are declared
+    \tgreen{$\emptyset$} are undefined and must be given explicitly in
+    the input files, else the code terminates right after reading. All
+    real parameters in the code are, in fact, double precision
+    variables. It is only for reason of better readability that we
+    specify default values often in the simpler form as, e.g., 1.0
+    instead of 1D0.  Boolean, or logical parameters respectively, can
+    be set in an input file either with the syntax {\tt F} (or {\tt
+      T}), or with the syntax {\tt .FALSE.} (or {\tt .TRUE.}), while
+    in the source code, only the second syntax is possible.  If a
+    parameter has a physical dimension, the corresponding unit is
+    shown in column 2.
+\end{minipage}
+}
+	
+\subsection{Parameters in the namelist GLOBAL}
+\label{sec:global}
+	
+\subsubsection{Defining system and numerical basis}
+
+%\begin{longtable}{|p{2.5cm}|p{1.0cm}|p{10.0cm}|}
+\begin{table}[bht]
+\caption{General parameters on the physical system and the numerical
+  box in the namelist \texttt{GLOBAL} of
+  \texttt{for005.<name>}. 
+%  The third column shows the default values. An entry
+%  $\emptyset$ means that this parameter is undefined and must be given explicitly.
+}\label{tab:input-params-sys-choice}
+%\endfirsthead
+\begin{tabular}{|p{2cm}|p{1.1cm}|p{1.3cm}|p{8.9cm}|}
+\hline
+\multicolumn{4}{|c|}{\texttt{GLOBAL} namelist}\\
+\hline
+\multicolumn{4}{|c|}{\textit{\color{activeColor}Setting system}}\\
+\hline
+\texttt{nelect}&$N_\mathrm{el}$&\tgreen{$\emptyset$}& Number of valence electrons \\
+\hline
+\texttt{nspdw}&$N_\downarrow$&\tgreen{$\emptyset$}& Number of spin down electrons\\
+\hline
+\texttt{nion}&$N_\mathrm{ion}$&\tgreen{$\emptyset$}& Number of ions \\
+\hline
+\texttt{numspin}&&\tgreen{2}& Number of spin components\\
+		&&& 1 $\rightarrow$ spin degenerated \\
+		&&& 2 $\rightarrow$ full spin treatment\\
+\hline
+\texttt{temp} & $T$ [Ry]&\tgreen{0.0}&   Electron temperature, see
+eq. (\ref{cpc:eq:Fermi0}) and \scn{sec:open-shell}\\
+\hline
+\multicolumn{4}{|c|}{\textit{\color{activeColor}Numerical grid}}\\
+\hline
+\texttt{kstate}&&\tgreen{20}& Max. number of possible electron states,
+must be $\geq$ \texttt{nelect}\\
+\hline
+\texttt{kxbox}, &$N_x$&\tgreen{$\emptyset$}& Number of grid points in $x$ direction, see \scn{cpc:sec:griddef}\\
+\texttt{kybox}, &$N_y$&\tgreen{$\emptyset$}& Number of grid points in $y$ direction, see \scn{cpc:sec:griddef}\\
+\texttt{kzbox} &$N_z$&\tgreen{$\emptyset$}& Number of grid points in $z$ direction, see \scn{cpc:sec:griddef}\\
+\hline
+\texttt{dx}&$\delta x$ [a$_0$]&\tgreen{$\emptyset$}& Grid spacing in $x$ direction, see \scn{cpc:sec:griddef}\\
+\texttt{dy}&$\delta y$ [a$_0$]&\tgreen{\texttt{dy=dx}}& Grid spacing in $y$ direction, see \scn{cpc:sec:griddef}\\
+\texttt{dz}&$\delta z$ [a$_0$]&\tgreen{\texttt{dz=dx}}& Grid spacing in $z$ direction see \scn{cpc:sec:griddef} \\
+\hline
+\texttt{tcoulfalr} &&\tgreen{\tt F}&   Switch to FALR Coulomb solver, else exact solver\\
+\hline
+\texttt{numthr} &&\tgreen{0}&   Max. number of OpenMP threads to use\\
+  &&& $=0$ $\rightarrow$ get \texttt{numthr} from system\\
+  &&& $<0$ $\rightarrow$ fixed setting (must stay below system limit)  \\
+\hline
+\end{tabular}
+\end{table}
+Table \ref{tab:input-params-sys-choice} collects the basic parameters
+of a calculation, the system in terms of numbers of electrons and ions
+as well as the numerical grid. Most of the entries are self
+explaining. A few of them need some more explanation.
+
+The parameter \texttt{numspin} sets the number of spin components in
+the calculations. The standard is to deal with both components, spin
+up and spin down, explicitly (\texttt{numspin=2}).  However, there are
+many situations where we know in advance that spin degeneracy is
+maintained throughout the whole process. In that case, one can save
+storage space and computing time when handling only one spin component
+(\texttt{numspin=1}). A typical case is the large C$_{60}$ system, see
+the examples in the directory \texttt{examples}. In case of separate
+spin-up and spin-down (\texttt{numspin=2}), the parameter
+\texttt{nspdw} has to be specified which fixes the number of spin down
+electrons. Proper choice allows one to consider spin polarized systems or
+systems in which there is an explicit violation of spin degeneracy,
+such as for example the carbon atom.
+
+The parameter \texttt{kstate} is used in defining the dimensions of
+the wave function arrays. It sets the upper limits for the number of
+states which can be covered in a calculation. The actual number of
+states is determined at the time of wave function initialization, see
+Sec. \ref{sec:initwf}. It is denoted \texttt{nstate} in the code
+and corresponds to the quantity $\Omega$ in the paper (see
+eq. (\ref{cpc:eq:gen_nbrs})).  Note that it is not a direct input of
+the code. It results from the initialization itself.  A message will
+be printed if the actual number exceeds \texttt{kstate} and the code
+terminates prematurely.
+
+The parameter \texttt{numthr} is only applicable if the code was
+compiled with OpenMP activated. It allows one to specify the number of
+threads explicitly. Default is \texttt{numthr=0} which sets the
+number of threads to the value provided by the actual computer
+system.
+
+%\paragraph{Coulomb solvers}
+
+The Boolean parameter
+\texttt{tcoulfalr} switches the Coulomb
+solver. This requires some explanation. 
+The Coulomb potential $U_\mathrm{C}$ to a given charge density
+$\varrho_\mathrm{C}$ is determined by solving the Poisson equation
+\begin{equation}
+  \Delta U_\mathrm{C} + 4\pi e^2\varrho_\mathrm{C} = 0
+  \;.
+\end{equation}
+We do that in Fourier space where the Laplacian operator $\Delta$
+amounts to simple multiplication. A problem is the long-range nature,
+$\propto r^{-1}$, of the Coulomb potential which means that sizable
+values of $U_\mathrm{C}$ remain at the bounds of typical numerical
+boxes.  There are two options to deal with the long-range part.
+%
+The first scheme, switched by {\tt tcoulfalr=.FALSE.}, manages to
+reproduce the exact Coulomb field at the bounds. To that end, it
+doubles the 3D grid in each spatial direction amounting to an eight
+times larger grid altogether, constructs a numerical representative of
+the Laplacian from the exact Coulomb Green's function on the grid, and
+solves the Poisson equation in Fourier space of the eightfold grid,
+for details see \cite{Eas79,Mar14aR}.
+%
+The second scheme, switched by {\tt tcoulfalr=.TRUE.}, approximates
+the $U_\mathrm{C}$ at the bounds by a multipole expansion going up the
+hexadecapole order, the residual error thus being of order $r^{-5}$.
+It separates the given density into a short-range part which produces
+no multipole fields up to hexadecapole and a long-range part covering
+all remaining contributions, particularly the long-range part. The
+short-range part is solved in the Fourier space of the regular
+grid. The long-range part uses model densities for which exact
+solutions are known and which are adjusted to reproduce all multipole
+moments up to hexadecapole.  The final Coulomb field is then obtained
+from summing the separately computed short-range and long-range parts.
+The method is coined Fourier Analysis with Long Range forces (FALR),
+for details see \cite{Lau94}.
+
+The grid spacings could be set differently. But it is highly
+recommended to use the same spacing in all three directions. This is
+the default. One should only specify \texttt{dx}. The \texttt{dy} and
+\texttt{dz} will then follow automatically. Specifying all three
+parameters explicitly, allows one to override the default.
+	
+\subsubsection{Initialization of the electronic wave functions}
+\label{sec:initwf}
+
+%\begin{longtable}{|p{2.5cm}|p{1.0cm}|p{10.0cm}|}
+\begin{table}
+\caption{Parameters for electronic properties in namelist
+  \texttt{GLOBAL} of
+  \texttt{for005.<name>}\label{tab:input-params-global-initwf}}
+%\endfirsthead
+\begin{tabular}{|p{2.3cm}|p{1.5cm}|p{0.45cm}|p{9.0cm}|}
+\hline
+\multicolumn{4}{|c|}{\texttt{GLOBAL} namelist}\\
+\hline
+\multicolumn{4}{|c|}{\textit{\color{activeColor}Initialization of
+    electron wave functions}} \\
+\hline
+\texttt{osfac} &$\eta_\mathrm{width}$&\tgreen{1.0}& Scaling width of the
+oscillator functions, eq. (\ref{eq:HOwf})   \\       
+\hline
+\texttt{b2occ}&$\beta_\mathrm{init}$&\tgreen{0.0}& Deformation for initial harmonic oscillator wave functions \\
+\hline
+\texttt{gamocc}&$\gamma_\mathrm{init}$&\tgreen{0.0}& Triaxiality for initial harmonic oscillator wave functions \\
+\hline
+\texttt{deocc}&$\Delta\varepsilon_\mathrm{occ}$&\tgreen{0.0}&
+   Size of additional shell of initial states above Fermi energy \\
+\hline
+\texttt{shiftWFx}&${r}_{\mathrm{shift},x}$[a$_0$]&\tgreen{0.0}&
+     Shift of initialized wave functions in $x$-direction \\
+\texttt{shiftWFy}&${r}_{\mathrm{shift},y}$[a$_0$]&\tgreen{0.0}&
+     Shift of initialized wave functions in $y$-direction \\
+\texttt{shiftWFz}&${r}_{\mathrm{shift},z}$[a$_0$]&\tgreen{0.0}&
+     Shift of initialized wave functions in $z$-direction \\
+\hline
+\texttt{ispinsep}&&\tgreen{0}& Initialisation of wave functions with spin asymmetry\\
+\hline
+\texttt{init\_ao}&&\tgreen{F}& Initialize wave functions with atomic orbitals \\
+\hline
+\multicolumn{2}{|l|}{\texttt{tshiftCMtoorigin}}& \tgreen{F} & Shift center of mass of ions to origin of numerical box\\
+\hline
+  \multicolumn{4}{|c|}{\textit{\color{activeColor}Choice of electronic
+      functional and pseudopotential}}\\
+  \hline
+  \texttt{idenfunc} &&\tgreen{1}& Choice of density functional for LDA\\
+    &&& 1  $\rightarrow$ Perdew \& Wang 1992 \cite{Per92} \\
+    &&& 2 $\rightarrow$ Gunnarson \& Lundquist  \cite{Gun76}\\
+    &&& 3 $\rightarrow$ only exchange in LDA \\
+  \hline
+  \texttt{ifsicp}&&\tgreen{2}& Type of self-interaction correction (SIC, see
+      \scn{cpc:sec:SIC})\\
+    &&& 0 $\rightarrow$ pure LDA\\
+    &&& 2 $\rightarrow$ ADSIC \\
+    &&& 3 $\rightarrow$ SIC-Slater\\
+    &&& 4 $\rightarrow$  SIC-KLI\\
+    &&& 5 $\rightarrow$ exact exchange\\
+  \hline
+  \texttt{ipsptyp}&&\tgreen{$\emptyset$}& Type of pseudopotentials: \\
+    &&& 0 $\rightarrow$  soft local (\texttt{errf})\\
+    &&& 1 $\rightarrow$ full Goedecker\\
+    &&& 2 $\rightarrow$ local Goedecker\\
+\hline
+\multicolumn{4}{|c|}{\textit{\color{activeColor}Setting for observables}} \\
+\hline
+  \texttt{tmoms\_rel\_cm}&&\tgreen{F}& Origin for calculating multipole momenta
+  of electron density \\
+  &&& \texttt{F} $\rightarrow$ relative to numerical box origin \\
+  &&& \texttt{T} $\rightarrow$ relative to center of mass of the system\\
+\hline
+\end{tabular}
+\end{table}
+%\end{longtable}
+
+Table \ref{tab:input-params-global-initwf} collects the parameters for
+the initialization of the electronic wave functions, choice of
+electronic energy functional, and reference point for global
+observables.  There are two strategies for wave function
+initialization.
+
+The option \texttt{init\_ao=.FALSE.} switches to harmonic oscillator
+states. That initialization is inspired by the Clemenger-Nilsson model
+for the wave functions of metal clusters \cite{Cle85}, but widely used
+also elsewhere \cite{Mar10aB}. The first step is to determine an
+appropriate sequence of initial states. To this end, we use the
+closed formula for energies of the states of triaxially deformed
+harmonic oscillator
+\begin{subequations}
+\label{eq:initho}
+\begin{equation}
+  \varepsilon_{n_xn_yn_z}
+  =
+  n_x\hbar\omega_x+  n_y\hbar\omega_y+  n_z\hbar\omega_z+\frac{3}{2}
+\end{equation}
+with the oscillator parameters defined as
+\begin{eqnarray}
+\\
+  \hbar\omega_x
+  &=&
+  \hbar\omega_0
+  \frac{1}{1-\sqrt{\frac{5}{16\pi}}\beta_\mathrm{init}
+       (\cos(\gamma_\mathrm{init})-\sin(\gamma_\mathrm{init}))}
+  \;,
+\\
+  \hbar\omega_y
+  &=&
+  \hbar\omega_0
+  \frac{1}{1-\sqrt{\frac{5}{16\pi}}\beta_\mathrm{init}
+       (\cos(\gamma_\mathrm{init})+\sin(\gamma_\mathrm{init}))}
+  \;,
+\\
+  \hbar\omega_z
+  &=&
+  \hbar\omega_0
+  \frac{1}{1+2\sqrt{\frac{5}{16\pi}}\beta_\mathrm{init}\cos(\gamma_\mathrm{init})}
+  \;,
+\\
+  \hbar\omega_0
+  &=&
+  \frac{1}{4}(N_\mathrm{e})^{-1/3}\frac{\hbar^2}{2m_\mathrm{el}a_0^2}
+  \;.
+\end{eqnarray}
+\end{subequations}
+Reference for filling the state is the Fermi energy which is estimated
+for electrons with spin $\sigma$ in the oscillator model as (in units
+of Ry)
+\begin{subequations}
+\begin{eqnarray}
+  \epsilon_{\mathrm{F},\sigma}
+  &=&
+  \left(\frac{6N_\sigma}{1-(6N_\sigma)^{-2/3}}\right)^{1/3}-\frac{3}{2}
+  \;.
+\end{eqnarray}
+We want to be flexible and augment that by an additional energy band
+$\Delta\varepsilon_\mathrm{occ}$ which yields a cutoff energy and
+subsequently cutoff criterion
+\begin{eqnarray}
+  \epsilon_\mathrm{cutoff}
+  &=&
+  \epsilon_{\mathrm{F},\sigma}+\Delta\varepsilon_\mathrm{occ}
+  \;,
+\\
+  \varepsilon_{n_xn_yn_z}
+  &<&
+  \epsilon_\mathrm{cutoff}
+  \;.
+\label{eq:cutoffinitwf}
+\end{eqnarray}
+\end{subequations}
+The states are selected in order of increasing energy until condition
+Eq. (\ref{eq:cutoffinitwf}) is reached. That is done for spin-up and
+spin-down separately. Finally, it is checked whether the actual number
+of states stays below or equal the parameter \texttt{kstate}, see
+table \ref{tab:input-params-sys-choice}. We must emphasize that the
+initial deformations $\beta_\mathrm{init}$ and $\gamma_\mathrm{init}$
+are most crucial parameters. They determine the sequence of initial
+states in terms of their numbers of nodes in $x$-, $y$-, and
+$z$-directions. A proper choice is important to avoid side-trapping in
+isomeric electron states. For an example see Sec. \ref{sec:initelec}.
+
+
+Having identified the wanted states, we initialize the corresponding
+wave function by the well known oscillator wave functions
+\begin{subequations}
+\label{eq:HOwf}
+\begin{equation}
+  \psi_{n_xn_yn_z}(\mathbf{r})
+  =
+  \psi_{n_x}(x)\psi_{n_y}(y)\psi_{n_z}(z)
+\end{equation}
+where
+\begin{eqnarray}
+  \psi_{n_x}(x)
+  &\propto&
+  \exp\left(-\frac{x^2}{2\delta_x^2}\right)H_{n_x}\left(\frac{x}{\delta_x}\right)
+  \;,
+\\
+  \delta_x
+  &=&
+  \eta_\mathrm{width}\sqrt{\frac{2}{\hbar\omega_x}\,\frac{\hbar^2}{2m_\mathrm{e}}}
+\end{eqnarray}
+\end{subequations}
+and analogously for $\psi_{n_y}(y)$ and $\psi_{n_z}(z)$.  The input
+allows one to tune the width of the oscillator states by the factor
+$\eta_\mathrm{width}\equiv$\texttt{osfac} in cases where the initial
+guess from the oscillator model was felt to be inefficient.
+
+The option \texttt{init\_ao=.TRUE.} switches to a localized
+initialization which associates electron states with atomic orbitals
+at each ion. As we do not have a simple energy estimator, this
+strategy works presently only for cases where we want to have only
+fully occupied states (all states associated with occupation number
+$w_\alpha=1$).  For the following explanation, we introduce two
+quantities related to the ionic pseudopotentials, $Z_I^{\rm (PsP)}$ the
+charge of the ionic core for the given pseudopotential and
+$Z_\mathrm{eff}=\sum_IZ_I^{\rm (PsP)}$ the total charge of the ionic
+cores.  The scheme then proceeds as:
+\begin{enumerate}
+  \item\label{it:fill} 
+    We go through the ions in the order as they are given in
+    \texttt{for005ion.<name>} and fill each ion with  $Z_I^{\rm (PsP)}$
+    electrons according to the prescription explained in the next step.
+  \item For each ion, we start occupying 
+     with spin {\tt ipol(ion)} as given as last entry of a line
+    in \texttt{for005ion.<name>} and switch
+    up$\leftrightarrow$down for each next electron. The states are
+    filled along the levels of the spherical harmonic oscillator in
+    the order as prescribed in column 5 of the file
+    \texttt{for005ion.<name>}, see paragraph \ref{sec:for005ion}.
+    We choose for the electronic states the ones given in Eq. \eqref{eq:HOwf} without
+    deformation and where the oscillator width is specified 
+    in column 6 of the file
+    \texttt{for005ion.<name>}. % \ref{sec:for005ion}.
+  \item The above process terminates if all \texttt{nelect} electrons
+    are distributed (case $N_\mathrm{el}\leq Z_\mathrm{eff}$) or if all
+    ions are neutralized (case $N_\mathrm{el}\geq Z_\mathrm{eff}$).
+    For anions, we have  $N_\mathrm{el}>Z_\mathrm{eff}$ and
+    there remain  $N_\mathrm{el}-Z_\mathrm{eff}$ electrons not yet
+    defined. These remaining electrons are distributed over the
+    ions  one-by-one in the
+    order they are given in the file \texttt{for005ion.<name>}.  This
+    defines the number of electron states per ion, internally stored
+    in the array \texttt{nmxst(:)}.
+\end{enumerate}
+After all, we see that the atomic orbital initialization is
+straightforward for neutral systems with minimal net spin, but can
+become problematic for anions and cations because we do not know ahead
+of time where is the best place to put the extra
+electron or to leave the hole. Moreover, this initialization is well suited only to
+  cases where the final electron states are all localized. Thus we
+  prefer \texttt{init\_ao=.FALSE.} in most cases. For a detailed
+  discussion of initializations see Sec. \ref{sec:initelec}.
+
+
+\subsection{Choice of electronic functional}
+
+Table \ref{tab:input-params-global-initwf} shows a further global
+setting, namely the selection of the electronic energy-density
+functional with \texttt{idenfunc}, the treatment of the SIC
+determined by parameter \texttt{ifsicp}, and the 
+choice of pseudopotential with \texttt{ipsptyp}. The details of SIC are
+explained in Sec. \ref{cpc:sec:SIC} of the reference paper. We emphasize here
+once again that SIC-Slater and KLI are not suited for dynamical
+simulations over long periods \cite{Mun05}. Exact exchange works in
+all regimes, however requiring that all active electron states in the
+calculations are fully occupied ($w_\alpha=1$). The best compromise in
+most situations is ADSIC which provides appropriate single particle (s.p.) energies in
+surprisingly many situations \cite{Klu13}.
+The various choices of pseudopotentials are explained in 
+\scn{sec:explions}.
+
+
+The last parameter in table \ref{tab:input-params-global-initwf} is
+\texttt{tmoms\_rel\_cm}. It determines the origin from which the
+global geometry parameters of the electronic density, radius and other
+moments, are computed. Default is \texttt{tmoms\_rel\_cm=.FALSE.}
+taking the center of the box as a reference.
+	
+\subsubsection{Initialization of the ionic background}
+\label{sec:ionbackinit}
+
+Information on the ionic background is given at three places: the file
+\texttt{for005ion.<name>} provides the ions specifying their
+positions, type of chemical element, and instructions for electrons attached
+with the ion (only relevant for option \texttt{init\_ao=.TRUE.}),
+options for geometrical transformations of the ions in namelist
+\texttt{GLOBAL}, and the ionic pseudopotentials in namelist
+\texttt{PERIO}. We will work them up now in that order.
+
+\paragraph{The anatomy of the ionic input file  \texttt{for005ion.<name>}\\}
+\label{sec:for005ion}
+				
+The file \texttt{for005ion.<name>}, containing the basic information
+about ions, is read provided we have not chosen the option for jellium
+background, namely \texttt{nion2=0}.  Each line in
+\texttt{for005ion.<name>} corresponds to each ion and is composed of
+several fields as follows:
+\begin{align*}
+  \underbrace{\tikz[baseline]{\node[fill=blue!20,anchor=base]{$x_I\:\:\: y_I\:\:\: z_I$};}}_{\circled{1}}\quad
+  \underbrace{\tikz[baseline]{\node[fill=red!20,anchor=base]{$Z_I$};}}_{\circled{2}}\quad
+  \underbrace{\tikz[baseline]{\node[fill=green!20,anchor=base]{\texttt{xyz}};}}_{\circled{3}}\quad
+  \underbrace{\tikz[baseline]{\node[fill=yellow!20,anchor=base]{$r_I$};}}_{\circled{4}}\quad
+  \underbrace{\tikz[baseline]{\node[fill=magenta!20,anchor=base]{$\mathcal{S}_I$};}}_{\circled{5}}
+\end{align*}
+\begin{itemize}
+\item[\circled{1}] the $x,y,z$ coordinates of ion $I$
+\item[\circled{2}] the atomic number $Z_I$ of the chemical element in the periodic table of ion $I$
+\item[\circled{3}] defines the ordering in which the harmonic
+  oscillator states are filled in localized initialization in case of
+  \texttt{init\_ao=.TRUE.}
+\item[\circled{4}] the radius of the initial Gaussian around ion $I$
+  in case of \texttt{init\_ao=.TRUE.}
+\item[\circled{5}] the first type of spin, $\uparrow\equiv{\tt 1}$
+ or $\downarrow\equiv$\,{\tt -1}, of ion $I$
+  (needed only if \texttt{init\_ao=.TRUE.}), see Sec.
+    \ref{sec:initwf}
+\end{itemize}
+		
+We give below as an example the content of a \texttt{for005ion.H2O}
+file describing a H$_2$O molecule:
+\\[4pt]
+\tikz[baseline]{\node[fill=blue!20,anchor=base]
+			{\texttt{~0.80400~~~0.00000~~0.00000}};
+		}
+\tikz[baseline]{\node[fill=red!20,anchor=base]
+                        {\texttt{8}};
+		}
+\tikz[baseline]{\node[fill=green!20,anchor=base]
+			{\texttt{zxy}};
+		}
+\tikz[baseline]{\node[fill=yellow!20,anchor=base]
+			{\texttt{1.0}};
+		}
+\tikz[baseline]{\node[fill=magenta!20,anchor=base]
+			{\texttt{1}};
+		}
+
+\tikz[baseline]{\node[fill=blue!20,anchor=base]
+			{\texttt{-0.41628~~~1.45009~~0.00000}};
+		}
+\tikz[baseline]{\node[fill=red!20,anchor=base]
+			{\texttt{1}};
+		}
+\tikz[baseline]{\node[fill=green!20,anchor=base]
+			{\texttt{zxy}};
+		}
+\tikz[baseline]{\node[fill=yellow!20,anchor=base]
+			{\texttt{1.0}};
+		}
+\tikz[baseline]{\node[fill=magenta!20,anchor=base]
+			{\texttt{1}};
+		}
+		
+\tikz[baseline]{\node[fill=blue!20,anchor=base]
+  {\texttt{-0.41628~~-1.45009~~0.00000}}; }
+\tikz[baseline]{\node[fill=red!20,anchor=base] {\texttt{1}}; }
+\tikz[baseline]{\node[fill=green!20,anchor=base] {\texttt{zxy}}; }
+\tikz[baseline]{\node[fill=yellow!20,anchor=base] {\texttt{1.0}}; }
+\tikz[baseline]{\node[fill=magenta!20,anchor=base] {\texttt{1}}; }
+\\[4pt] We remind that $Z_I$ is the element
+number. The number of active (valence) electrons which we treat
+explicitly for a given atom is usually smaller. For instance, in the
+case of the O atom, we have only 6 active electrons while the element
+number is $Z_{\rm O}=8$.
+
+As indicated above, the information from
+  \texttt{for005ion.<name>} is used depending on the chosen way of
+  initialization.  Only the first four columns ($x$, $y$, $z$ values
+  and element number $Z_I$) are used for \texttt{init\_ao=.FALSE.}, the
+  initialization by global oscillator wavefunctions as explained in
+  section \ref{sec:initwf}. The further columns are used for
+  \texttt{init\_ao=.TRUE.}, triggering localized initialization of atomic
+  orbitals. We detail the filling of the local oscillator shells on
+that example using the notation $(n_x,n_y,n_z,\sigma)$ for an
+oscillator state with spin $\sigma$: The first line stands for the O
+ion which gathers 6 valence electrons whose states are filled in the
+order $(0,0,0,\uparrow)$, $(0,0,0,\downarrow)$, $(0,0,1,\uparrow)$,
+$(0,0,1,\downarrow)$, $(1,0,0,\uparrow)$, $(1,0,0,\downarrow)$.
+%, $(0,0,1,\uparrow)$, $(0,0,1,\downarrow)$. 
+The second line stands for one H atom occupied with an electron in
+state $(0,0,0,\uparrow)$ and the third line associates
+$(0,0,0,\downarrow)$ to the other H atom. The spin label (last entry)
+is unimportant here because the remaining spin is chosen to guarantee
+the wanted number of spins (parameter \texttt{nspdw}).  If one uses
+the option \texttt{init\_ao=.TRUE.}, the last three columns are read.
+A word is in order here concerning the column that sets the ordering
+in which the harmonic oscillator states are filled. Naively, one would
+fill in alphabetical order $x$, $y$ and $z$. In the case of the H$_2$O
+molecule in the actual ionc configuration, there is a reason to
+initialize the modes at the O site in the order $z$ excitation first
+and the $x$ excitation. It is done to avoid time consuming
+rearrangements of the node structure of the wavefunctions, as
+exemplified in section \ref{sec:initelec}. The positions of the two
+$H$ atoms extends most in $y$ direction which means that an initial
+expansion in $y$ direction is automatically achieved by the two
+wavefunctions localized at the $H$ sites whereas we still need
+wavefunctions extending in $z$- and $x$-direction to cover all three
+directions. This is exactly achieved by the chosen order \texttt{zxy}
+in \texttt{for005ion.H2O}.
+
+\paragraph{Applying an initial global transformation on the ionic configuration\\}
+\label{eq:iontransform}
+
+The ionic background is given in {\tt for005ion.<name>} as described
+above. One often wants to give the molecule a different position
+and/or orientation. This can be done by changing the entries in
+\texttt{for005ion.<name>} ``by hand''. But that is painful. The code
+offers the more elegant option to perform global operations on ions by
+a few input parameters as explained in table
+\ref{tab:input-params-global-initions}. 
+
+\begin{table}[htbp]
+\caption{Parameters for initial ionic transformations in namelist \texttt{GLOBAL} of \texttt{for005.<name>}}\label{tab:input-params-global-initions}
+\begin{tabular}{|p{2.3cm}|p{2.25cm}|p{0.85cm}|p{8.0cm}|}
+\hline
+\multicolumn{4}{|c|}{\textit{\color{activeColor}More on ionic background}}\\
+\hline
+\texttt{rotionx}&${\omega}_{\mathrm{rot},x}$ [$^\circ$]&\tgreen{0.0}&\\
+\texttt{rotiony}&${\omega}_{\mathrm{rot},y}$ [$^\circ$]&\tgreen{0.0}&
+                   Rotate ionic background, see Eq. (\ref{eq:rotateions})\\
+\texttt{rotionz}&${\omega}_{\mathrm{rot},z}$ [$^\circ$]&\tgreen{0.0}& \\
+\hline
+\texttt{scaleionx} &$\eta_{\mathrm{scale},x}$&\tgreen{1.0}& \\
+\texttt{scaleiony} &$\eta_{\mathrm{scale},y}$&\tgreen{1.0}&
+   Scale ionic configuration, Eq. (\ref{eq:scaleions})\\
+\texttt{scaleionz} &$\eta_{\mathrm{scale},z}$&\tgreen{1.0}& \\
+\hline
+\texttt{scaleion} &$\eta_\mathrm{scale}$&\tgreen{1.0}&Same scaling in each
+direction, equivalent to $\eta_{\mathrm{scale},x}=\eta_{\mathrm{scale},y}=\eta_{\mathrm{scale},z}=\eta_\mathrm{scale}$\\
+\hline
+\texttt{shiftionx} &${R}_{\mathrm{shift},x}$[a$_0$]&\tgreen{0.0}& \\
+\texttt{shiftiony} &${R}_{\mathrm{shift},y}$[a$_0$]&\tgreen{0.0}&
+     Shift ionic configuration, Eq. (\ref{eq:shiftions})\\
+\texttt{shiftionz} &${R}_{\mathrm{shift},z}$[a$_0$]&\tgreen{0.0}& \\
+\hline
+\hline
+\texttt{endcon} &&\tgreen{1D-5}& Jellium initialization parameter, see \scn{sec:jelliter} \\
+\hline
+\texttt{itback} &&\tgreen{200}& Jellium initialization parameter, see \scn{sec:jelliter} \\  
+\hline\hline
+\texttt{dpolx}&$E_{0,x}^\mathrm{(stat)}$[Ry/a$_0$]&\tgreen{0.0}& Additional static $x$-dipole, see \scn{cpc:sec:comppol}\\
+\hline
+\texttt{dpoly}&$E_{0,y}^\mathrm{(stat)}$[Ry/a$_0$]&\tgreen{0.0}& Additional static $y$-dipole, see \scn{cpc:sec:comppol}\\
+\hline
+\texttt{dpolz}&$E_{0,z}^\mathrm{(stat)}$[Ry/a$_0$]&\tgreen{0.0}& Additional static $z$-dipole, see \scn{cpc:sec:comppol}\\
+\hline
+\end{tabular}
+\end{table}
+%\end{longtable}
+
+The simplest one is a shift
+\begin{subequations}
+\begin{equation}
+  \mathbf{R}_I\longrightarrow\mathbf{R}_I+\mathbf{R}_\mathrm{shift}
+  \;.
+\label{eq:shiftions}
+\end{equation}
+More involved is rotation of the ionic background. The rotation is
+performed about the center of mass $\mathbf{R}_\mathrm{cm}$ of the molecule
+which renders rotation to be a three-step process
+\begin{equation}
+  \mathbf{R}_I\rightarrow\mathbf{R}_I-\mathbf{R}_\mathrm{cm}
+  \;,\;
+  \mathbf{R}_I\rightarrow\hat{D}(\bm{\omega}_\mathrm{rot})\mathbf{R}_I
+  \;,\;
+  \mathbf{R}_I\rightarrow\mathbf{R}_I+\mathbf{R}_\mathrm{cm}
+  \;,
+\label{eq:rotateions}
+\end{equation}
+where $\hat{D}(\bm{\omega}_\mathrm{rot})$ is the 3$\times$3 matrix of
+rotation by angle $|\bm{\omega}_\mathrm{rot}|$ about the axis
+$\bm{\omega}_\mathrm{rot}/|\bm{\omega}_\mathrm{rot}|$. 
+Finally, there is the option to scale the ionic coordinates about the
+ionic center in each direction  separately as
+\begin{equation}
+  {R}_{I,i}
+  \longrightarrow
+  \eta_{\mathrm{scale},i}\left({R}_{I,i}-{R}_{\mathrm{cm},i}\right)
+  +{R}_{\mathrm{cm},i}
+  \;,\;
+  i\in\{x,y,z\}
+  \;.
+\label{eq:scaleions}
+\end{equation}
+\end{subequations}
+
+These ionic transformations can be used for different purposes.  One
+option is to perform several ground state computations from the same
+input file \texttt{for005ion.<name>}, but with different spatial
+orientations or scaling.  One can also use scaling of the background
+for instantaneous excitation of electronic breathing modes.  To that
+end, one uses a scaled configuration for the static calculation, saves
+that to file, and restarts dynamics with the standard (unscaled) ionic
+ground-state configurations, reading the scaled electron cloud from
+\texttt{RSAVE.<name>} (with invoking \texttt{tstat=.TRUE.}, see
+table~\ref{tab:static-output-files}).  One could use the same strategy
+for rotational excitation. But the parameter \texttt{irotate}, see
+table \ref{tab:dyn-input-params-instantaneous}, is the more convenient
+tool for that purpose.
+
+
+\paragraph{Static dipole field and computation of polarizability\\}
+\label{sec:static-dipole}
+
+The parameters \texttt{dpolx}, \texttt{dpoly} and \texttt{dpolz} add a
+static electric dipole field to the Kohn-Sham potential.  As explained
+in \scn{cpc:sec:comppol} of the reference paper, this is used to
+extract the static polarizability of the system under study.  More
+details on the corresponding output can be found in
+\scn{sec:results-pstat}
+
+
+
+\subsubsection{Initialization of the jellium background}
+\label{sec:jelliter}
+
+It is a long standing experience that the electronic structure of
+metals can be well approximated through replacing the ionic background
+by a smooth positive background charge \cite{GV05}. Thus the jellium
+model has been widely used in the physics of metal clusters
+\cite{Bra93} and  QDD contains this as an option by choosing
+\texttt{nion2=0} in namelist \texttt{PERIO} where also the jellium
+parameters can be found. Nonetheless, there remains the
+initialization.  The jellium density (\ref{cpc:eq:rhojell}) is not
+exactly fulfilling the condition (\ref{cpc:eq:R0cond}) due to grid
+representation, soft surface width, and deformation. We have to
+renormalize $\varrho_{\mathrm{jel},0}$ slightly to match condition
+(\ref{cpc:eq:R0cond}). This is done by iteration of the jellium radius
+$R_\mathrm{jel}$. This is what the parameters \texttt{itback} and
+\texttt{endcon} in namelist \texttt{GLOBAL}, see table \ref{tab:input-params-global-initions}, are for.
+
+
+\subsubsection{External ionic potential} 
+
+The final option \texttt{nion2=2} allows one to initialize the ionic
+background as an externally given potential. This is achieved by
+copying the content of the input file \texttt{potion.dat} onto the
+array \texttt{potion} (that contains the ionic potential). This can
+correspond for instance to a Woods-Saxon or a Clemenger-Nilsson
+potential, or whatever external potential, provided that
+\texttt{potion.dat} contains its discretization on the numerical grid.
+This is clearly an advanced option because properly mapping a
+potential onto the grid can become cumbersome.
+
+\subsection{PERIO namelist}
+\label{sec:perio}
+		
+%\begin{longtable}{|p{2.5cm}|p{1.0cm}|p{10.0cm}|}
+\begin{table}
+  \caption{Parameters in namelist \texttt{PERIO} of
+    \texttt{for005.<name>}, either for a jellium background or with
+    explicit ions described by a Goedecker-like pseudopotential. The
+    comment {\em some preset} indicates that the code contains a list
+    of default values for Goedecker and Gaussian pseudopotentials for
+    a couple elements, check subroutine \texttt{iperio} in
+    \texttt{init.F90} which ones are preset, see paragraph \ref{sec:explions}.
+  \label{tab:input-params-PsP}}
+%  \endfirsthead
+\begin{tabular}{|p{2.1cm}|p{2.1cm}|p{0.55cm}|p{8.55cm}|}
+  \hline \multicolumn{4}{|c|}{\texttt{PERIO} namelist}\\ 
+  \hline
+  \texttt{nion2} &&\tgreen{1}& Selects type of ionic background \\ 
+  &&& 0  $\rightarrow$ jellium background \\
+  &&& 1 $\rightarrow$ background  from ionic pseudo-potentials \\
+  &&& 2 $\rightarrow$ background read in from \texttt{potion.dat}\\ 
+  \hline \hline
+  \multicolumn{4}{|c|}{\textit{\color{activeColor}Jellium background
+      parameters, Eq. (\ref{cpc:eq:softJ})}}\\ 
+  \hline 
+  \texttt{radjel}&$r_s$ [a$_0$]&\tgreen{4.0}& Wigner-Seitz radius \\ 
+  \hline
+  \texttt{surjel}&$\sigma_\mathrm{jel}$ [a$_0$]&\tgreen{1.0}& Surface thickness \\ 
+  \hline
+  \texttt{bbeta}&$\beta_\mathrm{jel}$&\tgreen{0.0}& Quadrupole deformation \\ 
+  \hline
+  \texttt{gamma}&$\gamma_\mathrm{jel}$&\tgreen{0.0}& Triaxiality \\ 
+  \hline
+  \texttt{beta4}&$\alpha_{40,\mathrm{jel}}$&\tgreen{0.0}& Hexadecapole deformation\\ 
+  \hline
+  \multicolumn{4}{|c|}{\textit{\color{activeColor}Choice of
+      pseudopotential, see \scn{cpc:sec:practPsP}}}\\ 
+  \hline
+  \multicolumn{4}{|c|}{\textit{\color{activeColor}Parameters of the
+      Goedecker-like pseudopotentials Eq. (\ref{cpc:eq:Goed}) (many preset)}}\\
+   \hline
+  \texttt{amu(Z)}&$M_\mathrm{ion}$&& Atomic mass of chemical element
+    \texttt{Z}\\
+  \hline
+  \texttt{ch(Z)}& $Z$ && Atomic number of chemical element \texttt{Z}\\
+  \hline
+  \texttt{cc<k>(Z)}&$C_k$ [Ha]&&Local expansion coefficients $C_k$ in powers of
+     $\left(r/r_\mathrm{loc}\right)^{2k-2}$ for chemical element
+    \texttt{Z}, where (\texttt{k}, $k)\in\{1,2,3,4\}$\\
+  \hline
+  \texttt{crloc(Z)}& $r_\mathrm{loc}$ [a$_0$] &&Local radius $r_\mathrm{loc}$
+     of chemical element \texttt{Z}, in $a_0$\\
+  \hline
+  \texttt{r0g(Z)}& $r_s$ [a$_0$]&& Non-local radius $r_s$ for $l=0$ of element
+      \texttt{Z}\\
+  \hline 
+  \texttt{r1g(Z)}& $r_p$ [a$_0$]&& Non-local radius $r_p$ for $l=1$ of
+    element \texttt{Z}\\
+  \hline
+  \texttt{h0\_11g(Z)}& $h^s_{11}$ [Ha]&&Non-local radial projector
+    coefficient\\
+  \hline
+  \texttt{h1\_11g(Z)}& $h^p_{11}$ [Ha]&& Non-local radial projector
+    coefficient\\
+  \hline 
+  \texttt{h0\_22g(Z)}& $h^s_{22}$ [Ha]&&Non-local radial projector
+    coefficient\\ 
+  \hline
+  \texttt{radiong(Z)}& [a$_0$]&& radius  of the sphere within which the
+    pseudopotential is evaluated\\
+  \hline
+  \multicolumn{4}{|c|}{\textit{\color{activeColor}Parameters of the
+      soft local pseudopotentials Eq. (\ref{cpc:eq:softlocal}) (some preset)}}\\
+  \hline 
+  \texttt{dr1}& $\sigma_1\sqrt{2\mathrm{ln}2}$ [a$_0$]&& First Gaussian width parameter\\ 
+  \hline 
+  \texttt{dr1}& $\sigma_2\sqrt{2\mathrm{ln}2}$ [a$_0$]&& Second Gaussian width parameter\\ 
+  \hline 
+  \texttt{prho1}& $\frac{c_1}{(\sigma_2\sqrt{2\mathrm{ln}2})^3}$&&
+  First strength parameter\\ 
+  \hline 
+  \texttt{prho2}& $\frac{c_2}{(\sigma_2\sqrt{2\mathrm{ln}2})^3}$&&Second strength parameter\\ 
+%  \hline
+%  \texttt{tinterpol} &&\tgreen{.F.}& Switch to interpolation of pseudopotential on the grid \\
+  \hline
+\end{tabular}
+\end{table}
+%\end{longtable}
+
+The parameters of the interaction of the ions with electrons are
+provided in the namelist \texttt{PERIO}. They are collected here in
+table \ref{tab:input-params-PsP}.  As already discussed in the
+previous sections, there are three ways to deal with the ionic
+background. The choice is governed by the parameter \texttt{nion2}.
+
+
+\paragraph{Jellium background}
+%
+Setting \texttt{nion2=0} switches to soft jellium background
+whose parameters in table \ref{tab:input-params-PsP} can be easily
+related to Eq. (\ref{cpc:eq:rhojell}) in the reference paper.
+An example for jellium input is:
+\begin{Verbatim}[frame=single,label=Example of Jellium parameters for Na$_8$,fontsize=\footnotesize]
+&PERIO
+	nion2=0,
+	radjel=3.8, bbeta=0.0, gamma=0, surjel=0.9,
+	beta4=0.0,
+&END
+\end{Verbatim}
+The full example input file together with output files can be found
+in:
+\begin{verbatim}
+$QDD_ROOT/examples/ground-state/Na2-jel-egs/
+\end{verbatim}
+
+
+\newpage
+\paragraph{Explicit ions}
+\label{sec:explions}
+%
+Detailed ionic pseudopotentials (PsP), triggered by \texttt{nion2>0},
+require many more parameters.  Again, the respective parameters in
+table \ref{tab:input-params-PsP} can easily be related to Sec.
+\ref{cpc:sec:practPsP} of the reference paper.
+
+		
+The case \texttt{ipsptyp=0} uses soft local PsP, see
+Eq. (\ref{cpc:eq:softlocal}), whose parameters are explained in the last
+four rows of table \ref{tab:input-params-PsP}. They need rarely to be
+entered explicitly as those elements for which we had developed such
+pseudopotentials, namely H, Na, Mg, Ar, K, and Ce, are already
+implemented with appropriate default values \cite{Kue99}.
+
+		
+The case \texttt{ipsptyp=1} uses Goedecker-like PsP. The corresponding
+parameters are listed in \tab{tab:input-params-PsP}. Default values
+for some chemical elements, taken from \cite{PhysRevB.54.1703}, are
+already implemented, namely H, He, B, C, N, O, F, Ne, Na, Mg, Al, Si,
+P, S, Ar, Ca, Cu, and Ag. One can also use one's own set of PsP parameters,
+see e.g. explicit examples in the directory
+\texttt{\$QDD\_ROOT/examples/}. One of them is shown here:
+\vskip 0.5cm
+\begin{Verbatim}[frame=single,label=Example of pseudopotential parameters for H$_2$O,fontsize=\footnotesize]
+&PERIO
+	nion2=1,
+	ipsptyp=1,
+	cc1(1)   	=  0.28897655,
+	cc2(1)   	= -0.08386485,
+	crloc(1) 	=  0.5,
+	r0g(1)    	=  0.5,
+	r1g(1)     =  0.5,
+	radiong(1) =  2.2,
+	h0_11g(1)	= -0.49941755, 
+	h1_11g(1) 	=  0.0,
+	
+	cc1(8)   	=  0.7345366,
+	cc2(8)   	= -2.050880,
+	crloc(8) 	=  0.5,
+	r0g(8)		=  0.5,
+	r1g(8)		=  0.5,
+	radiong(8)	=  2.2,
+	h0_11g(8)	=  1.750506,
+	h1_11g(8) 	=  0.0,
+&END
+\end{Verbatim}
+
+The case \texttt{ipsptyp=2} uses only the local part of Goedecker-like
+pseudopotentials. Currently, defaults for H, Na and Ar are implemented,
+and again, one can enter one's own values through the namelist \texttt{PERIO}.
+
+Finally, there are two more parameters of more technical nature.  One is
+\texttt{radiong(Z)}. Mind that pseudopotentials are of short range. It
+does not make much sense to evaluate them over the whole numerical
+box. We confine the evaluation to a sphere of radius
+\texttt{radiong(Z)} around the concerned ion.  A good choice is five
+times the largest radius in the corresponding pseudopotential.  
+
+
+\clearpage
+	
+\section{I/O structure of a ground state calculation}
+\label{sec:stat_basics}
+
+After having defined the system, grid, and initial state we continue
+with a static or dynamic calculation, or one after the other. This
+requires further specific input parameters. This section discusses the
+input parameters for a static calculation to obtain the ground state
+of the studied system.
+
+
+
+\subsection{Input parameters for a static calculation}
+	
+
+%\begin{longtable}{|p{3.5cm}|p{11.2cm}|}
+\begin{table}[bht]
+  \caption{Numerical and physical parameters for a static calculation
+    in namelist \texttt{STATIC} of \texttt{for005.<name>}
+\label{tab:input-params-static}}
+%  \endfirsthead
+\begin{tabular}{|p{2.4cm}|p{1.1cm}|p{1.0cm}|p{9.0cm}|}
+\hline
+\multicolumn{4}{|c|}{namelist \texttt{DYNAMIC}}\\
+\hline
+\multicolumn{4}{|c|}{\textit{\color{activeColor}Convergence parameters
+    for a static calculation}}\\
+\hline
+\texttt{epswf}&$\delta_\mathrm{damp}$&\tgreen{0.2}&Step size for KS static solution, see Eq. (\ref{cpc:eq:dampstep}) \\
+\hline
+\texttt{e0dmp}& $E_{0,\mathrm{damp}}$&\tgreen{2.0}& Damping parameter
+for KS static solution,\\
+ &\multicolumn{1}{|r|}{[Ry]} && see Eq. (\ref{cpc:eq:dampstep}) \\
+\hline
+\texttt{epsoro}&&\tgreen{1D-8}& Termination criterion for static iterations \\
+\hline
+\texttt{occmix} &$\eta_\mathrm{occ}$&\tgreen{0.5}&Mixing of occupation numbers in static iterations, see Eq.~(\ref{cpc:eq:occmix}) \\
+  \hline
+  \texttt{variance\_gain} &$\eta_{var,max}$ &\tgreen{1/3}& Required
+  relative gain in
+  s.p. variance to activate diagonalization (see \texttt{ifhamdiag}) 
+  \\
+  \hline
+  \texttt{ismax}&&\tgreen{1000}& Maximum number of static iterations \\
+  \hline
+  \texttt{idyniter}&&\tgreen{0}& Switch to s.p. energy as \texttt{e0dmp} for \texttt{iter}$>$\texttt{idyniter} \\
+  \hline
+  \texttt{ifhamdiag} &&\tgreen{0}& Frequency of diagonalization of mean-field Hamiltonian \\
+  \hline
+  \multicolumn{4}{|c|}{\textit{\color{activeColor} Output parameters for
+      static iterations}} \\
+  \hline
+  \texttt{tstat}&&\tgreen{F}& To read static wave functions from \texttt{RSAVE.<name>}\\
+		&&& F $\rightarrow$ starts a static calculation from scratch \\
+		&&& T $\rightarrow$ continues iterations from \texttt{RSAVE.<name>}\\
+  \hline
+  \texttt{isaves}&&\tgreen{0}& Frequency to save static state in \texttt{RSAVE.<name>} \\
+  \hline
+  \texttt{istinf}&&\tgreen{10}& Frequency for printing information during static calculation \\
+  \hline			
+  \texttt{ifspemoms}&&\tgreen{F}& Switch to compute and write s.p.
+  spatial moments to final \texttt{pstat.<name>} \\
+  \hline
+  \texttt{iftransme}&&\tgreen{F}& Switch to compute and write dipole transition
+  matrix elements to file \texttt{mte\_xyz} \\
+  \hline
+  \texttt{tplotorbitals} &&\tgreen{F}& Switch to plot the orbitals at the end of the statics  \\
+  \hline
+  \texttt{iflocaliz}&&\tgreen{F}& Switch to compute electron localization
+  function and 
+     to write it to \texttt{pelfstat*.<name>} \\
+  \hline
+\end{tabular}
+\end{table}
+%\end{longtable}
+
+Table \ref{tab:input-params-static} summarizes the parameters
+governing the solution  of the static Kohn-Sham (KS) equations as described
+in \scn{cpc:sec:numstaticel} of the reference paper.
+
+\paragraph{Static iteration parameters\\}
+
+The first block sets numerical parameters for the static iteration
+step (\ref{cpc:eq:dampstep}).  The choice of the damping energy
+$E_\mathrm{damp}$ has some impact on the speed of convergence. It
+should be of order of the depth of the mean-field potential and stay
+$\leq|\varepsilon_1|$, the binding energy of the lowest
+s.p. state. Standard is to run it with an appropriately chosen fixed
+value of $E_\mathrm{damp}$, for inspiration see the test cases in the
+subdirectory {\tt examples} of this package. However, the code offers
+the option of a dynamic regulation by setting
+\texttt{idyniter>0}. This activates the automatic setting
+$E_\mathrm{damp}=|\varepsilon_1|$ after \texttt{idyniter} initial
+iterations with the initially given fixed $E_\mathrm{damp}$. This
+option provides the optimal choice of $E_\mathrm{damp}$. However, it
+requires observation as it may over-regulate in rare cases thus
+leading to delays or unstable iterations. This is why we always start
+for a few iterations with fixed $E_\mathrm{damp}$.
+
+The overall step size $\delta_\mathrm{damp}$ can be of order 0.5 if an
+appropriate $E_\mathrm{damp}$ is chosen. Slightly lower values help to
+avoid unstable regions at the price of requiring a few more
+iterations. A straightforward gradient step is switched by
+$E_\mathrm{damp}=0$ in which case one should choose
+$\delta_\mathrm{damp}<E_\mathrm{max}^{-1}$ with $E_\mathrm{max}$
+being the maximal representable energy on the grid
+\cite{Rei82a,Blu92}.
+
+
+% ifhamdiag
+A further option to speed up static iterations is to diagonalize the
+matrix $\langle\varphi_\alpha|\hat{h}|\varphi_\beta\rangle$ of the
+mean-field Hamiltonian within the space of given s.p. states. This is
+particularly efficient if $\Omega>N_\mathrm{el}$ (Eq. (\ref{cpc:eq:gen_nbrs})), i.e. the space of
+s.p. states is larger than the actual number of electrons as, e.g., in
+calculations at finite temperature or in RTA. This option is set by
+the input parameter \texttt{ifhamdiag}. It determines the frequency of
+explicit diagonalization steps, i.e., diagonalization of
+$\langle\varphi_\alpha|\hat{h}|\varphi_\beta\rangle)$ is invoked if
+\texttt{MOD(iter,ifhamdiag)=0}. It suffices to use values of order 10.
+Diagonalization has a further control parameter
+\texttt{variance\_gain}$=\eta_{var,max}$. Before running
+diagonalization, it is checked whether the gain factor in the variance
+of s.p. energies came out below $\eta_{var,max}$. If not,
+diagonalization is over-ridden.
+
+
+Important control parameters are \texttt{isaves} and \texttt{tstat}
+They regulate saving and recycling a full static electron
+configuration (all s.p. wave functions together with their occupation
+weights and grid parameters). If \texttt{isaves}$>0$ the state is
+always saved at the end of iteration and additionally every
+\texttt{isaves} times in between. The \texttt{tstat} triggers reading
+of the saved static configurations. This is useful, e.g., to continue
+a static iteration if one wants to improve the solution. It is mostly
+used to start a dynamical run from the static configuration without
+the need to recompute the ground state from scratch.
+For more details on the use of \texttt{tstat}, go to
+\scn{sec:basicDYN}
+%\scn{sec:resuming}. 
+%\MDfoot{pb in label of section}
+
+\paragraph{Observables during and after a static calculation\\}
+\label{sec:statobs}
+
+The final values of the most relevant observables (energy,
+s.p. energies, radius, \ldots)  are always printed on the file
+\texttt{pstat.<name>}. The parameter \texttt{ifspemoms} triggers
+adding more detailed information as, e.g., the spatial moments of each
+s.p. to \texttt{pstat.<name>}. With the parameter \texttt{iftransme} one
+can order computation of all one-particle-one-hole ($1ph$)
+configurations and their dipole transition elements which are printed
+finally on a separate file \texttt{mte\_xyz}. This makes sense only if
+a sufficient amount of unoccupied s.p. states was computed and then it
+helps to get a first overview of the structure of dipole
+excitation. Thus far, the switches determine final output.  One can
+also trigger output of during calculation with the frequency parameter
+\texttt{istinf}. This activates printing of key observables on
+\texttt{infosp.<name>} and more details on
+\texttt{out\_details.<name>}.
+
+The switch \texttt{tplotorbitals} triggers output of the full final
+s.p. wave functions to file \texttt{pOrbitals.<name>}. This is, of
+course, space eating and can be used only for small systems. On the
+other hand, it can be very instructive to visualize the detailed
+wave functions once in a while, particularly when trying to deal with a
+new molecule.
+
+A very special and interesting observable is the electron localization
+function which serves as an indicator of region where one particular
+electron state dominates the local density. It was first proposed in
+\cite{Bec90}, extended to dynamical simulations in \cite{Bur05} and
+also to nuclear TDHF calculations in \cite{Rei11d}. For electrons, the
+localization function is defined as
+\begin{equation}
+\label{eq:local}
+  {\cal C}_{\sigma}(\mathbf{r})
+  =
+  \left[
+  1
+  +
+  \left(
+  \frac{\tau_{\sigma}\varrho_{\sigma}-\frac{1}{4}[\nabla\varrho_{\sigma}]^2-{\bf j}_{\sigma}^2}
+       {\varrho_{\sigma}\tau_{\sigma}^\mathrm{TF}}
+  \right)^2
+  \right]^{-1}
+%\\
+  \;,\;
+  \tau_{\sigma}^\mathrm{TF}
+  =
+  \frac{3}{5}\left(6\pi^2\right)^{2/3}\varrho_{\sigma}^{5/3}
+  \;,
+\end{equation}
+where $\tau_{\sigma}^\mathrm{TF}$ is the Thomas-Fermi approximation to
+the kinetic energy density, $\varrho_\sigma$ the local density of
+spin $\sigma$ electrons as defined in Eq. (\ref{cpc:eq:locdens}),
+$\tau_\sigma$ the corresponding kinetic energy density, and ${\bf
+  j}_{\sigma}$ the current density. Note that the current density
+${\bf j}_{\sigma}$ vanishes in the static case. For further details
+see \cite {Bec90,Bur05,Rei11d}.
+
+
+\subsection{Output files of a static calculation}
+
+During a calculation, output files are generated and stored in the same directory as where the \texttt{qdd} binary is executed. For a ground state calculation, the output files are listed in \tab{tab:static-output-files}. The physical information stored in these output files will be discussed in an example in \scn{sec:stat_examples}.
+
+%\begin{longtable}{|p{3.7cm}|p{11cm}|}
+\begin{table}[htbp]
+  \caption{Output files generated during a static
+    calculation\label{tab:static-output-files}}
+ \begin{tabular}{|p{3.7cm}|p{10.5cm}|}
+%\endfirsthead
+  \hline
+  \texttt{poptions.<name>}& Overview of basic parameters
+  and chosen options on solvers, compiler options, etc.\\
+  \hline
+  \texttt{out\_detail.<name>}& Protocol file that contains
+  similar detailed information as screen output\\
+  \hline
+  \texttt{sconver.<name>} & Contains protocol information on static convergence\\
+  \hline
+  \texttt{sspenergies.<name>} & Contains protocol information on s.p. energies\\
+  \hline
+  \texttt{sspoccup.<name>} & Contains protocol information on s.p. occupation numbers\\
+  \hline
+  \texttt{sspvariances.<name>} & Contains protocol information on s.p. variances\\
+  \hline
+  \texttt{infosp.<name>}& Energy and variances at given iteration steps determined by the variable \texttt{istinfo} in the \texttt{DYNAMIC} namelist\\
+  \hline
+  \texttt{pstat.<name>}& Contains the final information about the s.p. energies, spins, variances, occupation numbers, monopole-, dipole- and quadrupole moments, etc.\\
+  \hline
+  \texttt{RSAVE.<name>} & Saves the full electronic and ionic
+  configuration of a static calculation\\
+  \hline
+\end{tabular}
+\end{table}
+%\end{longtable}
+
+		
+\clearpage
+
+\section{Example of a static calculation}	
+\label{sec:stat_examples}
+
+We present here a simple example, that is the ground state of the
+sodium dimer.  First we will go through the output files and explain
+their content and use. As more elaborate examples, we shows how to
+extract from these calculations ionization potential (IP) and
+HOMO–LUMO gap of Na$_2$. Finally, a series of static calculations can
+also be used to find the most stable ionic structure for dimer
+molecules by manually varying the distance between the ions,
+i.e. mapping the Born-Oppenheimer surface.
+			
+\subsection{Input and output files for Na$_2$}
+
+The input files for the ground state of the sodium dimer can be found in:
+\begin{verbatim}
+$QDD_ROOT/examples/user_manual/ground-state/Na2/ground-state
+\end{verbatim}
+As discussed in \scn{sec:launch}, there are 3 input files, namely
+\texttt{for005}, \texttt{for005.Na2} and \texttt{for005ion.Na2}. One
+can either copy these files to any desired location or run the
+\texttt{qdd} executable directly inside this directory, by
+executing:
+\begin{verbatim}
+$ cd "your working directory"
+$ QDD_ROOT/bin/qdd > terminal.out 2> messages.out
+\end{verbatim}
+		
+		
+\bigskip
+		
+\begin{table}[htbp]
+\caption{\label{tab:output-example}Typical file structure after a
+  static calculation.}
+\begin{Verbatim}[frame=single,label=Example directory listing]
+-rw-rw-r-- 1 mpt218 mpt218      10 Aug 17 21:37 for005
+-rw-rw-r-- 1 mpt218 mpt218     102 Aug 17 21:37 for005ion.Na2-egs
+-rw-rw-r-- 1 mpt218 mpt218     457 Sep 15 08:28 for005.Na2-egs
+-rw-rw-r-- 1 mpt218 mpt218   32985 Sep 15 08:37 out_detail.0.Na2-egs
+-rw-rw-r-- 1 mpt218 mpt218    4590 Sep 15 08:37 infosp.Na2-egs
+-rw-rw-r-- 1 mpt218 mpt218     153 Sep 15 08:37 messages.out
+-rw-rw-r-- 1 mpt218 mpt218    1241 Sep 15 08:36 poptions.Na2-egs
+-rw-rw-r-- 1 mpt218 mpt218    2098 Sep 15 08:37 pstat.Na2-egs
+-rw-rw-r-- 1 mpt218 mpt218 4194848 Sep 15 08:37 RSAVE.Na2-egs
+-rw-rw-r-- 1 mpt218 mpt218    2372 Sep 15 08:37 sconver.Na2-egs
+-rw-rw-r-- 1 mpt218 mpt218     617 Sep 15 08:37 sspenergies.Na2-egs
+-rw-rw-r-- 1 mpt218 mpt218     623 Sep 15 08:37 sspoccup.Na2-egs
+-rw-rw-r-- 1 mpt218 mpt218     762 Sep 15 08:37 sspvariances.Na2-egs
+-rw-rw-r-- 1 mpt218 mpt218   92993 Sep 15 08:37 terminal.out
+\end{Verbatim}
+\end{table}
+This will save the terminal output on the screen to the
+\texttt{terminal.out} file, and any error messages that might be
+generated during the calculation to the \texttt{messages.out}
+file. %Depending on the speed of your machine, after a few minutes, 
+When the calculation is over (after a few minutes),
+you should have a set of  files as listed in table \ref{tab:output-example}.  The
+largest file is \texttt{RSAVE.<name>} that saves the static
+configuration (wave functions, occupations, ionic coordinates, basic
+parameters) provided \texttt{isaves>0} was set.  For further use of
+this file, see \scn{sec:basicDYN}.
+%\scn{sec:resuming}.  
+The files starting by \texttt{s...} and the file
+\texttt{infosp.Na-egs} show evolution of observables along  static
+iterations with a frequency as set by \texttt{istinfo}. These are of
+interest for those wanting to scrutinize numerical
+performance. Observables related to the final solution will be
+discussed in the following three subsections.
+
+\subsection{Observables in the pstat.<name> output file}
+\label{sec:results-pstat}
+
+\begin{table}
+\caption{\label{tab:pstat}An example for a \texttt{pstat.Na2-egs}
+  output file from a static calculation. All energies in units of Ry and
+  all lengths in units of a$_0$.}  
+\begingroup
+\renewcommand{\arraystretch}{0.85}
+\renewcommand{\baselinestretch}{0.85}
+\begin{Verbatim}[frame=single,fontsize=\footnotesize]
+final protocol of static for IFSICP=  2
+level:  1 spin,occup,ekin,esp,variance =  1  1.00000  0.11487 -0.37147  5.0973E-10
+level:  2 spin,occup,ekin,esp,variance =  1  0.00000  0.15073 -0.26170  6.7700E-06
+level:  3 spin,occup,ekin,esp,variance =  1  0.00000  0.14652 -0.21593  1.1029E-05
+level:  4 spin,occup,ekin,esp,variance =  1  0.00000  0.14652 -0.21593  1.1838E-05
+level:  5 spin,occup,ekin,esp,variance = -1  1.00000  0.11487 -0.37147  5.0973E-10
+level:  6 spin,occup,ekin,esp,variance = -1  0.00000  0.15073 -0.26170  6.7700E-06
+level:  7 spin,occup,ekin,esp,variance = -1  0.00000  0.14652 -0.21593  1.1029E-05
+level:  8 spin,occup,ekin,esp,variance = -1  0.00000  0.14652 -0.21593  1.1838E-05
+binding energy =   -0.8091395
+total variance =  5.0973E-10
+sp pot, sp kin, rearr, nonlocal=   -0.97266    0.22973   -0.02291    0.00000
+e_coul: i-i , e-i , e-e , total=    0.35255   -1.76436    0.85760   -0.55422
+mon.:   2.00
+dip.IN :    0.00000    0.00000    0.00000
+dip.OUT :    0.00000    0.00000    0.00000
+quadrupole moments:
+xx,yy,zz:     9.0197     6.2984     6.2984
+xy,zx,zy:    -0.0000    -0.0000     0.0000
+spindip.:     0.0000     0.0000     0.0000
+rms radius:     4.6494, corresponding average density,k_F:  3.67991E-03  0.41278
+protocol of s.p. moments:
+ state energy x y z variance xx yy zz xy xz yz
+   1 -0.371  2.84 -0.00 -0.00  5.45     -0.0   -0.0   -0.0
+   2 -0.262  2.84 -0.00 -0.00  7.24      0.0    0.0    0.0
+   3 -0.216  2.84  0.00 -0.00  7.40      0.0   -0.0   -0.0
+   4 -0.216  2.84 -0.00  0.00  7.40     -0.0    0.0    0.0
+   5 -0.371  2.84 -0.00 -0.00  5.45     -0.0   -0.0   -0.0
+   6 -0.262  2.84 -0.00 -0.00  7.24      0.0    0.0    0.0
+   7 -0.216  2.84  0.00 -0.00  7.40      0.0   -0.0   -0.0
+   8 -0.216  2.84 -0.00  0.00  7.40     -0.0    0.0    0.0
+  average:   2.84  0.00  0.00  6.92
+\end{Verbatim}
+\endgroup
+\vspace*{4pt}
+\begingroup
+\renewcommand{\arraystretch}{0.97}
+\begin{center}
+\begin{tabular}{ll}
+\hline
+\multicolumn{2}{c}{Energetics}
+\\
+\hline
+\texttt{binding energy}: & binding energy of the system
+\\
+\texttt{total variance}: & average variance of s.p. energies
+\\
+\texttt{sp pot}: & sum over all occupied s.p. potential
+energies
+\\
+\texttt{sp kin}: & sum over all occupied s.p. kinetic
+energies
+\\
+\texttt{rearr}: & rearrangement energy
+\\
+\texttt{nonlocal}: & non-local part of the potential energy
+\\
+\texttt{i-i}: & ion-ion Coulomb energy
+\\
+\texttt{e-i}: & electron-ion Coulomb energy
+\\
+\texttt{e-e}: & electron-electron Coulomb energy
+\\
+\texttt{total}: & total Coulomb energy (\texttt{i-i} + \texttt{e-i} +
+                  \texttt{e-e})
+\\
+\hline
+\multicolumn{2}{c}{Electronic s.p. levels} 
+\\
+\hline
+\texttt{spin}: &  spin of the s.p. level
+\\
+\texttt{occup}: & occupation number
+\\
+\texttt{ekin}: & s.p. kinetic energy
+\\
+\texttt{esp}: & s.p. energy
+\\
+\texttt{variance} : & variance on the s.p. energy
+\\
+\hline
+\multicolumn{2}{c}{Multipole moments}
+\\
+\hline
+\texttt{mon}: & monopole moment (should equal $M_\mathrm{el}$)
+\\
+\texttt{dip.in/out}: & dipole moments in $x$, $y$,
+and $z$ directions
+\\
+\texttt{xx,yy,zz}: & quadrupole moments in $xx$, $yy$,
+and $zz$ directions
+\\
+\texttt{xy,zx,zy}: & quadrupole moments in
+$xy$, $zx$, and $zy$ directions
+\\
+\texttt{spindip}: & spin-dipole moments in $x$, $y$,
+and $z$ directions
+\\
+\texttt{rms radius}: & root mean square radius of the electron density
+\\
+\texttt{average density}: & average electron density
+\\
+\texttt{k\_F}: & Fermi momentum
+\\
+\hline
+\end{tabular}
+\end{center}
+\endgroup
+\end{table}
+
+The most relevant observables are located in the \texttt{pstat.<name>}
+file which is shown in the upper part of table
+\ref{tab:pstat}. The lower part of the table explains the
+entries. Most entries are self-explaining. Some of them need a few more
+words. The \texttt{total variance} is the average s.p. variance
+weighted by the occupation numbers, i.e.  
+%
+$\sqrt{\sum_\alpha  w_\alpha\Delta^2\varepsilon_\alpha/N_\mathrm{el}}$ 
+%
+where $\Delta^2\varepsilon_\alpha$ is the squared energy variance of
+s.p. state $\alpha$.  This quantity is an important counter-check of
+convergence of the static iterations. If it turns out to be larger
+than wanted, one can restart another round of static iterations from
+\texttt{RSAVE.<name>} if it was saved.
+
+The entry \texttt{dip.in} protocols the possible external dipole
+field, see entries \texttt{dpolx}, \texttt{dpoly} and \texttt{dpolz} in the namelist {\tt GLOBAL},
+see table \ref{tab:input-params-global-initions}, while \texttt{dip.out} covers
+the dipole moments emerging from the static calculation.  The average
+density and Fermi momentum are deduced from the electronic
+r.m.s. radius as
+%
+$\varrho_\mathrm{average}=3N_\mathrm{el}/(4\pi\sqrt{5/3}r_\mathrm{rms}^3)$
+% 
+and 
+%
+$k_\mathrm{F}=(9\pi/4)^{1/3}/r_\mathrm{rms}$.
+%
+These quantities are motivated from taking the electron cloud as an
+homogeneous sphere \cite{Mar10aB} and are useful to determine the
+electron-electron cross section for the RTA part.
+
+The file \texttt{pstat.<name>} is cumulative. This means if static
+calculations are sequentially launched in the same directory with the
+same qualifier \texttt{<name>}, the outputs are appended to
+\texttt{pstat.<name>}.
+			
+\subsection{Ionization potential (IP)} 
+
+There are two ways to read off the IP. The first, and simpler, method
+is to take it from \texttt{pstat.<name>}. The IP is the (negative)
+s.p. energy of the least bound occupied level known as the Highest
+Occupied Molecular Orbital (HOMO). These are here degenerated, namely
+levels 1 and 5 yielding an IP of 0.37 Ry. However, one has to be
+cautious with that simple approach.  The HOMO energy suffers from the
+self-interaction error when working with mere LDA (\texttt{ifsicp=0}).
+The strategy is applicable only in combination with a SIC.  In the
+\texttt{pstat} discussed above, the first line indicates
+\texttt{ifsicp=2}, corresponding to ADSIC, (see
+\tab{tab:input-params-global-initwf}). This means that the (absolute
+value of the) HOMO energy can be assumed to be close to the IP.
+
+The alternative is to compute the IP as it is defined, namely as the
+energy difference between the binding energy (BE) of the given molecule and the one of the once ionized
+molecule without changing the ionic configuration (often coined
+vertical ionization). We have already the binding energy of Na$_2$
+from the static calculation. We need now to compute also the ground
+state of Na$_2^+$.  There is an example calculation for the ground
+state of Na$^+_2$ in the directory
+\texttt{\$QDD\_ROOT/examples/Na2p/ground-state}. It
+uses exactly the same input file as that for Na$_2$, but with one less
+electron (\texttt{nelect=1}). Once completed, the IP of Na$_2$ is
+given as:
+\begin{equation*}
+\mathrm{IP(Na_2)} = \mathrm{BE(Na_2)} - \mathrm{BE(Na^+_2)} 
+= [-0.81~\mathrm{Ry}] - [-0.44~\mathrm{Ry}] 
+= 0.37~\mathrm{Ry} \quad.
+\end{equation*}
+This value is identical to the one of  the IP obtained from the HOMO energy
+above which can be taken as a practical illustration that Koopman's
+theorem is often well fulfilled for ADSIC \cite{Klu13}. Koopman's
+theorem is violated by LDA. But the direct evaluation of the IP from
+difference of binding energies still delivers a pertinent result.
+
+			
+\subsection{HOMO–LUMO gap} 
+
+This quantity is defined as the difference between the energy of the
+Lowest Unoccupied Molecular Orbital (LUMO) and the HOMO.  In the
+example here this is the difference between levels 2 and 1, or 6 and 5
+respectively.  To get the energy value of the LUMO, one needs to
+calculate more electronic states than there are valence electrons (see
+\texttt{nelect} parameter in \tab{tab:input-params-sys-choice}).  This
+can be controlled by the parameter \texttt{deocc} (see
+\tab{tab:input-params-global-initwf}) together with taking care that
+the initial deformation (parameters \texttt{b2occ} and
+\texttt{gamocc}, see \tab{tab:input-params-global-initwf}) is somehow
+close to the distribution of the ionic background.  The fine tuning of
+these parameters calls for some experience. We give the following
+strategy as a rough guide:
+\begin{enumerate}
+\item\label{it:setkstate} Set \texttt{kstate} to a value that is at
+  least double the number of electrons.
+\item Increase \texttt{deocc} until the static calculation uses 
+about twice as much states as occupied ones. 
+\item It may happen that the calculation fails to start and exits with
+  the message: \texttt{deocc or part.number too large for given
+    ksttot}. In that case, enhance  \texttt{kstate} and
+continue with step \ref{it:setkstate}.
+\end{enumerate}
+In the present case, the HOMO-LUMO gap  of Na$_2$ reads:
+\begin{equation*}
+\mathrm{gap(Na_2)} = \mathrm{LUMO(Na_2)} - \mathrm{HOMO(Na_2)} 
+= [-0.26170~\mathrm{Ry}] - [-0.37147~\mathrm{Ry}] 
+= 0.10977~\mathrm{Ry} \quad.
+\end{equation*}
+			
+\subsection{Finding the ionic ground state of Na$_\mathsf{2}$}
+\label{sec:Na2}
+
+In the previous example, the electronic density is relaxed around a
+frozen ionic configuration of Na$_2$. This is not necessarily the
+ionic ground state configuration which is defined as the configuration
+with the absolute minimum of total energy. Asserting that one has
+definitively found the absolute minimum is in general impossible,
+except for few overseeable cases. There are several strategies to find
+a minimum in the ionic landscape \cite{Pre92}. Some of them can also
+be pursued with the QDD code (see parameter \texttt{icooltyp} in
+\scn{sec:dyn_examples}).  The Na$_2$ dimer belongs to the overseeable
+cases and here we have the chance to find the minimum in illustrative
+manner.  We merely have to perform a series of calculations with
+varied distance between the ions, and draw the emerging binding
+energies (BE) as function of distance. One can find the input file to
+such a series in the directory
+\texttt{\$QDD\_ROOT/examples/Na2/ionic-BO-surfaces/},
+sorted in subdirectories called \texttt{gs$\pm$<value>}.
+
+Figure~\ref{fig:pes} shows the result, which is often called the
+potential energy surface or Born-Oppenheimer surface (even if here,
+this is rather a curve than a surface).  
+\begin{figure}[bh]
+  \centering
+  \includegraphics[width=0.6\linewidth]{na2_pes.pdf}
+  \caption{Potential energy surface of Na$_2$, i.e. binding energy as
+    a function of the Na-Na distance. The solid curve is a fit with
+    the Morse function $f(x)=a\left\{1-
+    \exp\left[-b(x-c)\right]\right\}^2+d$.}
+  \label{fig:pes}
+\end{figure}
+Close to the equilibrium
+ionic configuration (i.e. the minimum), the plot of binding energy
+versus ionic distance comes close to a parabola from which we may
+deduce also the molecular vibration frequency.
+			
+
+
+\clearpage
+
+\section{Basic I/O structure of dynamic calculations}
+\label{sec:dyn_basics}
+
+A dynamical simulation, of course, requires that the basic parameters
+for system and gridding (namelists \texttt{GLOBAL} and \texttt{PERIO})
+are set and that a reasonable starting point is defined from a static
+calculation.  All parameters specific for running a dynamic simulation
+are then contained in namelist \texttt{DYNAMIC} in file
+\texttt{for005.<name>}. This namelist is long. We present it in
+smaller chunks collected according to topic. Table
+\ref{tab:dyn-input-params-general} describes parameters for dynamical
+propagation, tables \ref{tab:dyn-input-params-instantaneous} and
+\ref{tab:dyn-input-params-excitation} describe the choice of
+excitation mechanism, and tables
+\ref{tab:dyn-input-params-observables} with
+\ref{tab:dyn-input-params-observables2} indicate how to activate the
+various observables.
+
+Mind, as said above, that a dynamical calculation should start from a
+(converged) stable static configuration.  This can be achieved in two
+ways: One strategy is to perform the static solution up to
+convergence, save the configuration by setting \texttt{isaves>0}, and
+starting dynamics from this static configuration by setting
+\texttt{tstat=.TRUE.}, for details see \scn{sec:basicDYN}.
+%\scn{sec:resuming}. 
+The other
+strategy is to combine static and dynamic calculations in one run
+simply be setting a sufficient number of static iterations
+\texttt{ismax} together with the desired number of dynamics steps
+\texttt{itmax}. The code will automatically run through.  Finally,
+there is a third option to continue a dynamical calculation by
+restarting from a previously saved dynamical configuration, see
+parameter \texttt{irest} and  \scn{sec:basicDYN}. %\scn{sec:resuming}.
+
+This section is concerned with input parameters and output files.
+Examples are presented in \scn{sec:dyn_examples}. One can find there
+typical values for some of the parameters used in the calculation of 
+dynamics.
+			
+
+\subsection{Basic input parameters in the \texttt{DYNAMIC} namelist}
+\label{sec:basicDYN}
+
+%			\begin{table}[htbp]
+%\begin{longtable}{|p{3.5cm}|p{11.2cm}|}
+\begin{table}
+\caption{Basic dynamical parameters in the \texttt{DYNAMIC} namelist in \texttt{for005.<name>}}\label{tab:dyn-input-params-general}
+\begin{tabular}{|p{2.3cm}|p{1cm}|p{0.8cm}|p{9.3cm}|}
+%\endfirsthead
+%				\begin{tabular}{|p{3.5cm}|p{11.2cm}|}
+\hline
+\multicolumn{4}{|c|}{Basic dynamic settings in  namelist\texttt{DYNAMIC}}\\
+\hline
+\multicolumn{4}{|c|}{\textit{\color{activeColor}Storing/retrieving full states of the system}} \\
+\hline
+\texttt{tstat}&&\tgreen{F}& Switch to read static wave functions from \texttt{RSAVE.<name>} \\
+\hline
+\texttt{irest}&&\tgreen{0}& Switch to restart dynamics  from \texttt{SAVE.<name>} \\
+\hline
+\texttt{isaved}&&\tgreen{0}& Frequency of saving actual state to \texttt{SAVE.<name>} \\
+\hline
+\multicolumn{4}{|c|}{\textit{\color{activeColor}Electronic stepping, see \scn{cpc:sec:numdynel}}} \\
+\hline
+\texttt{dt1}& $\delta t$ [1/Ry]&\tgreen{$\emptyset$}& Time step for propagating electronic wave
+functions
+ (1 $\hbar$/Ry $=$ 0.0484 fs) \\
+\hline
+\texttt{itmax}&&\tgreen{1000}& Number of time steps for electronic propagation  \\
+\hline
+\texttt{ifexpevol} &&\tgreen{F}& Exponential evolution instead of TV splitting \\
+\hline
+\multicolumn{4}{|c|}{\textit{\color{activeColor}Ionic stepping, see \scn{cpc:sec:numdynion}}} \\
+\hline
+\texttt{ionmdtyp}&&\tgreen{0}& Ionic propagation scheme\\
+  &&& 0 $\rightarrow$ no ionic propagation \\
+  &&& 1 $\rightarrow$ leap-frog\\
+  &&& 2 $\rightarrow$ velocity Verlet\\
+\hline
+\texttt{modionstep}&$\delta t_I/\delta t$&\tgreen{1}& Number of electronic steps per ionic step  \\
+\hline
+\texttt{icooltyp}&&\tgreen{0}& Type of ionic cooling \\
+  &&& 0 $\rightarrow$ none  \\
+  &&& 1 $\rightarrow$ pseudo-dynamics\\
+  &&& 2 $\rightarrow$ steepest descent\\
+  &&& 3 $\rightarrow$ Monte Carlo\\
+\hline
+\texttt{ifredmas}&&\tgreen{F}& Switch to use reduced mass for ions in dynamics (pseudo-dynamics \\
+\hline
+\texttt{tfixcmion} &&\tgreen{F}& Fix ionic c.m. during ionic motion  \\
+\hline
+\texttt{tfreezekspot} &&\tgreen{F}& Switch to freeze the initial KS potential
+during all dynamics \\
+\hline
+\hline
+\multicolumn{4}{|c|}{\textit{\color{activeColor}Absorbing boundary conditions, see \scn{cpc:sec:abso}}} \\
+\hline
+\texttt{ispherabso}&&\tgreen{1}& Choice of shape of mask function in absorbing bounds\\
+  &&& 0 $\rightarrow$ 3D box\\
+  &&& 1 $\rightarrow$ spherical  \\
+  &&& 2 $\rightarrow$ ellipsoidal\\
+\hline
+\texttt{nabsorb}&$N_\mathcal{M}$&\tgreen{0}& Number of grid points in the absorbing zone at
+boundary  \\
+  &&& 0 $\rightarrow$ switches off the absorbing boundary conditions\\
+\hline
+\texttt{powabso}&$\gamma_\mathcal{M}$&\tgreen{1/16}& Power  in the mask function in the case of absorbing boundary conditions \\
+  \hline
+  \texttt{iangabso} &&\tgreen{0}& Choice of origin for initialization of absorbing bounds \\ 
+   &&& 0 $\rightarrow$ center of numerical box \\
+   &&& 1 $\rightarrow$ electronic center of mass\\
+   &&& 2 $\rightarrow$ ionic center of mass\\
+\hline
+\multicolumn{4}{|c|}{\textit{\color{activeColor}Activating RTA}} \\
+  \hline
+  \texttt{jrtaint} &$\Delta t/\delta t$&\tgreen{0}&  Frequency for calling RTA, see 
+section \ref{cpc:sec:RTA} \\
+\hline
+\end{tabular}
+\end{table}
+%\end{longtable}
+%
+Table~\ref{tab:dyn-input-params-general} lists basic settings for the
+computation of a dynamics. First come the parameters for
+start/restart. The parameter \texttt{tstat} is already known from the
+description of static calculations, see \scn{sec:stat_basics}. It is
+also relevant for the initialization of a dynamic run as setting
+\texttt{tstat=.TRUE.} together with \texttt{ismax=0} allows one to
+start directly from a previously saved static configuration.  A
+setting of the parameter \texttt{irest>0} continues a dynamical
+simulation from a configuration previously saved on
+\texttt{SAVE.<name>}. Note that the time index starts on the latest
+value before saving which means that \texttt{itmax} has to be larger
+than the time step saved in order to render continuation active. Note
+also that computations performed during the former run {\em after} the
+last save are thus when restarting. It is thus advantageous to choose,
+whenever possible, a value of maximum time \texttt{itmax} as a integer
+multiple of \texttt{isaved} to avoid such loss.  Crucial for reading
+static or dynamic configurations is that these had been saved before
+which is achieved with setting \texttt{isaved>0} (or \texttt{isaves>0}
+in static runs). That parameter should not be too small because
+writing on a full configuration on disk is time consuming. Ideally,
+saving at the end of a computation is the best. However, occasional
+intermediate saving is recommended in situation where one is not sure
+how a simulation performs on long term. 
+
+At this point, it may be useful to summarize briefly the save and
+restart strategies. Static configurations are saved on
+\texttt{RSAVE.<name>} during static calculations if \texttt{isaves>0}
+is specified. The saved static configurations are read by invoking
+\texttt{tstat=T} in the static input. This holds also if one wants to
+use this configuration as basis for a dynamical calculation. In that
+case, one has to override further static steps by setting
+\texttt{ismax=0}. Dynamic configurations are saved on
+\texttt{SAVE.<name>} if \texttt{isaved>0} is specified. To restart a
+dynamical calculation directly from the saved dynamical configuration,
+set \texttt{irest>0}. In all cases, it is important to use the same
+qualifier \texttt{*.<name>} as in the previous run where the
+configuration has been saved.
+
+
+The input parameters concerning electronic propagation are obvious from
+\scn{cpc:sec:numdynel}. Some more explanations are needed here for
+ionic propagation. Leap-frog and velocity Verlet stepping are
+explained in \scn{cpc:sec:numdynion}. The (possibly larger) ionic time
+step $\delta t_I$ is regulated by \texttt{modionstep} which, however,
+is applicable only for the velocity Verlet scheme.  A subtle option is
+\texttt{ifredmas}. It sets each ionic mass to a much smaller value,
+namely half the proton mass. This produces much smaller ionic
+propagation at the price of destroying the relation between ionic and
+electronic motion. It makes sense for ionic motion where the electron
+cloud stays close to its ground state (adiabatic motion). And it is
+particularly designed for pseudo-dynamics on the way to the ionic
+ground state configuration. This points to option \texttt{icooltyp}
+which activates ionic cooling rather than ion-electron dynamics, see
+\scn{cpc:sec:numstaticion}. The most educated scheme is simulated
+annealing (Monte Carlo) which, however, requires a lot of experience,
+see the header of \texttt{carlo.F90} for a summary of the parameters
+of the method and a proposed setting. For the typical practical task
+of fine-tuning a configuration given from elsewhere, the recommended
+method is pseudo-dynamics, \texttt{icooltyp=1}.
+
+Ionic propagation allows still more advanced options.  The
+\texttt{tfixcmion} activates restoration of ionic center-of-mass after
+each ionic step such that the molecule stays always centered at the
+origin of the box. The point is that external fields have also an
+impact on ionic motion and can move also the ionic center of mass.
+Fixing the ionic center can be convenient to keep the process
+localized. But one has to keep in mind that one changes the dynamics
+of the system, more precisely that one changes the frame of reference.
+%
+The parameter \texttt{tfreezekspot} turns off the update of the KS
+potential in a dynamical calculation.  
+The dynamics then runs in a mean field frozen in the ground-state
+configuration after static iterations.
+This switch offers a tool for
+theoretical investigations. It is useful to study the impact of
+the KS self-consistent
+ interaction beyond the ground state by comparing
+a full dynamical run from \texttt{tfreezekspot=.FALSE.}
+with a motion in the frozen case  \texttt{tfreezekspot=.TRUE.}.
+The latter delivers the properties of pure one-particle-one-hole
+excitations in case of small amplitudes.
+%
+
+The next block in \tab{tab:dyn-input-params-general} defines the
+absorbing boundary conditions. Although this defines grid properties,
+we place it in namelist \texttt{DYNAMIC} because it is used only in a
+dynamical context.  The switch \texttt{ispherabso=.TRUE} activates
+spherical absorbing zones as indicated in figures \ref{cpc:fig:mask},
+else the rectangular bounds are employed.  The meaning of
+\texttt{nabsorb} and \texttt{powabso} is clear from eqs.
+\eqref{cpc:eq:mask} and \eqref{cpc:eq:abspoints}.  The
+\texttt{iangabso} is relevant in case of spherical absorbing
+bounds. It defines the position of the center of the absorbing sphere.
+
+Finally, the parameter \texttt{jrtaint} regulates the steps size for
+RTA.  The case \texttt{jrtaint=0} overrides RTA at all and larger
+values activate it.  We remind that there are two time steps: one coarse
+grained $\Delta t$ for evaluation of relaxation in RTA, and one fine
+grained for TDLDA $\delta t=$\texttt{dt1}. They are related as $\Delta
+t=$\texttt{jrtaint}$*$\texttt{dt1}. Typical values for
+\texttt{jrtaint} are such that the order of magnitude of $\Delta t$ is
+about $\sim 10$ Ry$^{-1}$. E.g. for water, we typically use \texttt{dt1=0.0125},
+\texttt{jrtaint=1000} such that $\Delta t=12.5$ Ry$^{-1}$.
+
+
+
+\subsection{Input parameters for initial excitation in namelist \texttt{DYNAMIC}}
+
+True dynamics requires excitation and the code supplies a lot of
+different choices for that, see \scn{cpc:sec:examples} of the reference paper. Thus we split
+the presentation into the two different types: instantaneous
+excitations as, e.g., initial boost or excitation by external fields
+over a certain time span. For all types excitation holds in
+  general that the default is set to ``no excitation''. Any wanted
+  excitation has to be asked for explicitly and one should take care not to invoke
+  possibly interfering excitations simultaneously.
+
+%\begin{longtable}{|p{2.5cm}|p{1cm}|p{11.2cm}|}
+\begin{table}
+\caption{Parameters for instantaneous initial excitations in a
+  dynamical calculation, in the  \texttt{DYNAMIC} namelist of
+  \texttt{for005.<name>} 
+\label{tab:dyn-input-params-instantaneous}}
+%\endfirsthead
+\begin{tabular}{|p{1.8cm}|p{1.8cm}|p{0.5cm}|p{9.2cm}|}
+%				\begin{tabular}{|p{3.5cm}|p{11.2cm}|}
+\hline
+\multicolumn{4}{|c|}{\texttt{DYNAMIC} namelist}\\
+\hline
+\multicolumn{4}{|c|}{\textit{\color{activeColor}Parameters of
+    instantaneous electron excitation}} \\
+\hline
+\texttt{centfx}&$p_{0,x}$ [a$_0^{-1}$]&\tgreen{0.0}& Electronic boost in $x$ direction \\
+\texttt{centfy}&$p_{0,y}$ [a$_0^{-1}$]&\tgreen{0.0}& Electronic boost in $y$ direction \\
+\texttt{centfz}&$p_{0,z}$ [a$_0^{-1}$]&\tgreen{0.0}& Electronic boost in $z$ direction \\
+\hline
+\texttt{shiftinix} &$s_{0,x}$ [a$_0$]&\tgreen{0.0}&  Initial electronic shift in $x$ direction \\
+\texttt{shiftiniy} &$s_{0,y}$ [a$_0$]&\tgreen{0.0}&  Initial electronic shift in $y$ direction  \\
+\texttt{shiftiniz} &$s_{0,z}$ [a$_0$]&\tgreen{0.0}&  Initial electronic shift in $z$ direction  \\
+\hline
+\texttt{tspindip}&&\tgreen{F}& Optional different boosts in each spin subspace \\
+  &&& F $\rightarrow$ dipole boost, same for spins up and down \\
+  &&& T $\rightarrow$ spin-up and -down boosted in opposite directions\\
+\hline
+\texttt{phirot} &$\phi_\mathrm{initrot}$&\tgreen{0.0}& Angle of initial rotation of ionic background, in degrees (only with \texttt{irotat>0})\\
+\hline
+\texttt{irotat} &&\tgreen{0}& Axis of rotation for scissor mode excitation\\
+ &&& 0 $\rightarrow$ no rotational initialization \\
+ &&& 1 $\rightarrow$ $x$ axis\\
+ &&& 2 $\rightarrow$ $y$ axis\\
+ &&& 3 $\rightarrow$ $z$ axis\\
+ &&& 4 $\rightarrow$ diagonal of the numerical box\\
+\hline
+\multicolumn{4}{|c|}{\textit{\color{activeColor}Parameters of instantaneous ion excitation}} \\
+\hline
+\texttt{tempion}&$T_\mathrm{ion,init}$ [K]&\tgreen{0.0}
+ & temperature to produce an initial thermal distribution of ionic velocities (only with \texttt{ionmdtyp=1}) \\
+\hline
+\end{tabular}
+\end{table}
+Table~\ref{tab:dyn-input-params-instantaneous} summarizes the
+parameters for all instantaneous excitation mechanisms in the code.
+The most used instantaneous electronic excitation is the initial boost
+Eq. (\ref{cpc:eq:boost}) with the input parameters
+\texttt{centfx,centfy,centfz}. There is also the option of an initial
+shift
+\begin{equation}
+  \varphi_\alpha(\mathbf{r},t\!=\!0)
+  =
+ \varphi_{\alpha,\mathrm{g.s.}}(\mathbf{r}-\mathbf{s}_0)
+\end{equation}
+of the whole electron cloud. Both can serve to excite the dipole mode
+of a molecule, as an idealization of an ultra-fast excitation delivered
+by a by-passing highly charged projectile or a very short laser pulse
+(see \cite{Cal97b} for a discussion of the different effects of shift
+versus boost).  Setting the switch \texttt{tspindip=.TRUE.} replaces
+mere dipole boost by excitation of a spin-dipole boost
+\begin{equation}
+    \varphi_\alpha(\mathbf{r},t\!=\!0)
+  =
+  e^{\mathrm{i}\sigma_\alpha\mathbf{p}_0\cdot\mathbf{r}}
+  \varphi_{\alpha,\mathrm{g.s.}}(\mathbf{r})
+\label{eq:spindipboost}
+\end{equation}
+where $\sigma_\alpha$ is the spin associated with state $\alpha$.
+
+A non-zero angle \texttt{phirot} generates an instantaneous rotational excitation.
+It does that by rotating the ionic background 
+\begin{equation}
+  \mathbf{R}_I
+  \longrightarrow
+  \hat{D}(\mathbf{\phi_\mathrm{inirot}})\mathbf{R}_I
+\label{eq:rotboost}
+\end{equation}
+where $\hat{D}(\mathbf{\phi_\mathrm{initrot}})$ is the 3$\times$3
+matrix of a rotation by the angle
+$\phi_\mathrm{initrot}=|\mathbf{\phi_\mathrm{initrot}}|$ about the
+axis defined by the direction of $\mathbf{\phi_\mathrm{initrot}}$.
+Actually, we supply four different choices for the axis of rotation
+with the parameter \texttt{irotat}, see
+\tab{tab:dyn-input-params-instantaneous}.  The same rotational
+transformation can also be used in connection with a jellium
+background. This excitation is useful in connection with studying the
+scissors mode, the dominating orbital magnetic mode, having angular
+momentum $J=1^-$. Although this rotational excitation acts on the
+ions, it excites eventually an electronic mode because electrons are
+not rotated together with ions.
+Note that instantaneous initial rotation is not compatible with
+initial boost or shift. The code stops if one tries to activate both
+mechanisms simultaneously.
+
+The parameter \texttt{tempion} gives the ionic configuration an
+initial temperature $T_\mathrm{ion,init}$. This is achieved by
+producing in Monte-Carlo fashion a thermal Boltzmann distribution of ionic
+velocities. 
+
+%\clearpage
+
+\begin{table}[ptbh]
+\caption{Parameters for initial excitation by external fields in a
+  dynamical calculation, in the  \texttt{DYNAMIC} namelist of
+  \texttt{for005.<name>}. 
+\label{tab:dyn-input-params-excitation}}
+%\endfirsthead
+\begin{tabular}{|p{2.2cm}|p{2.35cm}|p{0.7cm}|p{8.1cm}|}
+\hline
+\multicolumn{4}{|c|}{\textit{\color{activeColor}Laser parameters, 
+see \scn{cpc:sec:laser} and Eq. \ref{eq:pulse2}}}\\
+\hline
+\texttt{itft}&&\tgreen{3}& Choice of shape of laser pulse envelop \\
+  &&&   1 $\rightarrow$ ramp \\ %, sine switching on/off\\
+  &&&   2 $\rightarrow$  Gaussian\\
+  &&&   3 $\rightarrow \sin^2$, see Eq. (\ref{eq:pulse2}) \\
+  &&&   4 $\rightarrow \sin^4$ \\
+\hline
+\texttt{tnode}&$t_0$ [fs]&\tgreen{0.0}& Time at which pulse
+computation starts,
+relevant for \texttt{itft}=1,3, and 4  \\
+\hline
+\texttt{deltat}&$T_\mathrm{pulse}$ [fs]&\tgreen{0.0}& Pulse duration\\
+\hline
+\texttt{tpeak}&$T_\mathrm{peak}$ [fs]&\tgreen{0.0}& Time relative
+to \texttt{tnode} at which peak is reached,  only for \texttt{itft=1} and \texttt{2}  \\ 
+\hline
+\texttt{omega}&$\omega_\mathrm{las}$ [Ry]&\tgreen{0.0}& Photon frequency \\
+\hline
+\texttt{e0}&$|\mathbf{E}_0|$ [Ry/a$_0$]&\tgreen{0.0}& Photon field strength in Ry/$a_0$ \\
+  \hline
+\texttt{e1x,e1y,e1z}&$E_{0,i}/|\mathbf{E}_0|$&\tgreen{1,0,0}& Cartesian components of photon polarization  \\
+\hline
+\texttt{phi} &$\phi_\mathrm{las}$ [$^\circ$] &\tgreen{0.0}& Phase of laser pulse relative to
+peak of envelope  \\
+\hline
+\texttt{tstart2}&$t_0^{(2)}$ [fs]&\tgreen{0.0}& Initial time of 2nd pulse \\
+\hline
+\texttt{omega2}&$\omega_\mathrm{las}^{(2)}$ [Ry]&\tgreen{0.0}& Photon frequency of 2nd pulse \\
+\hline
+\texttt{deltat2} &$T_\mathrm{pulse}^{(2)}$ [fs]&\tgreen{0.0}& Pulse duration of 2nd pulse \\
+\hline
+\texttt{e0\_2}&$|\mathbf{E}_{0}^{(2)}|$[Ry/a$_0$]&\tgreen{0.0}& Field strength
+of 2nd laser pulse (only with \texttt{itft=3}, same pulse envelope for 2nd pulse)  \\
+\hline
+\texttt{e2x,e2y,e2z}&$E_{0,i}^{(2)}/|\mathbf{E}_0^{(2)}|$&\tgreen{0,0,0}& Cartesian components of photon polarization of 2nd pulse  \\
+\hline
+\texttt{phase2}&$\phi_\mathrm{las}^{(2)}$ [$^\circ$]&\tgreen{0.0}& Phase of 2nd pulse  \\
+\hline
+\multicolumn{4}{|c|}{\textit{\color{activeColor}Excitation by a by-passing
+    ion, see Eq. (\ref{cpc:eq:ionext})}}\\
+\hline
+\texttt{projcharge} &$Z_\mathrm{ext}$&\tgreen{0.0}& Charge of a point-charge (classical) projectile \\
+\hline
+\texttt{projvelx} &$\dot{R}_{\mathrm{ext},x}(0)$[a$_0$/fs]&\tgreen{0.0}& Initial $x$-velocity
+of projectile \\
+\texttt{projvely} &$\dot{R}_{\mathrm{ext},y}(0)$[a$_0$/fs]&\tgreen{0.0}& Initial
+$y$-velocity of projectile \\
+\texttt{projvelz}
+&$\dot{R}_{\mathrm{ext},z}(0)$[a$_0$/fs]&\tgreen{0.0}& Initial
+$z$-velocity of projectile\\
+\hline
+\texttt{projinix} &$R_{\mathrm{ext},x}(0)$[a$_0$]&\tgreen{0.0}& Initial $x$-position of projectile, in $a_0$ \\
+\texttt{projiniy} &$R_{\mathrm{ext},y}(0)$[a$_0$]&\tgreen{0.0}& Initial $y$-position of projectile, in $a_0$ \\
+\texttt{projiniz} &$R_{\mathrm{ext},z}(0)$[a$_0$]&\tgreen{0.0}& Initial $z$-position of projectile, in $a_0$ \\
+\hline
+\end{tabular}
+\end{table}
+%\end{longtable}
+
+Table~\ref{tab:dyn-input-params-excitation} presents the parameters for
+excitation by external electric pulses, either from laser or from a
+highly charge by-passing ion.  The main switch for photon pulses is the
+field strength $\mathbf{E}_0$. Any value $|\mathbf{E}_0|>0$ activates
+this excitation mechanism. The next important parameter is then
+\texttt{itft} which defines the laser pulse profile.  Most used
+standard is \texttt{itft=3}, the sin$^2$ pulse given in
+\scn{cpc:sec:laser}. It reads in detail:
+\begin{subequations}
+\label{eq:pulse2}
+\begin{equation}
+  V_\mathrm{ext}(\mathbf{r},t;
+  \omega_\mathrm{las},\mathcal{\mathbf{E}}_0,T_\mathrm{pulse},\phi_{\rm las},t_0)
+  =
+  e\,{\cal\bf E}_0\, f(t)\!\cdot\!\mathbf{r}
+%  \cos{\left(-\mathrm{i}(\omega_\mathrm{las}\tilde{t}
+%   -\phi_\mathrm{las})\right)}
+\ \cos\left(\omega_\mathrm{las}(t-t_0-{\textstyle{\frac{1}{2}}}T_\mathrm{pulse})
+   -\phi_\mathrm{las}\right)
+\label{eq:laserr}
+\end{equation}
+\begin{eqnarray}
+  f(t)
+  &=&
+  \left\{\begin{array}{ll}
+    \sin^2{\left(\displaystyle \pi\frac{t-t_0}{T_\mathrm{pulse}}\right)}
+        &\mbox{for}\quad t-t_0\in[0,2T_\mathrm{pulse}]  \\
+    0  &\mbox{else}
+  \end{array}\right.
+  \label{eq:laserenv}
+%\\
+%  \tilde{t}
+%  &=&
+%  t-t_0-T_\mathrm{pulse}/2
+  \quad.
+\label{eq:sinpulse}
+\end{eqnarray}
+\end{subequations}
+This case allows also to be combined with a
+second pulse of same profile with an offset shifted by a time
+$t_0^{(2)}$ which altogether leads to 
+\begin{equation}
+\begin{split}
+  V_\mathrm{ext}^\mathrm{(double)}(\mathbf{r},t)
+  =  &V_\mathrm{ext}(\mathbf{r},t;
+  \omega_\mathrm{las},\mathcal{\mathbf{E}}_0,T_\mathrm{pulse},\phi_{\rm las},t_0)
+  \\
+  +&
+  V_\mathrm{ext}(\mathbf{r},t;
+  \omega_\mathrm{las}^{(2)},\mathcal{\mathbf{E}}_0^{(2)},
+  T_\mathrm{pulse}^{(2)},\phi_{\rm las}^{(2)},t_0^{(2)})
+  \end{split}
+\label{eq:doublepulse}
+\end{equation}
+This double pulse can be used, e.g., to simulate pump-and-probe
+experiments, see e.g. \cite{And04a}.
+
+The choice \texttt{itft=4} goes for a sin$^4$ envelope and is
+else-wise the same as the sin$^2$ pulse \texttt{itft=4}, however
+working only for a single pulse (i.e. $\mathcal{\mathbf{E}}_0^{(2)}$, etc.,
+are ineffective).
+
+The choice \texttt{itft=1} produces a ramp pulse 
+%\begin{equation}
+%  V_\mathrm{ext}(\mathbf{r},t)
+%  =
+%  \mathcal{\mathbf{E}}_0\cdot\mathbf{r}
+%  \cos{\left(\omega_\mathrm{las}\tilde{t}\right)}
+%  \left\{\begin{array}{lcl}
+%    \sin\left(\frac{\pi}{2}\,\frac{t-t_0}{T_\mathrm{peak}}\right)
+%    &\mbox{for}&
+%    0\leq t\!-\!t_0 < T_\mathrm{peak}
+%  \\
+%    1
+%    &\mbox{for}&
+%    T_\mathrm{peak}\leq t\!-\!t_0 \leq T_\mathrm{pulse}-T_\mathrm{peak}
+%  \\
+%    \sin\left(\frac{\pi}{2}\,\frac{T_\mathrm{pulse}-t+t_0}{T_\mathrm{peak}}\right)
+%    &\mbox{for}&
+%    T_\mathrm{pulse}-T_\mathrm{peak}\leq t\!-\!t_0 < T_\mathrm{pulse}
+%  \\
+%    0
+%    &\mbox{for}&
+%    t<t_0 \;\mbox{for}\; T_\mathrm{pulse}+t_0< t
+%  \end{array}
+%  \right.
+%\end{equation}
+%\begin{subequations}
+\begin{equation}
+\begin{split}
+  V_\mathrm{ext}(\mathbf{r},t)
+  &=
+  \mathcal{\mathbf{E}}_0\cdot\mathbf{r}
+  \cos{\big(\omega_\mathrm{las}(t-t_\mathrm{center}-\phi_\mathrm{las})\big)}
+  f_\mathrm{ramp}(t-t_0)
+  \quad,
+\\
+  t_\mathrm{center}
+  &=
+  t_0+\frac{T_\mathrm{pulse}}{2}+t_\mathrm{peak}
+  \quad,
+\\
+  f_\mathrm{ramp}(\tilde{t})
+  &=
+  \left\{\begin{array}{lcl}\displaystyle
+    \sin\left(\frac{\pi}{2}\,\frac{\tilde{t}}{T_\mathrm{peak}}\right)
+    &\mbox{for}&
+    0\leq \tilde{t} < T_\mathrm{peak}
+  \\
+    1
+    &\mbox{for}&
+    T_\mathrm{peak}\leq \tilde{t}\leq T_\mathrm{pulse}-T_\mathrm{peak}
+  \\
+    \displaystyle
+    \sin\left(\frac{\pi}{2}\,\frac{T_\mathrm{pulse}-\tilde{t}}{T_\mathrm{peak}}\right)
+    &\mbox{for}&
+    T_\mathrm{pulse}-T_\mathrm{peak}\leq \tilde{t} < T_\mathrm{pulse}
+  \\
+    0
+    &\mbox{for}&
+    \tilde{t}<0 \mbox{  or  } T_\mathrm{pulse}< \tilde{t}
+  \end{array}
+  \right.
+  \quad.
+\end{split}
+\label{eq:itft=1}
+\end{equation}
+%\end{subequations}
+with soft switching at beginning and end, thus reducing unwanted long
+tails in the frequency distribution of the pulse. The
+$t_\mathrm{center}$ is the time in the middle of the ramp pulse.
+It enters the fast oscillations to define the phase
+$\phi_\mathrm{las}$ relative to the center of the pulse as in all
+other pulses too.
+
+
+
+The choice \texttt{itft=2} produces a Gaussian pulse
+\begin{equation}
+  V_\mathrm{ext}(\mathbf{r},t)
+  =
+  \mathcal{\mathbf{E}}_0\cdot\mathbf{r}
+  \cos{\big(\omega_\mathrm{las}(t-T_\mathrm{peak})-\phi_\mathrm{las}\big)}
+  \exp\left(-\frac{(t-T_\mathrm{peak})^2}{T_\mathrm{pulse}^2}\right)
+  \quad.
+\end{equation}
+
+The ramp with its long constant piece in the middle allows a high
+frequency selectivity around the peak frequency. However, the short
+switching intervals produces long tails in the spectrum.  The Gaussian
+pulse produces the best peaked spectrum but only if it extends to
+infinity. In practice, it is cut to finite interval which means, in
+particular, that it starts with a small step unavoidably polluting the
+spectrum a bit. The sin$^n$ pulses provided by the options
+\texttt{itft=2} or \texttt{itft=4} are efficient compromises combining
+high spectral selectivity with a finite extension in time. We prefer
+the sin$^2$ pulse as standard.
+
+The lower entries in \tab{tab:dyn-input-params-excitation} are related
+to an excitation by the Coulomb field of a bypassing charged ion as
+given in Eq. (\ref{cpc:eq:ionext}).  This mechanism is
+activated by setting the parameter \texttt{projcharge}$=Z_\mathrm{ext}>0$.
+The trajectory of the external ion is assumed to be a
+straight line defined by initial position and velocity relative to the
+origin of the numerical box.  The impact parameter, needed if one
+wants to compute an excitation cross-section, has to be deduced from
+$\mathbf{R}_\mathrm{ext}(0)$ and $\dot{\mathbf{R}}_\mathrm{ext}(0)$
+where a decision has to be made whether one computes that relative to
+ionic or electronic center of mass. 
+
+
+\subsection{Parameters for printing results in namelist \texttt{DYNAMIC}}
+
+%\begin{longtable}{|p{3.5cm}|p{11.2cm}|}
+\begin{table}
+  \caption{Flags that control the printing of global observables in
+    namelist \texttt{DYNAMIC} of \texttt{for005.<name>}}
+\label{tab:dyn-input-params-observables}
+%\endfirsthead
+\begin{tabular}{|p{2.2cm}|p{0.7cm}|p{10.7cm}|}
+  \hline
+  \multicolumn{3}{|c|}{namelist \texttt{DYNAMIC}}\\
+  \hline
+  \multicolumn{3}{|c|}{\textit{\color{activeColor}Flags for writing general dynamical electronic observables}} \\
+  \hline
+  \texttt{jinfo}&\tgreen{10}& Frequency for writing basic stepping information to \texttt{infosp.<name>}  \\
+  \hline
+  \texttt{jenergy}&\tgreen{10}& Frequency for writing energy information to \texttt{penergies.<name>}   \\
+  \hline
+  \texttt{jdip}&\tgreen{$\emptyset$}& Frequency for writing dipole moments to \texttt{pdip.<name>}  \\
+  \hline
+  \texttt{jdiporb}&\tgreen{0}& Frequency for writing s.p. dipole moments to \texttt{pdiporb.*.<name>}  \\
+  \hline
+  \texttt{jspdp}&\tgreen{0}& Frequency for writing spin-dipole moments \texttt{pspdip.*.<name>}  \\
+  \hline
+  \texttt{jquad}&\tgreen{0}& Frequency for writing quadrupole moments to \texttt{pquad.<name>}  \\
+  \hline
+  \texttt{jgeomel}&\tgreen{0}& Frequency for writing electronic
+  geometry parameters (c.m. moments, radius, quadrupole tensor) to \texttt{pgeomel.<name>}  \\
+  \hline
+  \texttt{jang}&\tgreen{0}& Frequency for writing angular momentum, see Eq.~(\ref{cpc:eq:angmom}), to \texttt{pangmo.<name>}  \\
+  \hline
+  \texttt{jstinf}&\tgreen{0}& Frequency for writing s.p. observables (energies, variances, etc.) to \texttt{psp*.<name>}  \\
+  \texttt{jlaser}&\tgreen{0}& Frequency for writing laser information to \texttt{plaser.<name>} (only if \texttt{e0}$>0$)  \\
+  \hline
+  \texttt{jcharges}&\tgreen{0}& Frequency for writing number of electron in
+  analyzing spheres
+  of different radii \texttt{pcharges.<name>}  \\
+  \hline
+  \texttt{drcharges} &\tgreen{5.0}& Size of radial slices for the analyzing spheres \\
+   \hline
+  \multicolumn{3}{|c|}{\textit{\color{activeColor}Flags for writing simple observables related to emission}} \\
+  \hline
+  \texttt{jesc}&\tgreen{$\emptyset$}& Frequency for writing electron emission, see Eq.~(\ref{cpc:eq:nesc}), to \texttt{pescel.<name>}   \\
+  \hline
+  \texttt{jnorms}&\tgreen{0}& Frequency for writing s.p. electron emission to \texttt{pescOrb.<name>}, and probability to find a certain charge state in \texttt{pproba.<name>}, see \scn{cpc:sec:ionizprobab}  \\
+  \hline
+  \hline
+  \multicolumn{3}{|c|}{\textit{\color{activeColor}Flags for writing dynamical ionic observables}} \\
+  \hline
+  \texttt{jpos}&\tgreen{$\emptyset$}& Frequency for writing ionic positions to
+  \texttt{pposion.<name>}   \\
+  \hline
+  \texttt{jvel}&\tgreen{$\emptyset$}& Frequency for writing ionic velocities to \texttt{pvelion.<name>} (only if \texttt{ionmdtyp=1} and \texttt{nion>0})\\
+  \hline
+  \texttt{jposcm} &\tgreen{0}& Frequency for writing ionic center of mass coordinates to \texttt{pposCM.<name>} (only if \texttt{ionmdtyp=1})  \\
+  \hline
+  \texttt{jforce}& \tgreen{0}& Frequency for writing total forces on ions to \texttt{pforce.<name>}, and optionally from laser field to \texttt{plforce.<name>} or from point-charge projectile to \texttt{projforce.<name>} (only if \texttt{ionmdtyp>0}, only for \texttt{nion<10}) \\
+  \hline
+  \texttt{jgeomion} &\tgreen{0}& Frequency for writing global ionic geometry parameters to \texttt{pgeomion.<name>}  \\
+  \hline
+\end{tabular}
+\end{table}
+In this subsection, we discuss the parameters which determine what
+results will be printed to file, how and how often.  With few
+exceptions, all output files related to dynamical calculations names
+start with the letter \texttt{p} for ``print''.  The presentation is
+split into two parts. We start with
+\tab{tab:dyn-input-params-observables} which deals with the ``simple''
+observables. Most of them are obvious and the corresponding output
+files explain in a header what comes in the appended columns.  In some
+files (e.g. {\tt pdip.<name>} or {\tt pquad.<name>}), the last line of
+the header shows a seemingly cryptic line of the sort \texttt{H: X YL
+  YD YP}. This is an instruction telling the routine
+\texttt{spectr2.f90} how to interpret the subsequent columns, for an
+example see \scn{eq:applyboost}. Note also that ``frequencies'' in
+\tab{tab:dyn-input-params-observables} are given in unit of multiples
+of the electronic time step \texttt{dt1}. This also holds true for
+ion-related observables.
+
+We complement here a few details which may be not that obvious. While
+\texttt{jdip} triggers output of the three components of the
+electronic dipole momentum, the \texttt{jdiporb} does that for dipole
+momenta $\mathbf{D}_\alpha(t)=\int
+d^3r\,\mathbf{r}|\varphi_\alpha(\mathbf{r})|^2$ of each s.p. state
+separately.  The \texttt{jspdp} calls for computing and printing the
+spin dipole moment
+\begin{equation}
+  \mathbf{D}_S
+  =
+  \int d^3r\,\mathbf{r}\left(
+    \varrho_\uparrow(\mathbf{r})-\varrho_\downarrow(\mathbf{r})
+  \right)
+\end{equation}
+which is useful to analyze the spin-dipole mode, often the dominating
+spin magnetic mode of a molecule. Spin-dipole excitations emerge
+naturally in molecules with spin polarized ground state. In spin
+saturated molecules, they are excited, e.g., by a spin-dipole boost
+(\ref{eq:spindipboost}). The next higher order moments, the
+  quadrupole moments (\ref{cpc:eq:quadmom}) are called for by
+  \texttt{jquad} for electrons and by \texttt{jgeomel} for ions. Note
+  that both files print the simple quadratic moments
+  $\langle{r_ir_j}\rangle$. These are immediately the quadrupole
+  moments $Q_{ij}$ for non-diagonal elements, but they have to be remapped
+  for the diagonal elements, e.g., as
+  $Q_{xx}=\langle{x^2}\rangle-\sum_i\langle r_i^2\rangle/3$.  
+
+The parameter \texttt{jcharges} activates an analysis of the radial
+distribution of the electronic density in interlaced spherical shells
+and \texttt{drcharges} defines the difference of the radii $R_\nu$ of
+the analyzing spheres. For each $R_\nu$, the electron content
+$N_\nu=4\pi\int_0^{R_\nu}dr\,r^2\,\int d^2\Omega\varrho(\mathbf{r})$ is
+computed and all $N_\nu$ at given time step are written to the file
+\texttt{pcharges.<name>}. This yields a radially averaged map of the
+density distribution which is simpler to visualize than the full 3D
+density and allows, in particular, to scrutinize the time evolution of
+particle emission. This option is thus especially useful in
+connection with absorbing boundary conditions. 
+
+
+The second block in \tab{tab:dyn-input-params-observables} deals with
+simple observables specific to electron emission.  The parameter
+\texttt{jesc} triggers output of the most basic emission observable,
+namely total ionization Eq. (\ref{cpc:eq:nesc}).  The parameter \texttt{jnorms}
+calls for more details, namely the electron emission from each
+s.p. state separately and deduced from that the probability to find
+the final total electron configuration in a certain charge state $Q$,
+see paragraph \ref{cpc:sec:ionizprobab}.
+
+Finally, \tab{tab:dyn-input-params-observables} contains a couple of
+parameters related to ionic motion.  The parameters \texttt{jpos},
+\texttt{jvel}, \texttt{jposcm}, and \texttt{jforce} are obvious and
+need no further explanation, except for mentioning that they can grow
+rather bulky for large molecules because information for each ion is
+printed. Global information on the ion distribution (center of mass,
+quadrupoles, ...) is triggered with \texttt{jgeomion}. For large
+molecules, this latter file is probably the first to look at before
+going into details with the other outputs.
+
+
+\begin{table}
+  \caption{Flags that control the printing of detailed observables in
+    namelist \texttt{DYNAMIC} of \texttt{for005.<name>}}
+\label{tab:dyn-input-params-observables2}
+%\endfirsthead
+\begin{tabular}{|p{2.4cm}|p{1.4cm}|p{0.8cm}|p{8.8cm}|}
+  \hline
+  \multicolumn{4}{|c|}{\textit{\color{activeColor}Parameters for PAD,
+      see eq. (\ref{eq:PAD})}}\\
+  \hline
+  \texttt{jangabso}&&\tgreen{0}& Frequency for writing PAD to \texttt{pangabso.<name>} (only with \texttt{iangabso>0})  \\
+  \hline
+  \texttt{nangtheta} &$n_\theta^\mathrm{(PAD)}$&\tgreen{1}& Number of angular bins in $\theta$ direction for PAD   \\
+  \hline
+  \texttt{nangphi} &$n_\phi^\mathrm{(PAD)}$&\tgreen{1}& Number of angular bins in $\phi$ direction for PAD   \\
+  \hline
+  \texttt{delomega} &$\Delta\Omega$&& Space angle of angular cones in PAD \\
+  \hline
+  \texttt{angthetal} &$\theta_\mathrm{low}^\mathrm{(PAD)}$[$^o$]&\tgreen{0.0}& Lowest $\theta$ angle for PAD   \\
+  \hline
+  \texttt{angthetah} &$\theta_\mathrm{up}^\mathrm{(PAD)}$[$^o$]&\tgreen{90.0}& Uppermost $\theta$ angle for PAD  \\
+  \hline
+  \texttt{angphil} &$\phi_\mathrm{low}$[$^o$]&\tgreen{0.0}& Lowest $\phi^\mathrm{(PAD)}$ angle for PAD  \\
+  \hline
+  \texttt{angphih} &$\phi_\mathrm{up}$[$^o$]&\tgreen{90.0}& Uppermost $\phi^\mathrm{(PAD)}$ angle for PAD  \\
+  \hline
+  \multicolumn{4}{|c|}{\textit{\color{activeColor}Parameters for PES}}\\
+  \hline
+  \texttt{jmp} &&\tgreen{0}& Frequency for writing of raw data to be post-processed for a photo-electron spectrum, to \texttt{pMP.<name>} \\
+  \hline
+  \texttt{nmptheta} &$n_\theta^\mathrm{(PES)}$&\tgreen{2}& Number of measuring points for PES in $\theta$ direction   \\
+  \hline
+  \texttt{nmpphi} &$n_\phi^\mathrm{(PES)}$&\tgreen{1}& Number of measuring points for PES in $\phi$ direction   \\
+  \hline
+  \multicolumn{4}{|c|}{\textit{\color{activeColor}Flags for detailed
+      printing of densities}}\\
+  \hline
+  {\texttt{jdensity2d}}&&\tgreen{0}& Frequency for plotting 2D cuts of
+  electron density   \\
+\hline
+  \texttt{jdensity1d}&&\tgreen{0}& Frequency to compute 1D reduced electronic densities   \\
+  \hline
+  {\texttt{jdensitydiff}}&&\tgreen{0}& Frequency for for printing the difference of actual density 'rho' with initial density   \\
+  \hline
+  \multicolumn{3}{|l|}{\texttt{jdensitydiff2d}}& Same as \texttt{jplotdensitydiff} but 2D   \\
+  \hline
+  \multicolumn{4}{|c|}{\textit{\color{activeColor}Flags for elaborate
+      observables}}\\
+  \hline \texttt{jelf}&&\tgreen{0}& Frequency for writing electron localization function to \texttt{pelf*.<name>}\\
+  \hline					
+  \texttt{jstateoverlap}&&\tgreen{0}& Frequency for writing overlap between
+  actual and ground state wave function to \texttt{povlp.<name>}  \\
+  \hline
+\end{tabular}
+\end{table}
+%\end{longtable}
+\tab{tab:dyn-input-params-observables2} continues the list of
+parameters governing output of observables with the more involved
+part. The PAD, triggered by \texttt{jangabso}, is collected from
+density of emitted electrons, i.e.  electrons removed by the mask in
+the absorbing zone, denoted $n_{\mathrm{esc},\alpha}(\mathbf{r})$ in
+\scn{cpc:sec:pad}. It is a function of emission angle and evaluated on
+a grid $\mathbf{\Omega}_{\nu\mu}$ over the unit sphere in terms of
+angles $\theta$ and $\phi$ which read
+\begin{equation}
+  \theta_\nu
+  =
+  \theta_\mathrm{low}^\mathrm{(PAD)}
+  +\nu\frac{\theta_\mathrm{up}^\mathrm{(PAD)}-\theta_\mathrm{low}^\mathrm{(PAD)}}{n_\theta^\mathrm{(PAD)}}
+  \;,\;
+  \phi_\mu
+  =
+  \phi_\mathrm{low}^\mathrm{(PAD)}
+  +\mu\frac{\phi_\mathrm{up}^\mathrm{(PAD)}-\phi_\mathrm{low}^\mathrm{(PAD)}}{n_\phi^\mathrm{(PAD)}}
+  \quad.
+\label{eq:PAD}
+\end{equation}
+The PAD is obtained from integrating in an angular cone of space angle
+$\Delta\Omega$ centered around direction of the angles
+$\theta_\nu,\phi_\mu$, as explained in
+Eq. (\ref{cpc:eq:PADfixed}).
+
+The parameter \texttt{jMP} invokes writing the information needed for
+later analysis of PES according to Eq. (\ref{cpc:eq:PESformula}),
+namely a protocol of the time evolution of all s.p. wave functions at
+certain measuring points $\mathbf{r}_\mathcal{M}$ near the absorbing
+bounds.  These are placed, similar as with PAD, on an angular grid
+over the unit sphere, however, with own, hardwired bounds
+\begin{equation}
+  \theta_\nu
+  =
+  \nu\frac{180^o}{n_\theta^\mathrm{(PES)}}
+  \;,\;
+  \phi_\mu
+  =
+  +\mu\frac{360^o}{n_\phi^\mathrm{(PES)}}
+  \quad.
+\label{eq:PES}
+\end{equation}
+The total number of measuring points
+$N_\mathcal{M}=n_\phi^\mathrm{(PES)}n_\theta^\mathrm{(PES)}$ plays a
+role communicating the results to the post-processing routine, see
+\scn{sec:PES}.
+
+The third block in \tab{tab:dyn-input-params-observables2} presents a
+couple of detailed observables.  The
+\texttt{jdensity2d} and \texttt{jdensity1d} trigger writing
+densities in reduced dimensions, as 2D cuts or 2D integrated over the
+other dimensions, e.g. in $z$ direction as $\iint \textrm dx\, \textrm
+dy \,\varrho(x,y,z,t)$. The density as such is often not instructive
+enough because the large background of the ground-state density
+over-shines the sometimes subtle dynamical changes. To extract them
+more clearly serves the parameter \texttt{jdensitydiff} which
+triggers writing of the difference
+$\varrho(\mathbf{r},t)-\varrho(\mathbf{r},0)$ which subtracts the offset of
+the ground-state density. Be careful, this parameter orders writing of
+the whole 3D density what may produce huge output files. To reduce the
+expense, 2D cuts of the difference density can be ordered by
+\texttt{jdensitydiff2d}.
+
+Finally come two rather advanced observables.  The parameter
+\texttt{jelf} triggers computation and writing of the electron
+localization function Eq. (\ref{eq:local}) which was already defined
+and discussed in paragraph \ref{sec:statobs}.  The parameter
+\texttt{jstateoverlap} triggers computation and writing of the overlap
+of actual and initial Slater state $\langle\Phi(t)|\Phi(0)\rangle$.
+This observable is useful for theoretical studies of changes of the
+many-body states with time, e.g., distance to the initial state,
+recurrence times etc. However, it can presently only be applied to pure
+Slater states. An attempt to use it else-wise terminates the program.
+
+
+
+
+\subsection{Output files}
+
+
+
+%			\begin{table}[htbp]
+%\begin{longtable}{|p{3.8cm}|p{10.0cm}|}
+\begin{table}
+  \caption{Output files generated during a dynamic calculation. The
+    second column indicates the input parameters which activates
+    writing the corresponding file. To save space, we indicate the
+    general qualifier \texttt{<name>} by a \texttt{*}.
+\label{tab:dynamic-output-files}}
+%\endfirsthead
+%				\begin{tabular}{|p{4.5cm}|p{10.2cm}|}
+\begin{tabular}{|p{3cm}|p{1.8cm}|p{8.9cm}|}
+  \hline
+  \multicolumn{1}{|c}{\em Filename} &
+  \multicolumn{1}{|c|}{\em Switch} &  \multicolumn{1}{c|}{\em Explanation} \\
+  \hline
+  \texttt{poptions.*}&& Overview of basic parameters
+  and chosen options on solvers, compiler options, etc.\\
+  \hline
+  \texttt{out\_detail.*}&& Detailed protocol file,
+  similar information as screen output\\
+  \hline
+  \texttt{SAVE.*} &\texttt{isaved}& Saves the dynamical state of the system\\
+  \hline	
+%  \texttt{*.bs} &\texttt{jpos}& Output for 3D structure plots of molecular configurations\\
+%  \hline
+  \texttt{pdip.*} &\texttt{jdip}&  Dipole moment in x, y, z direction \\
+  \hline
+  \texttt{pquad.*} &\texttt{jquad}&  Cartesian quadrupole moments \\
+  \hline
+  \texttt{pgeomel.*} &\texttt{jgeomel}& Global geometry parameters of
+  electron distribution \\
+  \hline
+  \texttt{pdiporb.i.*} &\texttt{jdiporb}&  Dipole moment in
+  \texttt{i}=\texttt{x,y,z} direction\\
+  \hline
+  \texttt{pcharges} & \texttt{jcharges} & Radial charge distribution\\
+  \hline
+  \texttt{pescel.*} &\texttt{jesc}& Ionization observables\\
+  \hline
+  \texttt{plaser.*} &\texttt{jlaser}& Laser parameters, as actual field
+  strength etc\\
+  \hline
+  \texttt{povlp.*} &\multicolumn{2}{l|}{\texttt{jstateoverlap} $\quad$ Overlap between actual and initial Slater state}\\
+  \hline
+  \texttt{penergies.*} &\texttt{jenergy}& Total energy and separate
+  contributions to it\\
+  \hline
+  \texttt{pescOrb.*} &\texttt{jnorms}& Number of emitted electrons
+  lost for each orbital\\
+  \hline
+  \texttt{pproba.*} &\texttt{jnorms}& Probabilities of charge states\\
+  \hline
+  \texttt{pspenergies.*} &\texttt{jstinf}& s.p. energies\\
+  \hline
+  \texttt{pspvariances.*} &\texttt{jstinf}& variances of s.p. energies\\
+  \hline
+  \texttt{pMP.*} &\texttt{jmp}& information for later evaluation of PES\\
+  \hline
+  \texttt{pkinenion.*} &\texttt{jvel}& kinetic energy of ions x,y,z directions and total\\
+  \hline
+  \texttt{pposion.*} &\texttt{jpos}& positions of the ions in
+  $x,y,z$, and distance to center\\
+  \hline
+  \texttt{pposCM.*} &\texttt{jposcm}& center-of-mass of the ionic configuration
+  \\
+  \hline
+  \texttt{pvelion.*} &\texttt{jvel}& ion velocities\\ %, triggered by \texttt{jvel}\\
+  \hline
+  \texttt{pgeomion.*} &\texttt{jgeomion}& global geometry observables\\
+  \hline
+  \texttt{pforce.i.*} &\texttt{jforce}& forces on ions, 
+\texttt{i}$\in\{$\texttt{x,y,z}$\}$\\
+  \hline
+  \texttt{plforce.i.*} &\multicolumn{2}{l|}{\texttt{jforce},\texttt{jlaser}$\;$ forces
+  on ions from photon field}\\
+  \hline
+  \texttt{pdensdiff.*} &\multicolumn{2}{|l|}{\texttt{jdensitydiff} $\quad$ density difference to  g.s. density}\\
+  \hline
+  \texttt{pdens2DXX.*} &\texttt{jdensity2d} & XX$\in\{$xy,yz,xz$\}$, 2D cuts of density in XX-plane\\
+  \hline
+  \texttt{pdensdiff2DXX.*} &\texttt{jdensity2d} &
+  XX$\in\{$xy,yz,xz$\}$, 2D cuts of density difference in XX-plane\\
+  \hline
+  \texttt{rho1DXX.*} &\texttt{jdensity1d} & XX$\in\{$x,y,z$\}$, 1D
+  reductions of density to X-direction\\
+  \hline
+\end{tabular}
+\end{table}
+%\end{longtable}
+%
+%
+\tab{tab:dynamic-output-files} lists the output files generated during
+a dynamical simulation (except those related to RTA). Most of them are
+produced on demand.  The corresponding switch (or print-frequency)
+parameter is indicated in the second column. Explanations are kept
+short because the printed observables were already explained in
+connection with the switch parameters in tables
+\ref{tab:dyn-input-params-observables} and
+\ref{tab:dyn-input-params-observables2}. The output structure is
+explained in the headers of the output files.
+
+Nonetheless, a few more explaining words are in order for particular
+cases. The file \texttt{pescel.<name>} records the electron loss, or
+emission respectively, from the absorbing boundary conditions. It does
+that in three different formats.  Column three prints the ionization
+computed as in Eqs.  (\ref{cpc:eq:depletion},\ref{cpc:eq:nesc}). Column two
+prints ionization relative to the initial electron number. Column four
+prints ionization computed alternatively from
+$n_{\mathrm{esc},\alpha}(\mathbf{r})$, the accumulated density of
+electrons removed by the mask, see Eq. (\ref{cpc:eq:PADfixed}).  It serves
+as a check of stability of the calculation: columns 3 and 4 that
+should show the same. Note that this is the total ionization. Ionization
+per s.p. state is given in \texttt{pescOrb.<name>}.
+
+The file \texttt{ptempion.*} contains the total ionic kinetic energy
+in terms of ionic temperature computed as
+\begin{equation}
+  T_\mathrm{ion}
+  =
+  2\frac{E_\mathrm{kin,ion}-E_\mathrm{kin,cm,ion}}{3N_\mathrm{ion}-3}
+\end{equation}
+where $E_\mathrm{kin,cm,ion}$ is the kinetic energy of the ionic
+c.m. motion (usually negligible).
+
+
+%
+Most output files can immediately be used in standard plot software, as
+e.g. GNUPLOT, by simply plotting the wanted column against time in the
+first column. Exception are the files \texttt{pcharges.<name>},
+\texttt{pposion.<name>}, \texttt{pvelion.<name>},
+\texttt{pforce.i.<name>}, and \texttt{plforce.i.<name>}.  Here, time
+is still running in the first column, but in blocks where several
+subsequent lines refer to the same time to work up the many
+observables printed, e.g. all the ionic positions in
+\texttt{pposion.<name>}. Preprocessing is needed before plotting
+information from these files.
+%
+Finally, the file \texttt{pMP.<name>} is not designed for immediate
+use. It supplies all information for post-processing with a separate
+program, see \scn{sec:PES}.
+			
+\subsection{RTA dynamics}
+\label{sec:RTA}
+
+\subsubsection{The namelist \texttt{RTAparams}}
+\label{sec:rtaparams}
+
+%\begin{longtable}{|p{3.1cm}|p{1.3cm}|p{10.2cm}|}%[htbp]
+\begin{table}
+  \caption{Parameters in the \texttt{RTAparams} namelist in
+    \texttt{for005.<name>} that control the RTA
+    procedure}\label{tab:dyn-input-params-rta}
+%\endfirsthead
+\begin{tabular}{|p{2.55cm}|p{1.4cm}|p{0.90cm}|p{8.3cm}|}%[htbp]
+  \hline
+  \multicolumn{4}{|c|}{namelist \texttt{RTAparams}}\\
+  \hline
+  \texttt{rtasigee}
+  &$\sigma_{ee}$ [a$_0^2$]&\tgreen{$\emptyset$}& In-medium $e^-e^-$-cross
+  section, used in Eq. (\ref{cpc:eq:relaxtime})\\ 
+  \hline
+  \texttt{rtars} & $r_s$ [a$_0$]&\tgreen{$\emptyset$}& Effective Wigner-Seitz
+  radius used in Eq. (\ref{cpc:eq:relaxtime})\\ 
+  \hline
+  \texttt{rtatempinit} & [Ry]&\tgreen{0.0}& Initial electron temperature to
+  stabilize first RTA steps, see text\\ 
+  \hline 
+  \texttt{rtaferminit} & [Ry]&\tgreen{0.5}& Upper bound for temperature in
+  the first step   adjusting the closest Fermi distribution
+  Eq. (\ref{cpc:eq:Fermi})\\ 
+  \hline
+  \texttt{rtamu} &$\mu$&\tgreen{20}& Lagrange multiplier for
+  the quadratic density constraint in the DCMF Hamiltonian
+  Eq. (\ref{cpc:eq:hDCMF}).\\ 
+  \hline 
+  \texttt{rtamuj}  &$\mu_j$&\tgreen{2}& Lagrange multiplier
+  for the quadratic  current constraint in the DCMF Hamiltonian
+  Eq. (\ref{cpc:eq:hDCMF}).\\ 
+  \hline 
+  \texttt{rtaeps}
+  &$\delta^\mathrm{(RTA)}$&0.1& Stepsize in the damped
+  gradient procedure (\ref{cpc:eq:dampstep}) \\ 
+  \hline
+  \texttt{rtae0dmp} &
+  $E_{0,\mathrm{damp}}^\mathrm{(RTA)}$ [Ry]&\tgreen{e0dmp}& Damping parameter 
+  for the damped gradient procedure(\ref{cpc:eq:dampstep}) in
+  DCMF\\ 
+  \hline 
+  \texttt{rtaDt1} & [Ry]&\tgreen{1D-3}& maximum temperature step
+  in searching Fermi distribution\\  
+  \hline 
+  \texttt{rtasumvar2max} & $\epsilon_0$ [Ry]&\tgreen{1D-4}& Termination
+  criterion for s.p. variance  in the DCMF loop, see
+  \fig{cpc:fig:dcmf} \\ 
+  \hline 
+  \texttt{rtadiffenrmax} & $\epsilon_2$ [Ry]&\tgreen{$\epsilon_0$}& Termination
+  criterion for s.p. variance  in the DCMF loop
+  \\
+  \hline
+  \texttt{rtaExitErr} &$\epsilon_\rho$ &\tgreen{1D-2}& Termination
+  criterion for relative density in the DCMF loop, see \fig{cpc:fig:dcmf}  \\ 
+  \hline
+  \texttt{rtaExitErrj} &$\epsilon_j$ &\tgreen{5$\epsilon_\rho$}& Termination
+  criterion for relative current in the DCMF loop \\ 
+  \hline 
+  \texttt{rtaerr1} &&\tgreen{100$\epsilon_\rho$}&
+  threshold on relative difference-density to start the temperature correction in
+  the DCMF loop, see \fig{cpc:fig:dcmf}\\ 
+  \hline 
+  \texttt{itmaxDCMF} &&\tgreen{2000}& Maximum number of DCMF
+  iterations\\ 
+  \hline
+\end{tabular}
+\end{table}
+%\end{longtable}
+\tab{tab:dyn-input-params-rta} lists the input parameters specific to
+the RTA procedure. Most parameters are explained in
+\scn{cpc:sec:summaryRTA}, however in rather compact manner. We
+complement that here with more details where necessary.
+% 
+There are two parameters which quantify the physical properties of
+dissipation, namely in-medium electron scattering cross section
+$\sigma_{ee}\equiv$\texttt{rtasigee} and the effective Wigner-Seitz
+radius of the electron cloud $r_s\equiv$\texttt{rtars}. They are
+explained in section \ref{cpc:sec:summaryRTA}.
+All other parameters are of more technical nature. The first group of
+them concern initialization of an RTA step:
+\begin{description}
+
+ \item{\texttt{rtatempinit}} sets an initial (small) electron
+   temperature.  This is applied already at the beginning of dynamics.
+   This serves to enter RTA with a Fermi distribution having small,
+   but finite width. The parameter serves a double purpose.  The value
+   \texttt{rtatempinit/Tfrac} is used as lower bound for the search of a
+   temperature \texttt{SUBROUTINE fermi1}.
+   The fraction parameter is set to \texttt{Tfrac=10} in the header
+   of \texttt{rta.F90}. 
+   \\
+   It is highly recommended to use the same temperature already
+   in the static calculation. This is achieved by
+   setting the parameter \texttt{temp}, see table
+   \ref{tab:input-params-sys-choice}, to \texttt{temp=rtatempinit}.
+   This avoids spurious excitation by suddenly changing temperature.
+
+  \item{\texttt{rtaferminit}} is upper bound for the temperature in
+    the first call to \texttt{SUBROUTINE fermi1} which determines
+    a Fermi distribution of occupation numbers reproducing a given
+    energy. The default setting is robust such that one rarely needs to 
+    enter it explicitly in the input file.
+\end{description}
+The next group of parameters regulates the DCMF step:
+\begin{description}
+
+  \item{\texttt{rtamu}$\equiv\mu$,\texttt{rtamuj}$\equiv\mu_j$} 
+  are the weight factors
+  in front of the quadratic constraint in the DCMF Hamiltonian,
+  see eq. (\ref{cpc:eq:hDCMF}). A larger value exerts more pressure to
+  fulfill the density and current constraint, however, at the price
+  of a numerically more critical DCMF-Hamiltonian. One has to find a 
+  proper balance between strength of constraint and the parameters
+  \texttt{rtaeps} and \texttt{rtae0dmp} of the DCMF step. The default
+  values for $\mu$ and $\mu_j$ represent a working
+  compromise. You may try larger or smaller values. But it is crucial
+  to make $\mu_j$ much  smaller than $\mu$. A ratio of 10 is
+  highly recommended.
+
+  \item{\texttt{rtaeps},\texttt{rtae0dmp}} are the damping parameters
+  for the damped gradient step in the solution of the static 
+  Kohn-Sham problem. One may wonder why not using the same values as
+  for the \texttt{epswf} and \texttt{e0dmp} from the standard static
+  Kohn-Sham  step. The point is that density and current constraints
+  change the spectral properties of the mean-field Hamiltonian which,
+  in turn, may require different stepping parameters. The default
+  \texttt{rtaeps=0.1} is a conservative choice. One may use larger
+  values together with \texttt{rtae0dmp}$<$\texttt{e0dmp}, and,
+  of course, both parameters may be reconsidered when changing
+  \texttt{rtamu} and \texttt{rtamuj}.
+
+  \item{\texttt{rtaDt1}} is the allowed change of temperature in
+  early calls to the Fermi routine. This serves to stabilize the
+  DCMF iterations because fast changes of occupation numbers
+  in early DCMF iterations can delay, or even inhibit, convergence.
+  The default setting is rigid. One may explore larger values.
+
+  \item{\texttt{rtaerr1}}$\equiv\epsilon_1$ is the threshold for the
+    average error on density, see eq. (\ref{eq:critrho}),
+    below which recomputation of the Fermi occupation distribution
+    in \texttt{SUBROUTINE fermi1}
+    is activated.
+
+\end{description}
+Finally comes the group of criteria for terminating the DCMF
+iterations:
+\begin{description}
+
+  \item{\texttt{rtasumvar2max}}$\equiv\epsilon_0$ is the maximal
+  allowed value for the average variance of s.p. energies.
+  The solution must fulfill
+  \begin{equation}
+    \sqrt{
+    \frac{\sum_\alpha w_\alpha\left(
+          \langle\varphi_\alpha|\hat{h}_\mathrm{DCMF}^2|\varphi_\alpha\rangle
+          -
+          \langle\varphi_\alpha|\hat{h}_\mathrm{DCMF}|\varphi_\alpha\rangle^2
+          \right)}
+         {\sum_\alpha w_\alpha}
+         }
+    <
+    \epsilon_0
+  \end{equation}
+  before ending the DCMF iterations.
+ 
+  \item{\texttt{rtadiffenrmax}}$\equiv\epsilon_0$ is the maximal
+  allowed deviation of total s.p. energies. The solution must fulfill
+  \begin{equation}
+    \left|E_\mathrm{s.p.}^\mathrm{DCMF}
+          -
+          E_\mathrm{s.p.}^\mathrm{goal}\right|
+    <
+    \epsilon_2
+    \;,\;
+    E_\mathrm{s.p.}^{\mbox{}}
+    =
+    \sum_\alpha w_\alpha\varepsilon_\alpha
+    \;.
+  \label{eq:misenergy}
+  \end{equation}
+%  One may wonder why using here the total deviation and not
+%  the average one. This is because energies converge faster
+%  than variances of energy. Using the total energy, but the average
+%  variance, allows to chose comparable
+%%  values for $\epsilon_2$ and $\epsilon_0$.
+
+\item{\texttt{rtaExitErr}}$\equiv\epsilon_\rho$ checks the
+  quality of reproduction of local density with the criterion
+  \begin{equation}
+    \frac{\int d^3r\,\left|
+     \rho_\mathrm{DCMF}(\mathbf{r})
+     -
+     \rho_\mathrm{goal}(\mathbf{r})
+    \right|}
+    {\int d^3r\,\rho_\mathrm{goal}(\mathbf{r})}
+    <\epsilon_\rho
+    \;.
+    \label{eq:critrho}
+  \end{equation}
+  This quantity is dimensionless and measures the relative deviation  
+  of density. It is thus rather independent of the systems scales.
+  Similar values of $\epsilon_\rho$ should apply for all systems.
+
+  \item{\texttt{rtaExitErrj}}$\equiv\epsilon_j$ checks the quality
+  of reproduction  of the current with
+  \begin{equation}
+    \frac{\int d^3r\,\left(
+     \mathbf{j}_\mathrm{DCMF}(\mathbf{r})
+     -
+     \mathbf{j}_\mathrm{goal}(\mathbf{r})
+    \right)^2}
+    {\int d^3r\,\left(
+     \mathbf{j}_\mathrm{goal}(\mathbf{r})
+     \right)^2}
+    < 
+    \epsilon_j
+    \;.
+  \label{eq:squarecurr}
+  \end{equation}
+  This is also relative deviation. A possible problem comes here in
+  regimes of very small currents where we may require too much
+  because a large error on a small quantity is harmless. So far, we
+  did not run into trouble with that.
+
+\item{\texttt{itmaxDCMF}} is the maximum number of iterations.
+  It overrules the other criteria and terminates even if density,
+  current, or energy variance has not yet reached its goal.
+  An exception if the mismatch of energies (\ref{eq:misenergy}).
+  If this has not yet reached a satisfying level,
+  a second round of iterations is appended up to
+  twice \texttt{itmaxDCMF}.
+
+\end{description}
+A few words are in order about chosing termination criteria.  DCMF is
+a highly demanding task. One should not expect a quality of
+convergence as one usually sees in unconstrained Kohn-Sham
+equations. In particular, the current is hard to tame. One has the
+choice between high demands and awfully long iterations or an
+affortable number of DCMF iterations with moderate quality. We opt for
+the latter choice. This is legitimate as true thermal states are
+anyway somewhat noisy. The default setting in table
+\ref{tab:dyn-input-params-rta} give you an idea of what to
+expect. Mind that a larger deviation for the currents is advisable
+because the current constraint is particularly obstinate. 
+
+When chosing convergence criteria too rigid, it can happen
+that iterations fluctuate and terminate with a mismatch in energy.
+In that case, a warning is printed in \texttt{peqstat.<name>}.
+This is acceptable if it happens rarely with only small mismatches
+because the final energy correction can cope with  that.
+But be careful, the choice of convergence parameters has to be revised if
+that  happens regularily.
+
+Typical values for the RTA parameters in
+\tab{tab:dyn-input-params-rta} can be found in the following
+subdirectories of directory
+\texttt{examples}: \texttt{H2O/laser/Onres-rta},
+\texttt{H2O/laser/Offres-rta}, and \\
+\texttt{Na11p/boost-XXX-rta/prta.Na11p}
+with \texttt{XXX=015, 020, 025}.
+We reproduce here two RTA input sequences, one from covalent H$_2$O
+(left) and one from metallic Na$_{11}^+$ (right):
+\\[8pt]
+\begin{center}
+\begin{minipage}{0.4\linewidth}
+\begin{Verbatim}[frame=single,label=RTAparams in for005.H2O,fontsize=\normalsize]
+&RTAparams
+itmaxDCMF=800,
+rtamu=20.0d0,
+rtamuj=2.0d0,
+rtaeps=0.2D0,
+rtae0dmp=2D0,
+rtasigee=0.91,
+rtars=1.0,
+rtatempinit=0.005D0,
+rtasumvar2max=1D-3,
+rtaExitErr=1D-2,
+rtaExitErrj=3D-2,
+rtadt1=0.08,
+&END
+\end{Verbatim}
+\end{minipage}
+\hspace{1em}
+\begin{minipage}{0.4\linewidth}
+\begin{Verbatim}[frame=single,label=RTAparams in for005.na11p,fontsize=\normalsize]
+&RTAparams
+itmaxDCMF=500,
+rtamu=20D0,
+rtamuj=2D0,
+rtaeps=0.2D0,
+rtae0dmp=0.9D0,
+rtasigee=6.5D0,
+rtars=3.7D0,
+rtatempinit=1D-2,
+rtartaexiterr=1D-2,
+rtaexiterrj=3D-2,
+sumvar2max=7D-3,
+rtaerr1=0D0,
+rtadT1=0.001D0,
+rtaexiterr=0.01D0,
+&END
+\end{Verbatim}
+\end{minipage}
+\end{center}
+The input for H$_2$O is shorter because it relies on defaults for
+parameters not given explicitly. 
+
+\paragraph{A note on obtaining PES} When RTA is activated the PES cannot be computed, because the wave functions are mixed and receive random phases in the DCMF diagonalization process. There is a need to correct this in order to get a continuous signal at the measuring points. Supplemental corrections will be added in a future release. 
+		
+\subsubsection{RTA output files}
+			
+\begin{table}[htbp]
+  \caption{Output files that are specific to a RTA-enabled calculation}\label{tab:dynamic-output-files-rta}
+  \begin{tabular}{|p{4.3cm}|p{10.1cm}|}
+    \hline
+    \texttt{convergenceRTA.<name>} &  Protocol of convergence
+    criteria along  DCMF iterations \\
+    \hline
+    \texttt{peqstate.<name>} &  Final convergence criteria of the DCMF
+    process
+% current iteration number, cycles to convergence, variance, residual
+% err. on density, residual err. on current, parameters mu, muj,
+% energy achieved
+\\
+    \hline
+    \texttt{prta.<name>} & Time evolution of entropy, laser energy,
+    $\mu^\mathrm{(eq)}$, and $T^\mathrm{(eq)}$\\
+    \hline
+    \texttt{pspeed.<name>} & Prints at each RTA step, along x axis, the reference density (spin up and down), achieved density (spin up and down), target x current, achieved x current \\
+    \hline
+  \end{tabular}
+\end{table}
+%
+\tab{tab:dynamic-output-files-rta} summarizes the output files written
+by the RTA procedure. These are mostly protocols of RTA iterations
+and their convergence. Particular information of physics interest is
+given in the file \texttt{prta.<name>}, namely entropy
+Eq. (\ref{cpc:eq:entropy}) of the
+occupation distribution and temperature as well as chemical potential
+of the instantaneous equilibrium distribution Eq. (\ref{cpc:eq:Fermi}).
+
+\clearpage
+
+\section{Dynamic examples}
+\label{sec:dyn_examples}
+	
+\subsection{Ionic cooling}
+
+Finding the ionic coordinates that minimize the system energy is easy
+when there are only two ions, as exemplified in Sec.
+\ref{sec:Na2}. But for more than two ions it grows quickly tedious.
+%			
+To solve this problem the code offers three strategies, dynamic
+cooling by pseudo-dynamics (\texttt{icooltyp=1}), steepest descent
+downhill the ionic energy surface (\texttt{icooltyp=2}), and simulated
+annealing with Monte-Carlo techniques (\texttt{icooltyp=3}).  We show
+here an example for dynamic cooling.  It works by starting a dynamic
+TDLDA-MD calculation, see \scn{cpc:sec:mf}. Initially, the ions are at
+rest, but in a possibly uncomfortable configuration.  Naturally, ions
+will start to move. Like in a mass-spring system, the ions will be
+accelerated at first, will then reach their maximum velocity once they
+pass close to their equilibrium positions, and then start to slow
+down.  This is the point where the ion-cooling algorithm comes into
+play.  It monitors the total ionic kinetic energy and interrupts the
+dynamics as soon as it observes the kinetic energy turning down. All
+ionic velocities are then reset to zero and TDLDA-MD is restarted from that
+configuration. This process is repeated until the gain in ionic
+kinetic energy is negligible after a restart. Then we have obviously
+reached a stable situation, a minimum in the ionic energy surface. It
+may be the true ground state or some isomeric minimum. Thus one should
+repeat the whole cooling procedure from different initial ionic
+configurations. With some patience one will so collect enough insight
+into the isomeric landscape of a system.  Finally, a word about
+naming. The propagation is called {\it pseudo dynamics} because it
+intervenes the free ionic dynamics by resetting velocities,
+even-though it is technically a dynamical calculation.
+
+As test case of some complexity we take the  Na$_8$ cluster, to
+increase the number of ionic degrees of freedom.  The corresponding
+input files are located in
+\begin{verbatim}
+  $QDD_ROOT/examples/Na8-ioncool/
+\end{verbatim}
+The following eight dynamics parameters have to be set in the
+\texttt{DYNAMIC} namelist in the \texttt{for005.<name>} input file:
+\begin{verbatim}
+  ionmdtyp = 2
+  icooltyp = 1
+  ifredmas = 1
+  nabsorb = 0, jesc = 0
+  itmax = 25000
+  jpos = 10, jvel = 10	
+\end{verbatim}
+Make sure that \texttt{itmax} is set to a sufficiently large  enough value
+for the cooling process to finish. Nonetheless, it is a good idea to
+activate saving of the state by setting \texttt{isaved} appropriately.
+This allows to continue the procedure from the saved state if it was
+found not sufficiently converged within the given \texttt{itmax}.  To
+estimate the amount of time steps, you need to have an idea about the
+time scale of ionic motion and to recall that the full propagation
+time is given by $t_\mathrm{max}=$\texttt{dt1}$*$\texttt{itmax}.  But
+that is guesswork anyway, and one has to monitor the run to either
+interrupt a run early or continue from a saved state.  Also it is
+better not to use any absorbing points (\texttt{nabsorb=0}, this
+automatically implies \texttt{jesc=0}), and to use reduced masses for
+the ions in the dynamics (\texttt{ifredmas=1}). The latter reduces the
+time scale for ionic motion and thus shortens the time it takes for
+the cooling. You can watch the cooling progress  by looking at the
+kinetic energy of the ions in the file
+\texttt{penergies.Na8-ioncool}. 
+%
+\begin{figure}[tbph]
+  \centering
+  \includegraphics[width=0.85\linewidth]{ion-cooling}
+  \includegraphics[width=0.85\linewidth]{ion-cooling-zoom}
+  \caption{Kinetic energy of the ion cores of Na$_8$ as a function of time. After about 69~fs the energy is well below the set variance of \texttt{epsoro}=$8\!\times\! 10^{-7}~\mathrm{Ry}$.}\label{fig:ion-cooling}
+\end{figure}
+%
+Figure~\ref{fig:ion-cooling} show a plot of this energy using columns
+1 and 4. One spots nicely the cooling steps where the kinetic energy
+is reset to zero. One observes also that the amount of kinetic energy
+extracted decreases from one cooling step to the next until from
+$\sim$70~fs onward the kinetic energy of the ions is well below the
+electronic variance of \texttt{epsoro}=$8\!\times\!
+10^{-7}~\mathrm{Ry}$. At this point the calculation is stopped. In
+fact, the limit of $10^{-7}~\mathrm{Ry}$ is extremely demanding. The
+limit for ionic cooling can be chosen independently from the
+electrons. This depends on the application one has in mind after
+cooling.
+
+In case, one want to scrutinize the cooling dynamics more deeply, one
+can  visualize positions and velocities of the individual ions from
+the files \texttt{pposion.Na8-ioncool} and
+\texttt{pvelion.Na8-ioncool}. Recall that during the calculation, each
+\texttt{jpos} and \texttt{jvel} iterations the time, current position
+and velocity are written to this file, per time step, one line for
+each ion. To plot this with, e.g., GNUPLOT one can take advantage of
+the command \texttt{every N::k}, where \texttt{N} is the number of
+ions in the cluster and \texttt{k} runs from \texttt{0} to
+\texttt{N-1}.
+
+Thus far the realistic test case Na$_2$. For those who want to gather their own
+experience, it might be insightful to repeat this calculation for
+Na$_2$ where the inter-sodium distance in the
+\texttt{for005ion.Na2-gs} is initially deliberately increased or
+decreased, and then compare it to the value of the equilibrium
+distance found in the previous section by the manual method.
+
+
+\subsection{Applying a boost: the excitation spectrum of Na$_\mathsf{41}^+$}
+\label{eq:applyboost}
+
+In this section, we present an example for computing the optical
+response of a molecule as explained in \scn{cpc:sec:specan}. The
+strategy is to apply an initial boost to the electronic wave functions
+and then to record the dipole oscillations of the electron cloud. The
+dipole moment is then Fourier-transformed from the time domain to
+the frequency domain to obtain the eigenfrequencies of the system \cite{Cal97b}.
+			
+The input files for this example are can be found in
+\begin{verbatim}
+  $QDD_ROOT/examples/Na41p/boost/
+\end{verbatim}
+Three parameters control the amplitude of the boost
+\texttt{centfx,centfy,centfz} (see
+\tab{tab:dyn-input-params-instantaneous}), one parameter for each
+direction. There are also three protocols in the vector
+$\mathbf{D}(t)$. This would allow to map altogether the full dipole
+response tensor. This tensor can be assumed to be diagonal if the
+principal axes of the molecule are aligned with the axes of the
+numerical box. In that case, one can excite all three direction
+simultaneously and read off the $x$-, $y$-, $z$-spectra directly from
+$D_x(t)$, $D_y(t)$, and $D_z(t)$. That is the strategy we follow here.
+
+
+
+A few more precautions are in order.  
+%
+When applying a boost, make sure it is not too intense. Too large a
+boost will induce a sizable ionization, see column 3 in
+\texttt{pescel.<name>}.  You can also check how much energy is
+absorbed by looking in \texttt{infosp.<name>} at the energy at the end
+of the static calculations and at the beginning of dynamics.
+			
+To obtain the dipole spectrum, an additional program `\texttt{spectr2}'
+needs to be compiled and used on the dipole response file
+\texttt{pdip.<name>}. The program can be found in
+\begin{verbatim}
+  $QDD_ROOT/src/auxiliary/spectr2.F90
+\end{verbatim}
+To build the program do
+\begin{verbatim}
+  $ cd $QDD_ROOT/src/auxiliary/
+  $ make spectr
+\end{verbatim}
+After this is done one simply runs
+\begin{verbatim}
+  $QDD_ROOT/bin/spectr2 < pdip.<name> > spectrum.dat
+\end{verbatim}
+The dipole spectrum can then be visualized by plotting columns 4, 7
+and 10 (the real parts of the Fourier transformed signal in the
+$(\mathbf{\hat{e}}_x,\mathbf{\hat{e}}_y,\mathbf{\hat{e}}_z)$-directions)
+versus column 2 (frequency $\omega$ in eV).
+		
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{spectrum_orange-blue}
+  \caption{Top panel: real-time dipole signal for Na$_{41}^+$ after a
+    small boost in the $(x,y,z)$-direction. Bottom panel: Fourier
+    transform of the same dipole signal. The vertical dotted line
+    indicates the ionization potential of
+    Na$_{41}^+$.}\label{fig:spectrum}
+\end{figure}
+Figure \ref{fig:spectrum} shows the results for the case of
+Na$_{41}^+$, dipole signals in time domain as well as in frequency
+domain. The spectrum (lower panel) shows dominantly the fragmented
+plasmon peak and a few minor side peaks. The overall position of the
+plasmon peak is nearly the same for all three modes. This indicates
+that Na$_{41}^+$ is close to spherical shape. The modes in $x$- and
+$y$-direction are even exactly degenerated which can be connected with
+the symmetry of the cluster. The example indicates that optical
+response and cluster shape are closely connected, see
+e.g. \cite{Hee93}.
+
+
+\subsection{Applying a laser excitation to H$_\mathsf{2}$O}
+
+In this example we will excite the water molecule by applying a
+resonant and off-resonant LASER pulse. The example input files can be
+found in
+\begin{verbatim}
+  $QDD_ROOT/examples/H2O/laser
+\end{verbatim}
+			
+The most important parameters that control the laser excitation are
+the following
+\begin{verbatim}
+  itft = 3
+  deltat = 36.0
+  e1x = 0.0
+  e1y = 0.0
+  e1z = 1.0
+  omega = 0.79
+  e0 = 0.08
+\end{verbatim}
+To be on-resonance with one of the dipole oscillation modes in the
+$z$-direction we need an \texttt{omega} of ~0.79~Ry which corresponds
+to 10.7~eV. This is slightly off-resonance on the blue side of the
+peak. The reason for this is that during the pulse, the ensuing
+ionization will cause the dipole spectrum to shift slightly to the
+blue. Just enough for the laser pulse to end up in the resonance
+region. In this case the shape of the pulse envelope is a $\sin^2$,
+the pulse length is 36~fs and the pulse polarization is in the
+$z$-direction. A list of all the excitation parameters can be found in
+\tab{tab:dyn-input-params-excitation}.
+			
+For the off-resonant case, we simply shift the value of \texttt{omega}
+farther away from resonance to another value, here to 0.84~Ry
+(11.4~eV).
+		
+%\paragraph{Results and observables}	
+The resulting time evolution of three basic observables, ionization,
+dipole moment, and energy absorbed from the photon pulse, are shown in
+\fig{cpc:fig:H2Oonoff} of the paper and discussed therein.
+
+\subsubsection{Calculating Photo-electron Spectra  (PES)}
+\label{sec:PES}
+
+Pure TDLDA calculations, with and without SIC, allow to compute PES,
+i.e. the kinetic-energy spectra of emitted electrons, see
+\scn{cpc:sec:pes}.  That requires, of course, to activate absorbing
+boundary conditions by setting \texttt{nabsorb>0}. A proper compromise
+has to be found for this parameter. Large values are desired to
+improve absorption. These, however, require larger grids and so
+enhance the computational expense. A minimum value is
+\texttt{nabsorb=4}, a good compromise is often \texttt{nabsorb=8},
+and critical cases may ask for even larger values.
+
+Next comes the choice of the shape of the absorbing bounds
+(rectangular, spherical, or ellipsoidal). Cleanest results are usually
+obtained with spherical absorbing zones, \texttt{ispherabso=1}.
+
+Then one has to decide how many measuring points one wants to set.
+This is done by the parameters \texttt{nmptheta} and \texttt{nmpphi}
+which define the measuring points on a grid of the unit sphere of
+emission directions, see 
+\tab{tab:dyn-input-params-observables2} and discussion thereof.
+Taking a small or large number of measuring points has negligible
+effect on computing time. It is a matter of storage space. Mind that
+the values of all s.p. wave functions at the measuring point are written
+to the file \texttt{pMP.<name>} in each \texttt{jMP}th time step.
+This is a small problem in small systems, but can grow space consuming
+for a large molecule like C$_{60}$ with its 240 electrons.
+
+Finally, we activate writing the information for later PES analysis by
+setting the corresponding write frequency \texttt{jMP}. Its choice
+determines the span of kinetic energies, we can evaluate. The time
+difference  between two writings is 
+%
+$\Delta t_\mathrm{MP}=\delta t*$\texttt{jMP}
+%
+and the maximum kinetic energy after Fourier analysis is
+$\varepsilon_\mathrm{kin,max}=\hbar\pi/\Delta t_\mathrm{MP}$. To be
+on the safe side, we should go only up to half that value, i.e.  we
+can expect safe results up to energy 
+%
+$\hbar\pi/(2\Delta t_\mathrm{MP})$.
+%
+This inhibits automatically  large \texttt{jMP}. Values of order
+1...10 are typical.
+%
+The spectral resolution is determined by the length of the simulation
+$t_\mathrm{max}=\delta t*$\texttt{itmax} as
+$\Delta\varepsilon_\mathrm{kin}=2\pi\hbar/t_\mathrm{max}$.
+
+Having then run the code successfully to the end, we use the protocol
+file \texttt{pMP.<name>} thus generated for further processing. This is done 
+in two steps. The first post-processing is done  with the code 
+in the file \texttt{analyze-MP.f90} found 
+in the directory \texttt{\$QDD\_ROOT/src/auxiliary}.
+%As this code has to be edited, it is useful to copy it into
+%the working directory where the  \texttt{pMP.<name>} resides.
+%Before compilation, there are three parameters in the source code to
+%be adjusted:
+%\begin{description}
+%  \item[\texttt{name}:] the \texttt{<name>} of the calculation as
+%    given in \texttt{for005} and used as qualifier of the output files.
+%  \item[\texttt{kpoints}:] the number of measuring points. It
+%    can be read off from the header of the \texttt{pPES.<name>}.
+%  \item[\texttt{kstate}:] the number of s.p. states. It
+%    can be read off from the header of the \texttt{pPES.<name>}.
+%\end{description}
+%After editing \texttt{analyze-MP.f90}, this Fortran file is compiled
+This code has to be compiled and executed. This means, e.g., in
+  case of the GNU Fortran compiler under Linux to issue
+  \texttt{gfortran -O3 \$QDD\_ROOT/src/auxiliary/analyze-MP.f90}
+  followed by \texttt{./a.out}.  The executable asks first for the
+  qualifier of the \texttt{pMP.<name>} file. Then it will read the
+  phase information from \texttt{pMP.<name>}, process it, and produce
+  an output file \texttt{pPES.<name>}. The number of measuring points
+  as well as the whole table of measuring points is taken from
+  \texttt{pMP.<name>} and copied to the header of
+  \texttt{pPES.<name>}.  In the rows after the header, the file
+\texttt{pPES.<name>} contains in first column the kinetic energy (in
+Ry) and the subsequent columns the PES at each measuring point as:
+\begin{displaymath}
+    \epsilon_{kin}/\mathrm{Ry} \quad 
+    \sum_i\left|\tilde\varphi_i\right|^2 \text{at MP}_1 
+    \quad \text{at MP}_2 \quad 
+    \text{at MP}_3 \quad \ldots \quad \text{at MP}_\mathrm{jMP}
+\end{displaymath}
+The relation between angles $\theta$ and $\phi$ with the number along the
+columns is given in the header of  \texttt{pPES.<name>}.
+%
+%We exemplify the relevant lines in the header of
+%  \texttt{analyze-MP.f90} for the test case
+%  H$_2$O from \texttt{\$QDD\_ROOT/examples/H2O/laser/pespad}.
+%\begin{verbatim}
+%! Parameters for input                                            
+%INTEGER, PARAMETER :: ktimes=170000     ! max. nr. of time points -- to be set
+%INTEGER :: kpoints=92                   ! nr. measuring points 
+%INTEGER :: kstate=8                     ! nr. states                   
+%CHARACTER (LEN=13) ::  name = 'H2O'     ! qualifier                  
+%\end{verbatim}
+%The freshly edited Fortran file can then be compiled and executed.
+%, e.g., as
+%\textcolor{black}{Again, this
+%    Fortran file can be compiled and executed, e.g., by a tool
+%    provided with the QDD package.  The latter proceeds with the steps
+%    (starting in the sub-directory \texttt{src/auxiliary})
+%\begin{verbatim}
+% $ make analyze-PES
+% $ cd </path/to/pPES.<name>-file/>
+% $ $QDD_ROOT/bin/analyze-MP && $QDD_ROOT/bin/analyze-PES
+%\end{verbatim}
+%\begin{verbatim}
+%  $ <compiler> <options> -o analyze-MP $QDD_ROOT/src/auxiliary/analyze-MP.f90
+%  $ ./analyze-MP
+%\end{verbatim}
+The routine \texttt{\$QDD\_ROOT/src/auxiliary/analyze-MP.f90} contains
+in its headers the setting for the grid of kinetic energies
+in the output \texttt{pPES.<name>} in terms of energetic grid spacing
+and number of grid points. If one wants to have other setting than
+provided (spacing 0.01 Ry and number of grid points 1000) one has to
+edit the file and compile again.
+
+One can now plot the PES in the specific directions 
+directly from \texttt{pPES.<name>}.  
+However, in the case that we use a rather fine mesh of measuring points, we are
+confronted with a swamp of data. There, we are often particularly
+interested in the angular integrated total PES. This is achieved by
+running a second routine contained in the file
+\texttt{analyze-PES.f}, again found
+in the directory \texttt{\$QDD\_ROOT/src/auxiliary}.
+%and to be copied into the working directory.  Two parameters
+%are to be adjusted before compilation:
+%\begin{description}
+%  \item[\texttt{name}:] the \texttt{<name>} name of the calculation as
+%    given in \texttt{for005} and used as qualifier for most output
+%    files.
+%  \item[\texttt{kpoints}:] the number of measuring points, same as
+%    used in \texttt{analyze-MP.f90}.
+%\end{description}
+%This reads, e.g., for the above example of H$_2$O:
+%\begin{verbatim}
+%      parameter(kpoints=92)       ! number of meas. points            
+%      parameter(komega=3000)      ! max. nr. of frequencies in PES 
+%      parameter(name='H2O')       ! set up the name   
+%\end{verbatim}
+This file \texttt{analyze-PES.f} is also to be compiled and
+  executed. The executable asks first for the qualifier of the 
+\texttt{pMP.<name>} file. Then it produces a couple of output files.
+Most important is the file
+\texttt{iPES.<name>} which contains integrated properties from
+the PES:\\
+\hspace*{1em}column 1: energy (in Ry),
+\\
+\hspace*{1em}column 2: total PES (arbitrary units),
+\\
+\hspace*{1em}column 3: quadrupole anisotropy ($\propto P_2(\cos\theta)$),
+\\
+\hspace*{1em}column 4: hexadecapole anisotropy ($\propto P_4(\cos\theta)$),
+\\
+\hspace*{1em}column 6: sixth order anisotropy ($\propto P_6(\cos\theta)$).
+\\
+%
+The most interesting observable is here the total PES in column 2. A
+logarithmic $y$-axis is recommended because the PES can span enormously
+different values. For an example see \fig{cpc:fig:PES} in the paper.
+		
+The routine in file \texttt{analyze-PES.f} produces a couple of
+further output files. The file \texttt{distavphi.<name>} contains the
+$\phi$-averaged PES in the plane of energy and angle $\theta$
+appropriate for a color-map plot in \texttt{gnuplot}.  The file
+\texttt{distavphi-map.<name>} contains the same information, but
+plotted in a plane the two outgoing momenta $p_z$ along the $z$-axis
+and $p_\perp$ orthogonal to it, again suited for color-map plotting.
+The file \texttt{parametric.<name>} plots also the $\phi$-averaged PES
+in the plane of energy and angle $\theta$, but here with a smooth
+reconstruction from $\theta$ average and quadrupole anisotropy which
+is more robust in case the given grid in $\theta$ and $\phi$ was
+sparse. Finally, the file \texttt{velomap.<name>} shows the same
+smoothed information as \texttt{parametric.<name>}, but in the plane
+of $p_z$ and $p_\perp$.
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=\linewidth]{H2O-PESandmore.jpg}
+  \caption{Different representations of PES for H$_2$O irradiated by a
+    laser pulse with characteristics as indicated. The laser
+    polarization is along the $z$ direction.  Upper panel: The angular
+    integrated PES versus kinetic energy $E_\mathrm{kin}$ of the emitted
+    electron (same as the PES in figure \ref{cpc:fig:PES}).  Lower left:
+    The $\phi$-integrated PES in the plane of $E_\mathrm{kin}$ and
+    angle $\theta$.  Middle left: The smoothed $\phi$-integrated PES
+    in the plane of $E_\mathrm{kin}$ and angle $\theta$.  Lower right:
+    The $\phi$-integrated PES in the plane of outgoing momenta $p_z$
+    and $p_{x,y}\equiv p_\perp$.  Middle right: The smoothed
+    $\phi$-integrated PES in the plane of outgoing momenta $p_z$ and
+    $p_{x,y}\equiv p_\perp$.  }\label{fig:H2O-PESandmore}
+\end{figure}
+Fig.~\ref{fig:H2O-PESandmore} illustrates the use of the different
+output files for visualizing the PES. Test case is the same as used
+for Fig.~\ref{cpc:fig:PES}, namely H$_2$O excited by a laser
+pulse. The upper panel repeats the fully angular integrated PES from
+Fig.~\ref{cpc:fig:PES}. The other four panels illustrate four ways of
+plotting the $\phi$-integrated PES in their two remaining dependences.
+The smoothed PES just resolve the differences in forward-sideward
+emission while the full PES (lower panels) can show more angular
+fluctuations.  The left panels show clearly the angular distributions
+for a given energy while the right panels in terms of outgoing
+momenta, or velocities respectively, provide an imagination of how the
+electrons flow apart in the different directions.
+
+\subsection{Dual pulses and pump-and-probe scenarios}
+
+The profiles for laser pulses provide also dual pulses, see
+Eq. (\ref{eq:doublepulse}). These are useful to design pump-and-probe
+scenarios which are widely used for time-resolved analysis of ionic
+motion in a molecule \cite{Zew94}. We demonstrate the capability here
+with an example for the Na$_9^+$ cluster, comparing two different
+delay times. The detailed input and output files are found in the
+directory \texttt{examples/Na9p/PandP}. The important ingredient is
+here the input for the laser pulse. It reads, for one of two
+cases:\\[3pt]
+\begin{minipage}{\linewidth}
+\begin{verbatim}
+itft=3, deltat=48.0, tnode=0.025,
+e1x=0.0, e1y=0.0, e1z=1.0,
+omega=0.169, e0=0.014,
+e0_2=0.0034, omega2=0.169, tstart2=200.0, deltat2=48.0,
+e2x=0.0, e2y=0.0, e2z=1.0,
+\end{verbatim}
+\end{minipage}
+\\[3pt] The first three lines define the pump pulse. We see that it
+has frequency $\omega_\mathrm{las}=0.169~{\rm Ry}=2.3$~eV, pulse
+length $T_\mathrm{pulse}=48$ fs, field strength $E_0=0.014$ Ry/a$_0$,
+and linear polarization along $z$. The small
+\texttt{tnode}$=t_0=0.025$ fs serves to stay away a tiny bit from the
+initialization at $t=0$.  The last two lines stand for the probe
+pulse (and are omitted if only a pump pulse is asked for). It starts
+at \texttt{tstart2}~$=t_0^{(2)}=200$~fs and its envelope reaches
+the peak value at $200+48/2$~fs. The envelope of the pump pulse has
+its peak at $48/2=24$~fs.  The delay is defined from peak to peak and
+it is thus $t_0^{(2)}=200$~fs for this case.
+
+Figure \ref{fig:Na9p-PandP} shows the results for pure pump and two
+different pump-and-probe pulses. 
+%\begin{figure}[htbp!]
+%  \centering
+%  \includegraphics[width=\linewidth]{Na9p-PandP}
+%  \caption{Illustration of a pump-and-probe scenario for Na$_{9}^+$.
+%    Pump and probe pulses have the same frequency $\omega_\mathrm{las}=2.3$ eV and
+%    pulse length $T_\mathrm{pulse}=48$ fs. The intensity of the pump
+%    pulse is $I=1.6\times10^{12}$ W/cm$^2$ and of the probe pulse
+%    $I=10^{11}$ W/cm$^2$.  Upper left: Time evolution of the ionic
+%    r.m.s. radius after the pump pulse \MD{only}.  Lower left: Time evolution of
+%    dipole \MD{moment in $z$-direction} for pure pump and pump-and-probe with two different
+%    delays as indicated.  Lower right: Time evolution of the
+%    ionization for pure pump and pump-and-probe with two different
+%    delays as indicated. Note that the two delay times correspond
+%    roughly to maximum and minimum of the ionic radius (upper left).
+%  }\label{fig:Na9p-PandP}
+%\end{figure}
+
+\begin{minipage}{0.59\linewidth}
+%\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=\linewidth]{Na9p-PandP}
+%\end{figure}
+\end{minipage}
+\hfill
+\begin{minipage}{0.4\linewidth}
+  \captionof{figure}{Illustration of a pump-and-probe scenario for
+    Na$_{9}^+$.  Pump and probe pulses have the same frequency
+    $\omega_\mathrm{las}=2.3$ eV and pulse length
+    $T_\mathrm{pulse}=48$ fs. The intensity of the pump pulse is
+    $I=1.6\times10^{12}$ W/cm$^2$ and of the probe pulse $I=10^{11}$
+    W/cm$^2$.  Upper left: Time evolution of the ionic r.m.s. radius
+    after the pump pulse only.  Lower left: Time evolution of dipole
+    moment in $z$-direction for pure pump and pump-and-probe with two
+    different delays (identical to $t_0^{(2)}$) as indicated.  Lower
+    right: Time evolution of the ionization for pure pump and
+    pump-and-probe with two different delays as indicated. Note that
+    the two delay times correspond roughly to maximum and minimum of
+    the ionic radius (upper left).
+  \label{fig:Na9p-PandP}}
+\end{minipage}
+
+The pump pulse (green curves in all panels)
+produces rather quickly an ionization stage of one charge unit. The
+Coulomb pressure thus generated induces significant ionic pulsations
+with the typical frequency for ionic motion in Na clusters
+\cite{Wop14aR}. The overall extension of a system has a direct impact
+on the plasmon frequency which determines the electronic response to
+an external photon field. 
+%We place the probe pulses once at the
+%maximum of the ionic radius (blue curves) and another at the minimum
+%(red curves). 
+We compare two different delay times of the probe pulse: the first one
+(blue curves) is chosen so that the envelop peak of the probe pulse matches
+the maximum of the ionic radius, while the second delay time (red curves) corresponds
+to the minimum of the ionic radius, as indicated in the upper left panel.
+The dipole responses in the direction of the laser polarization (lower left panel) are much different
+in each case
+because the plasmon frequency is lower at maximum radius, thus closer
+to the photon frequency \cite{Sur00a}. As a consequence, we experience
+a strong response whereas the probe pulse at the minimal radius has an
+order of magnitude weaker response. The effect can be observed
+experimentally from the extra ionization generated by the probe pulse, as shown in the
+lower right panel: It is indeed dramatic. Thus one can map the ionic radius
+oscillations by scanning the ionization for a dense series of probe
+delay times~\cite{And02b}. %$t_\mathrm{delay}$ \cite{And02b}.
+
+Experimental facilities have been much further developed to allow
+meanwhile atto-second pulses with well controlled profile and delay.
+What is an enormous effort at the experimental side shrinks to a mere
+change of input parameters for theorists which allows them to apply
+TDLDA in general and the QDD code in particular also for exploring
+atto-second dynamics \cite{Bra19a}.  Note, however, that the often
+used pump-and-probe setup with an IR pump and an XUV attopulse train
+\cite{Wop14b} calls for more coding. This option will be available in
+the next release of QDD.
+			
+			
+
+\clearpage
+\section{Some common mistakes}
+\label{sec:mistakes}     
+
+All the above shows that there are many numerical parameters which all
+have to be chosen in appropriate ranges else things do not work out
+properly.  In this section, we will address a few common misfits and
+their effect on the observables. The idea is to illustrate what can go
+wrong and how in the hope to make it easier to pinpoint a problem if
+it appears.
+	
+		
+\subsection{Too large time step}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{total-energy}
+%				\includegraphics[width=\linewidth]{total-energy-zoom}
+  \caption{Total energy as a function of time for H$_2$O, without any
+    external excitation, for 3 common problem
+    cases.}\label{fig:total-energy}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{nesc}
+  \caption{Ionization as a function of time for H$_2$O, without any
+    external excitation, for 3 common problem cases.}\label{fig:nesc}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=1.0\linewidth]{dipole}
+  \caption{Dipole response as a function of time for H$_2$O, without any external excitation, for 3 common problem cases.}\label{fig:dip}
+\end{figure}
+
+Figures \ref{fig:total-energy},~\ref{fig:nesc}~and~\ref{fig:dip}
+illustrate what happens if the chosen time step is too large. The
+total energy is not conserved and usually increases, often virtually
+exploding at some time. After $\sim$100$\,\mathrm{fs}$, most of the
+electrons are gone and spurious dipole moments are generated. This
+mis-choice of time step causes by far the strongest effect on the
+observables. The step from stable to unstable propagation is extremely
+small as also documented in figure \ref{cpc:fig:Na9p-compsteps_2}.
+			
+\subsection{Numerical box too small}
+
+A bit less severe but still strong enough to invalidate the
+calculation is when too small a box is chosen in connection with
+absorbing boundary conditions. In this case, the converged ground
+state will not be dynamically stable. Once the dynamics is started the
+electrons start to leak out of the box in quantities, the total energy
+will increase and sooner or later, the ionic structure disintegrates
+due to Coulomb pressure (if ionic motion was also enabled).
+%			
+A good rule of thumb to see if the box is big enough is to check the
+value of the electron ground-state density $\varrho(\mathbf{r})$ at the
+boundary of the box and make sure that
+$|\varrho(\mathbf{r})\left|_\mathrm{boundary}\right. < 10^{-8}$.
+
+
+
+
+In case of strong laser fields, a further effect comes into play.
+Besides strong electron emission, the external field generates also
+some electron dust. This dust can modify the dynamics due to its own
+dynamical response. This is a valid physical effect. But it causes a
+sensitivity to the box size because the extension of the dust, of
+course, changes with the box volume.  Box size is most crucial if one
+aims at effects from the ponderomotive motion of the emitted electron
+cloud as done, e.g., in refs.~\cite{Li15a,Gao17a,Rei18e}.  However,
+signals from the clusters volume, as dipole amplitude and energy
+absoportion from the laser pulse, remain robust.  A bit more sensitive
+is electron emission which remains qualitatively robust, but may vary
+in overall size.  Consider, e.g., the example of laser excitation of
+H$_2$O shown in figure \ref{cpc:fig:H2Oonoff}. This is computed on a
+grid with $N_x=N_y=N_z=64$ points using an absorbing boundary with
+$N_\mathrm{abs}=6$ points. This is a rather parsimonious choice done
+for demonstration purposes. More appropriate, in case of strong
+fields, would be e.g. $N_x=N_y=N_z=96$ with a rather good absorption
+of $N_\mathrm{abs}=16$. This costs considerably more computing time
+(factor 3.5), enhances energy absorption and emission by 15\%, but
+does not change the pattern of time evolution. And the dipole signal
+as well as energy absorption remain nearly unaffected.  This means in
+practice, that economically chosen box sizes do well in most
+cases. One may check larger boxes before drawing quantitative
+conclusions on emission.  And huge boxes are required when focusing on
+the ponderomotive dynamics of the emitted electrons. 
+			
+\subsection{Too large grid constant}
+
+The proper choice of the grid spacing \texttt{dx}$\equiv\delta x$ is
+another issue. It is never wrong to chose a too small grid spacing,
+but can be unnecessarily expensive. Dangers lie at the side of too
+large grid spacings. One problem is that the pseudopotential cannot be
+properly represented on the grid and thus the interaction between the
+electrons and the ions becomes too imprecise. Another point is that
+the mesh has to be fine enough to resolve all electronic
+wave functions, in dynamical cases covering also the possibly newly
+created Fourier components.
+
+The typical test is to run calculations, static as well as dynamic
+ones, with different grid spacings and to see at which point the
+results stabilize when going from larger spacings to smaller ones.
+%
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.7\linewidth]{H2O-varygrid}
+  \caption{\label{fig:H2O-varygid}Kinetic energy and s.p. energy of
+    the HOMO in H$_2$O as function of grid spacing $\delta x=\delta
+    y=\delta z$.}
+\end{figure}
+%
+Fig.~\ref{fig:H2O-varygid} shows an example for the H$_2$O molecule
+with the configuration and pseudo-potential parameters as explained in
+\scn{sec:explions}.  The number of grid points is varied together with
+grid spacing such that the size of the numerical box remains exactly
+the same to avoid unwanted side-effects from changing box size.
+The trend of the energies in the figures shows the typical behavior
+\cite{Blu92}: Large variations of energies at the side of too large
+grid spacings and nearly flat trends in the ``safe'' regime. For
+ground state and not too high excitations, the 
+limiting factor comes from the pseudopotential (or jellium background).
+As a rule of thumb one can say that the ``safe'' regime lies in
+the range  $\delta x\leq \sqrt{2\ln 2}r_\mathrm{PsP,min}$ where
+$r_\mathrm{PsP,min}$ is the smallest of the pseudo-potential radii.
+In rare cases, some s.p. states could have and even smaller
+  radius.
+Then one has to take this as limiting reference.
+			
+			
+\subsection{Impact of initial electron wave functions}
+\label{sec:initelec}
+
+It is advisable to try, for the static iterations, a starting
+  configuration which is close to the final one. Thereby, the spatial
+  distribution is less important. What counts is the distribution of
+  the nodes of the wave functions.  The initialization by harmonic
+  oscillator wave functions, option \texttt{init\_ao=.FALSE.}, allows
+  to tune rather flexibly that by the choice of initial deformations,
+  see table \ref{tab:input-params-global-initwf} and discussion
+  thereof.  The initialization by atomic orbitals, option
+  \texttt{init\_ao=.TRUE.}, allows that (to a lesser extend) by the
+  ordering instructions in the input file \texttt{for005ion.<name>}.
+  We exemplify the impact of the choice of initialization for the C$_3$
+  molecule.
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=\linewidth]{C3-testinitv2.pdf}
+  \caption{Evolution of average variance of s.p. energies (left) and
+    with total energy (right) with number of iterations for the C$_3$
+    molecule. Results for four different initializations are
+    shown. For details see text.  }
+  \label{fig:C3-testinit}
+\end{figure}
+Figure \ref{fig:C3-testinit} compares the convergence of variance and
+energy for four different initializations. The case ``localized,12
+states'' stands for initialization by atomic orbitals which are
+naturally localized and which fill exactly as many states as there are
+electrons. The three other case deal all with harmonic oscillators
+initialization. The cases are related one line
+in the input file \texttt{for005.<name>} as:
+\begin{center}
+\begin{tabular}{lcl}
+``$\beta$=0.3,$\gamma$=30,12 states''
+ &$\quad\longleftrightarrow\quad$&
+\texttt{b2occ=0.3, gamocc=30.0, deocc=0.1}
+\\
+``$\beta$=0.3,$\gamma$=30,18 states''
+ &$\quad\longleftrightarrow\quad$&
+\texttt{b2occ=0.3, gamocc=30.0, deocc=0.4}
+\\
+``$\beta$=0.9,$\gamma$=0,12 states''
+ &$\quad\longleftrightarrow\quad$&
+\texttt{b2occ=0.9, gamocc=0.0, deocc=0.05}
+\end{tabular}
+\end{center}
+Let us start with ``$\beta$=0.3,$\gamma$=30,12 states'' (green line).
+Some $\beta$ deformation is needed to avoid the high degeneracy of
+states in spherical basis which makes it impossible to select uniquely
+a configuration with 12 states. Still, there remains a degeneracy of
+two electron states. This problem is resolved by introducing also some
+triaxiality $\gamma$. This case the starts to converge rapidly, but
+then gets stuck in that the energy does not decrease any more and the
+variance even goes back up. After same time around iteration 500, a
+new phase of convergence starts which then leads to the final result.
+The reason for this behavior is that the distribution of nodes in the
+initial state differs from that in the final state. The 3D code is
+capable to perform the change, but it takes some time for it. One way
+to overcome that detour is to initialize more states than occupied in
+order to supply a richer choice of node structures. This comes to
+the case ``$\beta$=0.3,$\gamma$=30,18 states'' (blue). After some
+initial finding phase, it turns soon to straightforward convergence
+because the code performs occasional re-occupation of states filling
+freshly the states in the order of the actual s.p. energies (set by
+compile-time parameter \texttt{tocc} in \texttt{static.F90}).  The
+other option is to use a different deformation, here a larger one
+because C$_3$ is an elongated molecule. This is the case
+\texttt{b2occ=0.9, gamocc=0.0, deocc=0.05} (red line) which shows the
+best convergence of all because the distribution of nodes is correct
+from the onset. Finally, the case ``localized,12 states'' (purple)
+goes a long road to find the true minimum.  We spot at least two long
+rearrangement phases from which we conclude that the initial
+configuration is even worse than for the case
+``$\beta$=0.3,$\gamma$=30,12 states''. The reason is that C$_3$ has
+partially localized orbit and partially metallic orbits covering the
+whole molecule. The fully localized initialization does not map this
+structure.  The localized initialization can only be recommended for
+purely covalent binding. Generally, the harmonic oscillator
+initialization is to be preferred and even that has to be handled with
+care.  Some error and trial is recommended when dealing with complex
+geometries.
+
+\subsection{Open-shell systems}\label{sec:open-shell}
+
+If the ionic background has high symmetry, in worst case spherical
+symmetry as in atoms, one finds highly degenerated electron
+shells. This raises obnoxious problems if the number of electrons
+does not fill exactly those degenerated shells. There are then a couple
+of equivalent Slater states with different occupations, but exactly
+the same energy.  In such situations, straightforward static iterations
+do not converge, but are stuck in regular oscillations between the
+equivalent configurations. In molecules, the situation can be defused
+by breaking symmetry through a slight ionic displacement which is, in
+fact a physical mechanism called Jahn-Teller effect \cite{Eng72}.  It is
+not applicable for atoms which never loose spherical symmetry and
+dimers which are always axially symmetric. A way out in such
+unsolvable situations is to give the system  some electron
+``temperature'' to overcome the undecided oscillations between
+configurations. Each case has a certain minimum temperature above
+which it achieves a stable ground state. It is of the order of the
+typical level separation near the Fermi surface. A safe way to find the
+optimal temperature is to start with a high temperature and to reduce it
+until configuration oscillations take off.
+
+			
+\subsection{Spin assignment in spin-polarized systems}
+
+A subtle problem, as already discussed in \scn{sec:ionbackinit} in
+connection with the file \texttt{for005ion.<name>}, is the LCGO
+initialization of the spin configuration (input parameter
+\texttt{init\_ao=.TRUE.})  The filling strategy is explained in
+\scn{sec:ionbackinit}. With a bit of care, we can arrange a wanted net
+spin. Thus far the technical side. The problem remains that we often
+do not know the optimal total spin for a system. There is often no
+other choice than to check several possible spin settings and find out
+the minimum.
+
+	
+\clearpage
+			
+\section{Advanced compilation options}
+\label{sec:adv_compil}
+In the directory \texttt{\$QDD\_ROOT/src/qdd/Makefiles} are pre-configured makefiles for different compilers and computer architectures. They have the following naming convention
+\begin{verbatim}
+  Makefile.<compiler>.<architecture>.mk
+\end{verbatim}
+\begin{description}
+\item [Specifying computer architecture] The following predefined architectures are available
+  \begin{itemize}
+  \item Advanced Vector Extensions version 2 (AVX2). Oldest supported Intel CPUs: Haswell Q2 2013, Broadwell Q4 2014, Skylake Q3 2015
+  \item  512-bit Advanced Vector Extensions (AVX-512). Oldest supported CPUs: Knights Landing 2016, Knights Mill 2017
+  \item  512-bit Advanced Vector Extensions for Intel Xeon Phi (MIC-AVX512)
+  \end{itemize}
+  To see a list of supported CPU extensions on Linux, issue the command
+\begin{verbatim}
+  $ lscpu
+\end{verbatim}
+or
+\begin{verbatim}
+  $ cat /proc/cpuinfo
+\end{verbatim}
+or consult your cluster/supercomputer administrator.
+\item [Different compilers] there are makefile templates offered for 
+  \begin{itemize}
+  \item Intel Fortran (\texttt{ifort})
+  \item GNU Fortran (\texttt{gfortran})
+  \end{itemize}
+\item [Choosing FFT libraries] in all the makefiles there is support for the following external FFT libraries
+  \begin{itemize}
+  \item Intel MKL: (\texttt{TYPE\_FFT = MKL})
+  \item GNU Fortran (\texttt{TYPE\_FFT = FFTW})
+  \end{itemize}
+\item [Enable OpenMP parallelism] Enable OpenMP threading in the code
+  by putting \texttt{OMP = YES} in the makefile. Recompile. Before
+  starting the calculation set \texttt{OMP\_NUM\_THREADS} roughly
+  equal to the number of s.p. wave functions used in the calculation.
+  % The difference lies in the time-evolution, the whole step for
+  exponential evolution and the kinetic step in
+  TV-splitting. \texttt{YES} uses parallel FFT in the dynamic
+  evolution while \texttt{DYN} runs s.p. wave functions in parallel
+  and uses sequential FFT for the wave functions. The option
+  \texttt{DYN} becomes the more advantageous the more electrons are
+  involved.
+
+\item [Enable debugging] Two levels of debugging are available
+  \begin{itemize}
+  \item On the level of the compiler: (\texttt{DEBUG = YES})
+  \item OpenMP debugging (\texttt{OMP\_DEBUG = YES})
+  \end{itemize}
+\end{description}
+	
+\clearpage
+		
+\section{Details of code structure}	
+	
+\subsection{Basic fields in QDD}
+The basic arrays concern densities, potentials, and s.p. wave functions.  Densities and potentials distinguish spin which is denoted by $\uparrow=$ spin-up and $\downarrow=$ spin-down. Each s.p. wave function is associated with one unique spin carried in the array {\tt ispin(1:kstate)}. The fields are arranged the following way:
+
+\begin{description}
+\item{\tt rho(2*kdfull2):} electron number density, linearly stored in two blocks of length {\tt kdfull2}:\\
+  {\tt rho(1:kdfull2):} total electron density $\varrho(\mathbf{r})=\varrho_\uparrow(\mathbf{r})+\varrho_\downarrow(\mathbf{r})$\\
+  {\tt rho(kdfull2+1:2*kdfull2):} electron density difference $\varrho(\mathbf{r})=\varrho_\uparrow(\mathbf{r})-\varrho_\downarrow(\mathbf{r})$
+			
+\item{\tt aloc(2*kdfull2)} local Kohn-Sham potential,
+  linearly stored in two blocks of length {\tt kdfull2}:\\
+  {\tt aloc(1:kdfull2)} = local KS potential for spin-up
+  $=U_\uparrow(\mathbf{r})$\\
+  {\tt aloc(kdfull2+1:2*kdfull2)} = local KS potential for spin-down
+  $=U_\downarrow(\mathbf{r})$
+  
+\item{\tt chpcoul(kdfull2)} = Coulomb potential, linearly stored
+			
+\item{\tt psi(kdfull2,kstate)} = set of complex s.p. wave functions 
+  \\ 1. index for spatial distribution, 2. index counts the states
+  \\ complex array {\tt psi} for dynamics, real array {\tt psir} for static case
+  \\ each s.p. state has unique spin given in the array {\tt ispin(1:kstate)}
+			
+\item{\tt occup(kstate):} Occupation numbers for each of the \texttt{ksttot} number of electronic states, where \texttt{ksttot} is the total number of electronic states. 
+\item{\tt ispin(kstate):} The spin for each of the \texttt{ksttot} number of electronic states.
+\end{description}
+
+	
+\subsection{General subroutine calling tree}
+
+
+The TDLDA packages is a rather complex collection of routines.  Thus
+the tree structure of the code is sketched only at the major level of
+callings and is presented in three separate diagrams: the main routine
+with all initializations and two calls to the major drivers for static
+and dynamic calculations in Figure \ref{fig:tree_main}, the static
+driver in Figure \ref{fig:tree_static}, and the dynamic driver in
+Figure \ref{fig:tree_dyn}. Finally, an oversight over the tree
+structure of the RTA routines is given in figure \ref{fig:tree_rta}.
+
+
+\begin{figure}[htbp]
+  \centerline{\fbox{
+      \begin{picture}(122,158)(5,-146)
+	\put(10,8){\mbox{\tt main}}
+	\put(11,7){\line(0,-1){147}}
+	\put(50,1){\mbox{\large general initializations}}
+	\put(20,-4){\mbox{\tt cpu\_time,  init\_parallele, init\_simann}}
+	\put(11,-3){\line(1,0){8}}
+	\put(20,-8){\mbox{\tt  initnamelists, checkoptions}}
+	\put(11,-7){\line(1,0){8}}
+	\put(20,-12){\mbox{\tt init\_baseparams, iparams}}
+	\put(11,-11){\line(1,0){8}}
+	\put(20,-16){\mbox{\tt iperio, changeperio}}
+	\put(90,-16){\mbox{$\leftrightarrow$ PsP tables}}
+	\put(11,-15){\line(1,0){8}}
+	\put(20,-20){\mbox{\tt init\_grid, init\_fields}}
+	\put(11,-19){\line(1,0){8}}
+	\put(20,-24){\mbox{\tt init\_radmatrix}}
+	\put(90,-24){\mbox{$\leftrightarrow$ tables for SIC}}
+	\put(11,-23){\line(1,0){8}}
+	\put(20,-28){\mbox{\tt ocoption, init\_output}}
+	\put(11,-27){\line(1,0){8}}
+	\put(20,-32){\mbox{\tt init\_jellium, initions}}
+	\put(11,-31){\line(1,0){8}}
+	\put(20,-36){\mbox{\tt pseudo\_external}}
+	\put(90,-36){\mbox{$\leftrightarrow$ read explicit PsP}}
+	\put(11,-35){\line(1,0){8}}
+	\put(20,-40){\mbox{\tt initwf}}
+	\put(11,-39){\line(1,0){8}}
+	\put(20,-44){\mbox{\tt init\_homfield}}
+	\put(11,-43){\line(1,0){8}}
+	\put(20,-48){\mbox{\tt timer, init\_boxpara}}
+	\put(11,-47){\line(1,0){8}}
+	\put(50,-55){\mbox{\large static part}}
+	\put(20,-60){\mbox{\tt init\_fsicr}}
+	\put(11,-59){\line(1,0){8}}
+	\put(20,-64){\fbox{\tt statit}}
+	\put(11,-63){\line(1,0){8}}
+	\put(20,-68){\mbox{\tt simann}}
+	\put(11,-67){\line(1,0){8}}
+	\put(20,-72){\mbox{\tt afterburn}}
+	\put(11,-72){\line(1,0){8}}
+	\put(50,-79){\mbox{\large dynamic part}}
+	\put(20,-84){\mbox{\tt init\_absbc, init\_abs\_accum, initmeasurepoints}}
+	\put(11,-83){\line(1,0){8}}
+	\put(20,-88){\mbox{\tt init\_dynprotocol, evaluate}}
+	\put(11,-87){\line(1,0){8}}
+	\put(20,-92){\mbox{\tt init\_fsic, init\_scattel{\rm(??)}}}
+	\put(11,-91){\line(1,0){8}}
+	\put(20,-96){\mbox{\tt init\_dynwf}}
+	\put(11,-95){\line(1,0){8}}
+	\put(20,-100){\mbox{\tt restart2, addcluster}}
+	\put(11,-99){\line(1,0){8}}
+	\put(20,-104){\mbox{\tt calclocal, calc\_sic, calcpseudo}}
+	\put(11,-103){\line(1,0){8}}
+	\put(20,-108){\mbox{\tt dyn\_mfield, fermi\_init, info}}
+	\put(11,-107){\line(1,0){8}}
+	\put(20,-112){\mbox{\tt mergetabs, ordo\_per\_spin}}
+	\put(11,-111){\line(1,0){8}}
+	\put(20,-116){\mbox{\tt calc\_proj, calc\_projFine}}
+	\put(11,-115){\line(1,0){8}}
+	\put(20,-120){\mbox{\tt mpi\_barrier}}
+	\put(11,-119){\line(1,0){8}}
+	\put(20,-124){\mbox{\tt rhointxy, rhointxz, rhointyz}}
+	\put(11,-123){\line(1,0){8}}
+	\put(20,-128){\mbox{\tt lffirststep}}
+	\put(11,-127){\line(1,0){8}}
+	\put(20,-132){\mbox{\tt open\_protok\_el, analyze\_elect}}
+	\put(11,-131){\line(1,0){8}}
+	\put(20,-136){\fbox{\tt dyn\_propag}}
+	\put(11,-135){\line(1,0){8}}
+	\put(20,-141){\mbox{\tt mpi\_finalize}}
+	\put(11,-140){\line(1,0){8}}
+      \end{picture}
+  }}
+  \caption{\label{fig:tree_main}
+    Schematic calling tree for the main routine in {\tt main.F90}.
+    The calling trees for the two major 
+    subroutines in framed boxes are explained in
+    subsequent figures \ref{fig:tree_static} and  \ref{fig:tree_dyn}.
+  }
+\end{figure}
+
+%\subsection{Subroutine calling tree for static calculations}
+%See \fig{fig:tree_static}.
+
+\begin{figure}[htbp]
+  \centerline{\fbox{
+      \begin{picture}(122,66)(5,-62)
+	\put(10,0){\mbox{\tt static}}
+	\put(11,-1){\line(0,-1){58}}
+	\put(20,-4){\mbox{\tt calcrhor}}
+	\put(11,-3){\line(1,0){8}}
+	\put(20,-8){\mbox{\tt falr, solv\_possion}}
+	\put(11,-7){\line(1,0){8}}
+	\put(20,-12){\mbox{\tt calcpseudo, static\_mfield}}
+	\put(11,-11){\line(1,0){8}}
+	\put(20,-16){\mbox{\tt pricm, infor, prifld}}
+	\put(11,-15){\line(1,0){8}}
+	\put(20,-20){\mbox{\tt sstep}}
+	\put(11,-19){\line(1,0){8}}
+	\put(21,-21){\line(0,-1){22}}
+	\put(30,-24){\mbox{\tt cpu\_time, system\_clock}}
+	\put(21,-23){\line(1,0){8}}
+	\put(30,-28){\mbox{\tt exchgr, subtr\_sicpot}}
+	\put(21,-27){\line(1,0){8}}
+	\put(30,-32){\mbox{\tt nonlocalr}}
+	\put(21,-31){\line(1,0){8}}
+	\put(30,-36){\mbox{\tt rftf, rfftback, rkin3D}}
+	\put(21,-35){\line(1,0){8}}
+	\put(30,-40){\mbox{\tt project, givens}}
+	\put(21,-39){\line(1,0){8}}
+	\put(30,-44){\mbox{\tt schmidt, reocc}}
+	\put(21,-43){\line(1,0){8}}
+	\put(20,-48){\mbox{\tt prifldz, pri\_pstat, printfield}}
+	\put(11,-47){\line(1,0){8}}
+	\put(20,-52){\mbox{\tt localizer, mtv\_field}}
+	\put(11,-51){\line(1,0){8}}
+	\put(20,-56){\mbox{\tt resume, rsave}}
+	\put(11,-55){\line(1,0){8}}
+	\put(20,-60){\mbox{\tt infor\_sic, diag\_lagr}}
+	\put(11,-59){\line(1,0){8}}
+      \end{picture}
+  }}
+  \caption{\label{fig:tree_static}
+    Schematic calling tree for the static driver routine in {\tt static.F90}.
+  }
+\end{figure}
+
+%\subsection{Subroutine calling tree for dynamic calculations}
+%See \fig{fig:tree_dyn}.
+
+\begin{figure}[htbp]
+  \centerline{\fbox{
+      \begin{picture}(122,70)(5,-66)
+	\put(10,0){\mbox{\tt dyn\_propag}}
+	\put(11,-1){\line(0,-1){62}}
+	\put(20,-4){\mbox{\tt stimer, print\_densdiff, savings}}
+	\put(11,-3){\line(1,0){8}}
+	\put(20,-8){\fbox{\tt rta}}
+	\put(11,-7){\line(1,0){8}}
+	\put(90,-8){\mbox{$\leftrightarrow$ see section \ref{sec:RTA}}}
+	\put(20,-12){\mbox{\tt init\_occ\_target, init\_psitarget}}
+	\put(11,-11){\line(1,0){8}}
+	\put(20,-16){\mbox{\tt tstep\_exp, CrankNicholson\_exp}}
+	\put(11,-15){\line(1,0){8}}
+	\put(20,-20){\mbox{\tt tstep}}
+	\put(11,-19){\line(1,0){8}}
+	\put(21,-21){\line(0,-1){18}}
+	\put(30,-24){\mbox{\tt cpu\_time, system\_clock}}
+	\put(21,-23){\line(1,0){8}}
+	\put(30,-28){\mbox{\tt nonlocstep}}
+	\put(21,-27){\line(1,0){8}}
+	\put(30,-32){\mbox{\tt kinprop, fftf, fftback}}
+	\put(21,-31){\line(1,0){8}}
+	\put(30,-36){\mbox{\tt eval\_unitrot}}
+	\put(21,-35){\line(1,0){8}}
+	\put(30,-40){\mbox{\tt dyn\_meanfield, escmask, checkzeroforce}}
+	\put(21,-39){\line(1,0){8}}
+	\put(20,-44){\mbox{\tt rhointxy, rhointxz, rhointyz, testcurrent}}
+	\put(11,-43){\line(1,0){8}}
+	\put(20,-48){\mbox{\tt itstep, itstepv, enerkin\_ions, reset\_ions}}
+	\put(11,-47){\line(1,0){8}}
+	\put(20,-52){\mbox{\tt calc\_pseudo, calclocal, calc\_sic}}
+	\put(11,-51){\line(1,0){8}}
+	\put(20,-56){\mbox{\tt calc\_proj, calc\_projFine}}
+	\put(11,-55){\line(1,0){8}}
+	\put(20,-60){\mbox{\tt analyze\_elect, analyze\_ions, energ\_ions}}
+	\put(11,-59){\line(1,0){8}}
+	\put(20,-64){\mbox{\tt mpi\_barrier}}
+	\put(11,-63){\line(1,0){8}}
+      \end{picture}
+  }}
+  \caption{\label{fig:tree_dyn}
+    Schematic calling tree for the static driver routine in {\tt dynamic.F90}.
+    The routine in the framed box is explained in great detail in section \ref{cpc:sec:RTA}.}
+\end{figure}
+
+
+%\subsection{The RTA calling tree}\label{eq:treeRTA}
+
+\begin{figure}[htbp]
+  \centerline{\fbox{
+      \begin{picture}(122,159)(5,-155)
+	\put(10,0){\mbox{\tt RTA}}
+	\put(11,-1){\line(0,-1){150}}
+	\put(20,-4){\mbox{\tt srhomat}}
+	\put(11,-3){\line(1,0){8}}
+	\put(21,-5){\line(0,-1){6}}
+	\put(30,-8){\mbox{\tt scalar}}
+	\put(21,-7){\line(1,0){8}}
+	\put(30,-12){\mbox{\tt cdiagmat}}
+	\put(21,-11){\line(1,0){8}}
+	\put(31,-13){\line(0,-1){2}}
+	\put(40,-16){\mbox{\tt HEigensystem}}
+	\put(31,-15){\line(1,0){8}}
+	\put(90,-16){\mbox{$\leftrightarrow$ library routine}}
+	\put(20,-20){\mbox{\tt eqstate}}
+	\put(21,-21){\line(0,-1){74}}
+	\put(11,-19){\line(1,0){8}}
+	\put(30,-24){\mbox{\tt calcrhotot}}
+	\put(21,-23){\line(1,0){8}}
+	\put(30,-28){\mbox{\tt calc\_current}}
+	\put(21,-27){\line(1,0){8}}
+	\put(30,-32){\mbox{\tt calc\_Eref}}
+	\put(21,-31){\line(1,0){8}}
+	\put(30,-36){\mbox{\tt fermi1}}
+	\put(31,-37){\line(0,-1){2}}
+	\put(21,-35){\line(1,0){8}}
+	\put(40,-40){\mbox{\tt occT1}}
+	\put(31,-39){\line(1,0){8}}
+	\put(30,-44){\mbox{\tt calc\_psi1}}
+	\put(31,-45){\line(0,-1){38}}
+	\put(21,-43){\line(1,0){8}}
+	\put(40,-48){\mbox{\tt calc\_hamiltonien}}
+	\put(31,-47){\line(1,0){8}}
+	\put(40,-52){\mbox{\tt calc\_var}}
+	\put(41,-53){\line(0,-1){2}}
+	\put(50,-56){\mbox{\tt cproject}}
+	\put(41,-55){\line(1,0){8}}
+	\put(90,-56){\mbox{$\leftrightarrow$ \footnotesize obsolete?}}
+	\put(40,-60){\mbox{\tt calcrhotot}}
+	\put(31,-59){\line(1,0){8}}
+	\put(40,-64){\mbox{\tt calc\_current}}
+	\put(31,-63){\line(1,0){8}}
+	\put(40,-68){\mbox{\tt cschmidt}}
+	\put(31,-67){\line(1,0){8}}
+	\put(90,-68){\mbox{$\leftrightarrow$ TDLDA package}}
+	\put(40,-72){\mbox{\tt calc\_ekin}}
+	\put(31,-71){\line(1,0){8}}
+	\put(90,-72){\mbox{$\leftrightarrow$ TDLDA package}}
+	\put(40,-76){\mbox{\tt nonlocalc}}
+	\put(31,-75){\line(1,0){8}}
+	\put(90,-76){\mbox{$\leftrightarrow$ TDLDA package}}
+	\put(40,-80){\mbox{\tt fftf}}
+	\put(31,-79){\line(1,0){8}}
+	\put(90,-80){\mbox{$\leftrightarrow$ FFTW3 package}}
+	\put(40,-84){\mbox{\tt fftback}}
+	\put(31,-83){\line(1,0){8}}
+	\put(90,-84){\mbox{$\leftrightarrow$ FFTW3 package}}
+	\put(30,-88){\mbox{\tt coul\_mfield}}
+	\put(21,-87){\line(1,0){8}}
+	\put(90,-88){\mbox{$\leftrightarrow$ TDLDA package}}
+	\put(30,-92){\mbox{\tt dyn\_mfield}}
+	\put(21,-91){\line(1,0){8}}
+	\put(90,-92){\mbox{$\leftrightarrow$ TDLDA package}}
+	\put(30,-96){\mbox{\tt info}}
+	\put(21,-95){\line(1,0){8}}
+	\put(90,-96){\mbox{$\leftrightarrow$ TDLDA package}}
+	\put(20,-100){\mbox{\tt occupT0}}
+	\put(21,-101){\line(0,-1){2}}
+	\put(11,-99){\line(1,0){8}}
+	\put(30,-104){\mbox{\tt indexx}}
+	\put(21,-103){\line(1,0){8}}
+	\put(20,-108){\mbox{\tt calcrhoeq}}
+	\put(21,-109){\line(0,-1){10}}
+	\put(11,-107){\line(1,0){8}}
+	\put(30,-112){\mbox{\tt cdiagmat}}
+	\put(31,-113){\line(0,-1){2}}
+	\put(21,-111){\line(1,0){8}}
+	\put(40,-116){\mbox{\tt HEigensystem}}
+	\put(31,-115){\line(1,0){8}}
+	\put(90,-116){\mbox{$\leftrightarrow$ library routine}}
+	\put(30,-120){\mbox{\tt  indexx}}
+	\put(21,-119){\line(1,0){8}}
+	\put(20,-124){\mbox{\tt calc\_Eref}}
+	\put(11,-123){\line(1,0){8}}
+	\put(20,-128){\mbox{\tt CorrectEnergy2}}
+	\put(11,-127){\line(1,0){8}}
+	\put(20,-132){\mbox{\tt OccupPerSpin}}
+	\put(11,-131){\line(1,0){8}}
+	\put(20,-136){\mbox{\tt temperature}}
+	\put(11,-135){\line(1,0){8}}
+	\put(21,-137){\line(0,-1){2}}
+	\put(30,-140){\mbox{\tt lmdif1}}
+	\put(21,-139){\line(1,0){8}}
+	\put(20,-144){\mbox{\tt dyn\_mfield}}
+	\put(11,-143){\line(1,0){8}}
+	\put(90,-144){\mbox{$\leftrightarrow$ TDLDA package}}
+	\put(20,-148){\mbox{\tt info}}
+	\put(11,-147){\line(1,0){8}}
+	\put(90,-148){\mbox{$\leftrightarrow$ TDLDA package}}
+	\put(20,-152){\mbox{\tt analyze\_elect}}
+	\put(11,-151){\line(1,0){8}}
+	\put(90,-152){\mbox{$\leftrightarrow$ TDLDA package}}
+      \end{picture}
+  }}
+  \caption{\label{fig:tree_rta}
+    Schematic calling tree for the static driver routine in {\tt dynamic.F90}.}
+\end{figure}
+					
+\newpage
+\bibliographystyle{plain}
+\bibliography{User_manual.bib}
+
+\end{document}

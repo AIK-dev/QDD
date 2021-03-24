@@ -1,0 +1,11 @@
+*.aux
+*.dvi
+*.log
+*.ps
+#*.pdf
+*.toc
+.texpadtmp
+*.bbl
+*.blg
+*.spl
+*.out

@@ -1,0 +1,63 @@
+\documentclass[11pt,a4paper]{article}
+%\input{../User_manual.preamble.tex}
+%\usepackage[utf8]{inputenc}
+\usepackage{xcolor}
+\usepackage{parskip}
+\usepackage{graphicx}
+\usepackage{mathtools}
+%\usepackage{physics}
+%\usepackage[xetex]{hyperref}
+\usepackage{hypertoc}
+\usepackage{enumitem}
+\usepackage{fancyvrb}
+%\usepackage{mathspec}
+\usepackage{titlesec,titletoc}
+\usepackage[singlelinecheck=false]{caption}
+\usepackage{tikz}
+
+
+\begin{document}
+
+There are systems which cannot be describe by a simple mean-field
+state within DFT. Trying to describe them, nonetheless, with DFT runs
+into strange problems already with the static iteration. Many atoms
+show this problem. We discuss here as simple example the carbon atom.
+%
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{C_atom_instab.pdf}
+\caption{Evolution of static iterations for the C atom as function of
+  iteration number.  Lower left: total energy. Upper left: average
+  variance of s.p. energies. Lower right: lowest s.p. energies as
+  indicate. Upper right: Occupation numbers in the spin-up 1p shell.
+}
+\label{fig:C_atom_instab}
+\end{figure}
+%
+Figure \ref{fig:C_atom_instab} shows the (non-)convergence pattern of
+four crucial observables. The total energy in the lower left panel
+gives the impression of perfect convergence in that it approaches
+quickly a stable asymptotic value. However, the average variance of
+s.p. energies (upper left) is stuck at a too large value. Even when
+playing with iteration parameters, there is no way to reduce the final
+variance significantly. What happens becomes apparent when looking at
+the behavior of s.p. energies and occupation numbers in detail. This
+is done in the two right panels whereby we concentrate on states which
+have a chance to be occupied. We see that there are two states in the
+$1p$ shell never stop to exchange occupations from one iteration to
+the next. Recall that C has total spin 1 in its ground state. The $1s$
+shell is occupied by two electron, spin-up and spin-down. The two
+remaining electrons are both spin-up to form a spin 1 configuration as
+observed in experiment. The two electrons have three states to fill in
+the $1p$ shell. Whichever two states we decide to fill the emerging
+Kohn-Sham field yields s.p. energies which prefer the other
+configuration (if the states are occupied in energy order as should be
+done). Such systems as the C atom require correlated states to obtain
+a unique ground state. Unfortunately, there is no simple rule to tell
+in advance when such an unstable situation will occur as soon as one
+deals with molecules because then the electronic state depends
+sensitively on the ionic configuration. The user has to be alert to
+spot the problem if it happens.
+
+
+\end{document}

@@ -1,0 +1,942 @@
+\documentclass[final,1p]{elsarticle}
+\usepackage{amssymb}
+\usepackage{stackrel}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{rotating}
+\usepackage{color}
+%\usepackage{ulem}
+\usepackage{tikz}
+\usepackage{epic}
+% \usepackage{caption,subcaption}
+%\usepackage{subeqnarray}
+\usepackage{titlesec}
+\usepackage{etoolbox}
+
+\makeatletter
+\patchcmd{\ttlh@hang}{\parindent\z@}{\parindent\z@\leavevmode}{}{}
+\patchcmd{\ttlh@hang}{\noindent}{}{}{}
+\makeatother
+
+\setcounter{secnumdepth}{4}
+
+\titleformat{\paragraph}
+{\normalfont\small\scshape}{\theparagraph}{1em}{}
+%{\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
+\titlespacing*{\paragraph}
+{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+
+\newcommand\encircle[1]{%
+  \tikz[baseline=(X.base)] 
+    \node (X) [draw, shape=circle, inner sep=0] {\strut #1};}
+
+\newcommand{\I}{\mathrm{i}}
+\newcommand{\D}{\mathrm{d}}
+
+\newcommand{\PGR}[1]{{\color{blue} #1}}
+\newcommand{\PGRcomm}[1]{{\color{blue}\small\em PGR2all: #1}}
+\newcommand{\PGRfoot}[1]{{\color{blue}\footnote{\color{blue} #1}}}
+\newcommand{\ES}[1]{{\color{red} #1}}
+\newcommand{\EScomm}[1]{{\color{red}\small\em ES2all: #1}}
+\newcommand{\ESfoot}[1]{{\color{red}\footnote{\color{red} #1}}}
+\newcommand{\bmu}{{\mbox{\boldmath{$\mu$}}}}
+
+\newcounter{denselistcounter}
+\newenvironment{denselist}[1]
+{ \begin{list}
+  {#1{denselistcounter})}{\usecounter{denselistcounter}
+  \setlength{\topsep}{-0pt}
+  \setlength{\partopsep}{-0pt}
+  \setlength{\itemsep}{-0pt}
+  \setlength{\parsep}{-0pt}
+  \setlength{\labelwidth}{6pt}
+  \setlength{\labelsep}{4pt}
+  \setlength{\leftmargin}{20pt}
+  \setlength{\rightmargin}{20pt}
+  }
+}
+{\end{list}}
+
+\unitlength 1mm
+\thicklines
+
+\begin{document}
+
+
+\begin{frontmatter}
+
+\title{Quantum Dissipative Dynamics\\
+A real time real space approach to far off equilibrium dynamics in finite electron systems}
+
+\author{F.~Coppens$^{a,b}$}
+\author{P. M. Dinh$^{a,b}$}
+\author{J. Heraud$^{a,b}$}
+\author{P.-G.~Reinhard$^c$}
+\author{E.~Suraud$^{a,b,d}$}
+\author{M.~Vincendon$^{a,b}$}
+\cortext[author]{Corresponding author:
+  coppens@irsamc.ups-tlse.fr} 
+\address{$^a$Universit\'e de Toulouse; UPS; Laboratoire de Physique
+             Th\'{e}orique, IRSAMC; F-31062 Toulouse Cedex, France}
+\address{$^b$Laboratoire de Physique Th\'eorique, Universit\'e Paul
+  Sabatier, CNRS, F-31062 Toulouse C\'edex, France}
+\address{$^c$Institut f{\"u}r Theoretische Physik, Universit{\"a}t
+  Erlangen, D-91058 Erlangen, Germany}
+\address{$^d$School of Mathematics and Physics, Queen's University Belfast, Belfast, UK}
+
+\date{Status: 12. January 2019}
+\begin{abstract}
+\PGR{\em This is a first draft for the CPC presenting the TDLDA+RTA code
+  to the public. The layout of presentation has yet to be discussed.
+Presently it mixes theory and algorithm with code. We may also
+consider collecting all theory \& numerics together then followed by a
+huge block detailing the code.}
+\end{abstract}
+
+\begin{keyword}
+%\PACS{05.30.Fk,31.70.Hq,34.10.+x,36.40.Cg}
+electronic dissipation, time-dependent
+density functional theory, ...
+\end{keyword}
+\end{frontmatter}
+
+\tableofcontents
+
+\noindent
+\PGRcomm{Two general points yet to be clarified:
+\\
+The code is still capable of coupling to a dielectric
+  environment. We should skip that for the CPC publication.
+\\
+Another question to be discussed is whether we maintain the option to
+run finite differences instead of FFT. If we do so, then we have to
+test that branch carefully.
+}
+
+
+\subsection{The structure of the TDLDA  and RTA packages}
+\label{sec:TDLDA_RTAnum}
+
+%\input{storage}
+
+\EScomm{TDLDA and RTA calling trees to be simplified with keywords only; 
+Present figs to be put in supplemental material together with details on subroutines. 
+NB Supplemental material to be made as separate file. }
+
+\subsubsection{The TDLDA calling tree}
+\label{sec:TDLDAtree}
+
+The TDLDA packages is a rather complex collection of routines.  Thus
+the tree structure of the code is sketched only at the major level of
+callings and is presented in three separate diagrams: the main routine
+with all initializations and two calls to the major drivers for static
+and dynamic calculations in diagram \ref{fig:tree_main}, the static
+driver in diagram \ref{fig:tree_static}, and the dynamic driver in
+\ref{fig:tree_dyn}.
+\begin{figure}
+\centerline{\fbox{
+\begin{picture}(122,158)(5,-146)
+\put(10,8){\mbox{\tt main}}
+\put(11,7){\line(0,-1){147}}
+ \put(50,1){\mbox{\large general initializations}}
+   \put(20,-4){\mbox{\tt cpu\_time,  init\_parallele, init\_simann}}
+   \put(11,-3){\line(1,0){8}}
+   \put(20,-8){\mbox{\tt  initnamelists, checkoptions}}
+   \put(11,-7){\line(1,0){8}}
+   \put(20,-12){\mbox{\tt init\_baseparams, iparams}}
+   \put(11,-11){\line(1,0){8}}
+   \put(20,-16){\mbox{\tt iperio, changeperio}}
+        \put(90,-16){\mbox{$\leftrightarrow$ PsP tables}}
+   \put(11,-15){\line(1,0){8}}
+   \put(20,-20){\mbox{\tt init\_grid, init\_fields}}
+   \put(11,-19){\line(1,0){8}}
+   \put(20,-24){\mbox{\tt init\_radmatrix}}
+        \put(90,-24){\mbox{$\leftrightarrow$ tables for SIC}}
+   \put(11,-23){\line(1,0){8}}
+   \put(20,-28){\mbox{\tt ocoption, init\_output}}
+   \put(11,-27){\line(1,0){8}}
+   \put(20,-32){\mbox{\tt init\_jellium, initions}}
+   \put(11,-31){\line(1,0){8}}
+   \put(20,-36){\mbox{\tt pseudo\_external}}
+        \put(90,-36){\mbox{$\leftrightarrow$ read explicit PsP}}
+   \put(11,-35){\line(1,0){8}}
+   \put(20,-40){\mbox{\tt initwf}}
+   \put(11,-39){\line(1,0){8}}
+   \put(20,-44){\mbox{\tt init\_homfield}}
+   \put(11,-43){\line(1,0){8}}
+   \put(20,-48){\mbox{\tt timer, init\_boxpara}}
+   \put(11,-47){\line(1,0){8}}
+ \put(50,-55){\mbox{\large static part}}
+   \put(20,-60){\mbox{\tt init\_fsicr}}
+   \put(11,-59){\line(1,0){8}}
+   \put(20,-64){\fbox{\tt statit}}
+   \put(11,-63){\line(1,0){8}}
+   \put(20,-68){\mbox{\tt simann}}
+   \put(11,-67){\line(1,0){8}}
+   \put(20,-72){\mbox{\tt afterburn}}
+   \put(11,-72){\line(1,0){8}}
+ \put(50,-79){\mbox{\large dynamic part}}
+   \put(20,-84){\mbox{\tt init\_absbc, init\_abs\_accum, initmeasurepoints}}
+   \put(11,-83){\line(1,0){8}}
+   \put(20,-88){\mbox{\tt init\_dynprotocol, evaluate}}
+   \put(11,-87){\line(1,0){8}}
+   \put(20,-92){\mbox{\tt init\_fsic, init\_scattel{\rm(??)}}}
+   \put(11,-91){\line(1,0){8}}
+   \put(20,-96){\mbox{\tt init\_dynwf}}
+   \put(11,-95){\line(1,0){8}}
+   \put(20,-100){\mbox{\tt restart2, addcluster}}
+   \put(11,-99){\line(1,0){8}}
+   \put(20,-104){\mbox{\tt calclocal, calc\_sic, calcpseudo}}
+   \put(11,-103){\line(1,0){8}}
+   \put(20,-108){\mbox{\tt dyn\_mfield, fermi\_init, info}}
+   \put(11,-107){\line(1,0){8}}
+   \put(20,-112){\mbox{\tt mergetabs, ordo\_per\_spin}}
+   \put(11,-111){\line(1,0){8}}
+   \put(20,-116){\mbox{\tt calc\_proj, calc\_projFine}}
+   \put(11,-115){\line(1,0){8}}
+   \put(20,-120){\mbox{\tt mpi\_barrier}}
+   \put(11,-119){\line(1,0){8}}
+   \put(20,-124){\mbox{\tt rhointxy, rhointxz, rhointyz}}
+   \put(11,-123){\line(1,0){8}}
+   \put(20,-128){\mbox{\tt lffirststep}}
+   \put(11,-127){\line(1,0){8}}
+   \put(20,-132){\mbox{\tt open\_protok\_el, analyze\_elect}}
+   \put(11,-131){\line(1,0){8}}
+   \put(20,-136){\fbox{\tt dyn\_propag}}
+   \put(11,-135){\line(1,0){8}}
+   \put(20,-141){\mbox{\tt mpi\_finalize}}
+   \put(11,-140){\line(1,0){8}}
+\end{picture}
+}}
+\caption{\label{fig:tree_main}
+Schematic calling tree for the main routine in {\tt main.F90}.
+The calling trees for the two major 
+subroutines in framed boxes are explained in
+subsequent figures \ref{fig:tree_static} and  \ref{fig:tree_dyn}.
+}
+\end{figure}
+
+
+\begin{figure}
+\centerline{\fbox{
+\begin{picture}(122,66)(5,-62)
+\put(10,0){\mbox{\tt static}}
+\put(11,-1){\line(0,-1){58}}
+   \put(20,-4){\mbox{\tt calcrhor}}
+   \put(11,-3){\line(1,0){8}}
+   \put(20,-8){\mbox{\tt falr, solv\_possion}}
+   \put(11,-7){\line(1,0){8}}
+   \put(20,-12){\mbox{\tt calcpseudo, static\_mfield}}
+   \put(11,-11){\line(1,0){8}}
+   \put(20,-16){\mbox{\tt pricm, infor, prifld}}
+   \put(11,-15){\line(1,0){8}}
+   \put(20,-20){\mbox{\tt sstep}}
+   \put(11,-19){\line(1,0){8}}
+   \put(21,-21){\line(0,-1){22}}
+      \put(30,-24){\mbox{\tt cpu\_time, system\_clock}}
+      \put(21,-23){\line(1,0){8}}
+      \put(30,-28){\mbox{\tt exchgr, subtr\_sicpot}}
+      \put(21,-27){\line(1,0){8}}
+      \put(30,-32){\mbox{\tt nonlocalr}}
+      \put(21,-31){\line(1,0){8}}
+      \put(30,-36){\mbox{\tt rftf, rfftback, rkin3D}}
+      \put(21,-35){\line(1,0){8}}
+      \put(30,-40){\mbox{\tt project, givens}}
+      \put(21,-39){\line(1,0){8}}
+      \put(30,-44){\mbox{\tt schmidt, reocc}}
+      \put(21,-43){\line(1,0){8}}
+   \put(20,-48){\mbox{\tt prifldz, pri\_pstat, printfield}}
+   \put(11,-47){\line(1,0){8}}
+   \put(20,-52){\mbox{\tt localizer, mtv\_field}}
+   \put(11,-51){\line(1,0){8}}
+   \put(20,-56){\mbox{\tt resume, rsave}}
+   \put(11,-55){\line(1,0){8}}
+   \put(20,-60){\mbox{\tt infor\_sic, diag\_lagr}}
+   \put(11,-59){\line(1,0){8}}
+\end{picture}
+}}
+\caption{\label{fig:tree_static}
+Schematic calling tree for the static driver routine in {\tt static.F90}.
+}
+\end{figure}
+
+
+\begin{figure}
+\centerline{\fbox{
+\begin{picture}(122,70)(5,-66)
+\put(10,0){\mbox{\tt dyn\_propag}}
+\put(11,-1){\line(0,-1){62}}
+   \put(20,-4){\mbox{\tt stimer, print\_densdiff, savings}}
+   \put(11,-3){\line(1,0){8}}
+   \put(20,-8){\fbox{\tt rta}}
+   \put(11,-7){\line(1,0){8}}
+        \put(90,-8){\mbox{$\leftrightarrow$ see section \ref{sec:RTA}}}
+   \put(20,-12){\mbox{\tt init\_occ\_target, init\_psitarget}}
+   \put(11,-11){\line(1,0){8}}
+   \put(20,-16){\mbox{\tt tstep\_exp, CrankNicholson\_exp}}
+   \put(11,-15){\line(1,0){8}}
+   \put(20,-20){\mbox{\tt tstep}}
+   \put(11,-19){\line(1,0){8}}
+   \put(21,-21){\line(0,-1){18}}
+      \put(30,-24){\mbox{\tt cpu\_time, system\_clock}}
+      \put(21,-23){\line(1,0){8}}
+      \put(30,-28){\mbox{\tt nonlocstep}}
+      \put(21,-27){\line(1,0){8}}
+      \put(30,-32){\mbox{\tt kinprop, fftf, fftback}}
+      \put(21,-31){\line(1,0){8}}
+      \put(30,-36){\mbox{\tt eval\_unitrot}}
+      \put(21,-35){\line(1,0){8}}
+      \put(30,-40){\mbox{\tt dyn\_meanfield, escmask, checkzeroforce}}
+      \put(21,-39){\line(1,0){8}}
+   \put(20,-44){\mbox{\tt rhointxy, rhointxz, rhointyz, testcurrent}}
+   \put(11,-43){\line(1,0){8}}
+   \put(20,-48){\mbox{\tt itstep, itstepv, enerkin\_ions, reset\_ions}}
+   \put(11,-47){\line(1,0){8}}
+   \put(20,-52){\mbox{\tt calc\_pseudo, calclocal, calc\_sic}}
+   \put(11,-51){\line(1,0){8}}
+   \put(20,-56){\mbox{\tt calc\_proj, calc\_projFine}}
+   \put(11,-55){\line(1,0){8}}
+   \put(20,-60){\mbox{\tt analyze\_elect, analyze\_ions, energ\_ions}}
+   \put(11,-59){\line(1,0){8}}
+   \put(20,-64){\mbox{\tt mpi\_barrier}}
+   \put(11,-63){\line(1,0){8}}
+\end{picture}
+}}
+\caption{\label{fig:tree_dyn}
+Schematic calling tree for the static driver routine in {\tt dynamic.F90}.
+The routine in the framed box is explained in great detail in section
+\ref{sec:RTA}. 
+}
+\end{figure}
+
+\subsubsection{The structure of the RTA package} % in {\tt rta.F90}}
+\label{eq:RTApack}
+
+\paragraph{Input and output related to RTA}
+\label{sec:IO}
+
+\PGRcomm{This subsection needs yet to be worked out in detail.}
+\EScomm{Section to be put in supplemental material}
+
+
+\medskip
+
+The {\tt NAMELIST dynamic} contains the following variables
+used in the RTA procedure:\PGRfoot{We should define a new {\tt
+    NAMELIST} and shift the RTA variables to there.}
+\begin{description}
+\item[\tt jrtaint:]
+   Modulus for calling the RTA subroutine, i.e., nr. of TDLDA steps
+   per one RTA step. Course time step $\Delta t$ for RTA and fine
+   time step for TDLDA {\tt dt1} are related as
+   $\Delta t=${\tt jrtaint}$*${\tt dt1}.
+\item[\tt rtamu:]
+   Parameter $\mu$ in front of the quadratic density constraint in the
+   DCMF Hamiltonian (\ref{eq:hDCMF}).
+\item[\tt rtamuj:]
+   Parameter $\mu_j$ in front of the quadratic current constraint in the
+   DCMF Hamiltonian (\ref{eq:hDCMF}).
+\item[\tt rtasumvar2max:] Termination criterion $\epsilon_0$ in the
+   RTA step as used
+   in figure \ref{fig:summaryDCMF}. 
+\item[\tt rtaeps:]
+  Step size $\delta$ in the damping operator \PGRcomm{(cross ref to be
+    defined)} $\mathcal{D}$ for the RTA step.
+\item[\tt rtae0dmp:]
+  Energy offset $E_00$ in the damping operator \PGRcomm{(cross ref to be
+    defined)} $\mathcal{D}$ for the RTA step.
+\item[\tt rtasigee:]
+  In medium $e^-$-$e^-$ cross section used for the relaxation time 
+  (\ref{eq:relaxtime}).
+\item[\tt rtars:]
+  Effective  Wigner-Seitz radius $r_s$ used for the relaxation time 
+  (\ref{eq:relaxtime}).
+\item[\tt rtatempinit:]
+  The value {\tt rtatempinit}/10 is used as lower value for the search
+  of temperature in {\tt SUBROUTINE ferm1}.
+\item[\tt rtaforcetemperature:]
+  \PGRcomm{Seems to be obsolete?}
+\end{description}
+
+Most observables were already defined at TDLDA stage and thus
+are returned in the standard output files as explained in the TDLDA
+section\PGRfoot{Cross reference yet to be defined.}. New output files
+specific to observables from RTA are:\PGRfoot{These
+  files seem to carry only protocol for numerics. Where do we
+  print energy balance ($E_\mathrm{intr}^*$ etc)?}
+\begin{description}
+\item[\tt prta:]
+\item[\tt peqstat:]
+\item[\tt pspeed:]
+\item[\tt prhov:]
+\end{description}
+
+\paragraph{The calling tree}
+\label{eq:treeRTA}
+
+Here is an oversight over the tree structure of the RTA routines.
+Those subroutines contained in  {\tt rta.F90} are explained in detail
+in section \ref{eq:details}. Subroutines coming from the TDLDA package
+or external sources are marked\PGRfoot{The {\tt HEigensystem} seems
+  copied from some library. This could cause copyright problems if we
+  publish the code. Is it from BLAS/LINPACK? Then we could
+replace the Fortran source by a library call.}
+\\
+\centerline{\fbox{
+\begin{picture}(122,159)(5,-155)
+\put(10,0){\mbox{\tt RTA}}
+\put(11,-1){\line(0,-1){150}}
+   \put(20,-4){\mbox{\tt srhomat}}
+   \put(11,-3){\line(1,0){8}}
+   \put(21,-5){\line(0,-1){6}}
+      \put(30,-8){\mbox{\tt scalar}}
+      \put(21,-7){\line(1,0){8}}
+      \put(30,-12){\mbox{\tt cdiagmat}}
+      \put(21,-11){\line(1,0){8}}
+      \put(31,-13){\line(0,-1){2}}
+         \put(40,-16){\mbox{\tt HEigensystem}}
+         \put(31,-15){\line(1,0){8}}
+             \put(90,-16){\mbox{$\leftrightarrow$ library routine}}
+   \put(20,-20){\mbox{\tt eqstate}}
+   \put(21,-21){\line(0,-1){74}}
+   \put(11,-19){\line(1,0){8}}
+      \put(30,-24){\mbox{\tt calcrhotot}}
+      \put(21,-23){\line(1,0){8}}
+      \put(30,-28){\mbox{\tt calc\_current}}
+      \put(21,-27){\line(1,0){8}}
+      \put(30,-32){\mbox{\tt calc\_Eref}}
+      \put(21,-31){\line(1,0){8}}
+      \put(30,-36){\mbox{\tt fermi1}}
+      \put(31,-37){\line(0,-1){2}}
+      \put(21,-35){\line(1,0){8}}
+         \put(40,-40){\mbox{\tt occT1}}
+         \put(31,-39){\line(1,0){8}}
+      \put(30,-44){\mbox{\tt calc\_psi1}}
+      \put(31,-45){\line(0,-1){38}}
+      \put(21,-43){\line(1,0){8}}
+         \put(40,-48){\mbox{\tt calc\_hamiltonien}}
+         \put(31,-47){\line(1,0){8}}
+         \put(40,-52){\mbox{\tt calc\_var}}
+         \put(41,-53){\line(0,-1){2}}
+            \put(50,-56){\mbox{\tt cproject}}
+            \put(41,-55){\line(1,0){8}}
+            \put(90,-56){\mbox{\PGR{$\leftrightarrow$ \footnotesize obsolete?}}}
+         \put(40,-60){\mbox{\tt calcrhotot}}
+         \put(31,-59){\line(1,0){8}}
+         \put(40,-64){\mbox{\tt calc\_current}}
+         \put(31,-63){\line(1,0){8}}
+         \put(40,-68){\mbox{\tt cschmidt}}
+         \put(31,-67){\line(1,0){8}}
+             \put(90,-68){\mbox{$\leftrightarrow$ TDLDA package}}
+         \put(40,-72){\mbox{\tt calc\_ekin}}
+         \put(31,-71){\line(1,0){8}}
+             \put(90,-72){\mbox{$\leftrightarrow$ TDLDA package}}
+         \put(40,-76){\mbox{\tt nonlocalc}}
+         \put(31,-75){\line(1,0){8}}
+             \put(90,-76){\mbox{$\leftrightarrow$ TDLDA package}}
+         \put(40,-80){\mbox{\tt fftf}}
+         \put(31,-79){\line(1,0){8}}
+             \put(90,-80){\mbox{$\leftrightarrow$ FFTW3 package}}
+         \put(40,-84){\mbox{\tt fftback}}
+         \put(31,-83){\line(1,0){8}}
+             \put(90,-84){\mbox{$\leftrightarrow$ FFTW3 package}}
+      \put(30,-88){\mbox{\tt coul\_mfield}}
+      \put(21,-87){\line(1,0){8}}
+             \put(90,-88){\mbox{$\leftrightarrow$ TDLDA package}}
+      \put(30,-92){\mbox{\tt dyn\_mfield}}
+      \put(21,-91){\line(1,0){8}}
+             \put(90,-92){\mbox{$\leftrightarrow$ TDLDA package}}
+      \put(30,-96){\mbox{\tt info}}
+      \put(21,-95){\line(1,0){8}}
+             \put(90,-96){\mbox{$\leftrightarrow$ TDLDA package}}
+   \put(20,-100){\mbox{\tt occupT0}}
+   \put(21,-101){\line(0,-1){2}}
+   \put(11,-99){\line(1,0){8}}
+      \put(30,-104){\mbox{\tt indexx}}
+      \put(21,-103){\line(1,0){8}}
+   \put(20,-108){\mbox{\tt calcrhoeq}}
+   \put(21,-109){\line(0,-1){10}}
+   \put(11,-107){\line(1,0){8}}
+      \put(30,-112){\mbox{\tt cdiagmat}}
+      \put(31,-113){\line(0,-1){2}}
+      \put(21,-111){\line(1,0){8}}
+         \put(40,-116){\mbox{\tt HEigensystem}}
+         \put(31,-115){\line(1,0){8}}
+             \put(90,-116){\mbox{$\leftrightarrow$ library routine}}
+      \put(30,-120){\mbox{\tt  indexx}}
+      \put(21,-119){\line(1,0){8}}
+   \put(20,-124){\mbox{\tt calc\_Eref}}
+   \put(11,-123){\line(1,0){8}}
+   \put(20,-128){\mbox{\tt CorrectEnergy2}}
+   \put(11,-127){\line(1,0){8}}
+   \put(20,-132){\mbox{\tt OccupPerSpin}}
+   \put(11,-131){\line(1,0){8}}
+   \put(20,-136){\mbox{\tt temperature}}
+   \put(11,-135){\line(1,0){8}}
+   \put(21,-137){\line(0,-1){2}}
+      \put(30,-140){\mbox{\tt lmdif1}}
+      \put(21,-139){\line(1,0){8}}
+   \put(20,-144){\mbox{\tt dyn\_mfield}}
+   \put(11,-143){\line(1,0){8}}
+             \put(90,-144){\mbox{$\leftrightarrow$ TDLDA package}}
+   \put(20,-148){\mbox{\tt info}}
+   \put(11,-147){\line(1,0){8}}
+             \put(90,-148){\mbox{$\leftrightarrow$ TDLDA package}}
+   \put(20,-152){\mbox{\tt analyze\_elect}}
+   \put(11,-151){\line(1,0){8}}
+             \put(90,-152){\mbox{$\leftrightarrow$ TDLDA package}}
+\end{picture}
+}}
+
+
+\section{Supplemental material}
+
+\input{storage}
+
+
+\subsection{The TDLDA subroutines in detail}
+\label{eq:detailsTDLDA}
+
+
+\PGRcomm{Here is to come a detailed description of the subroutines
+  similar as for RTA in \ref{eq:details}, but here for the LDA part.
+Only one example is given as appetizer. The problem is that it cost
+enormous amounts of space to present all routines and functions at that
+level of detail. We should shift that to the
+supplementary material. It will comes there anyway if we decide to
+transfer all these details to {\tt doxygen}.
+}
+
+\subsubsection*{\tt SUBROUTINE coul\_mfield(rho)}
+\begin{tabular}{lcl}
+ {\tt rho(1:2*kdfull2)} & in/out & \\ density for which Coulomb field
+ is computed
+\end{tabular}
+\\[4pt]
+Computes Coulomb potential for given density by invoking
+Poisson solver.
+Th emerging coulomb potential is communicated as {\tt chpcoul}
+via module {\tt params}.
+In case of dielectric external media, adds pseudo-density for image
+charge.
+\\
+\PGRcomm{Why is {\tt rho} also {\tt INTENT OUT}? Is all {\tt
+    1:2*kdfull2} used or only the first block {\tt 1:kdfull2}?}
+
+
+
+%\subsubsection*{\tt }
+%\begin{tabular}{lcl}
+% {\tt } & &\\
+%\end{tabular}
+%\\[4pt]
+
+
+\subsection{The RTA subroutines in detail}
+\label{eq:details}
+
+\subsubsection*{\tt SUBROUTINE rta(psi,aloc,rho,iterat)}
+\begin{tabular}{lcl}
+ {\tt iterat} & in & external iteration number (TDLDA time step)\\
+ {\tt psi(1:kdfull2,1:kstate)} & in/out& set of s.p. wavefunctions\\
+ {\tt rho(1:2*kdfull2)}& in/out & local densities for spin up and down\\
+ {\tt aloc(1:2*kdfull2)} & in/out& local potentials for spin up and down\\
+\end{tabular}
+\\[4pt]
+Basic RTA routine performing density constrained mean-field (DCMF)
+iterations, energy adjustment, admixing of local equilibrium states by
+calls to subroutines (see calling tree).
+
+
+
+\subsubsection*{\tt SUBROUTINE calcrhoeq(psiorthloc,psieqloc,psiloc,occuporthloc,occuploc,nstateloc)}
+\begin{tabular}{lcl}
+ {\tt nstateloc} & in & number of s.p. states in spin block\\
+ {\tt psiorthloc(1:kdfull2,1:nstateloc),} & in & set of TDLDA
+ wavefunctions (natural orbitals)\\
+ {\tt occuporthloc(1:nstateloc)} & in & occupations of TDLDA states\\
+ {\tt psieqloc(1:kdfull2,1:nstateloc)} & in& set of local-equilibrium wavefunctions\\
+ {\tt psiloc(1:kdfull2,1:nstateloc)} & out& set of final mixed wavefunctions\\
+ {\tt occuploc(1:nstateloc)} & in/out & \\
+\end{tabular}
+\\[4pt]
+Encapsulated in {\tt SUBROUTINE rta}. Performs the mixing of TDLDA
+states with local-equilibrium state according to relaxation rate
+for one spin block. The mixed densty matrix is expanded in a
+representation by both sets of s.p. states. 
+
+
+
+\subsubsection*{\tt SUBROUTINE calc\_Eref(occup,ispin,Ei,Eref)}
+\begin{tabular}{lcl}
+ {\tt occup(1:nstate)} & in & occupation number for s.p. states.\\
+ {\tt ispin(1:nstate)} & in & spin assignement for s.p. states.\\
+ {\tt Ei(1:nstate)} & in & spin assignement for s.p. states.\\
+ {\tt Eref(1:2)} & out & sum of s.p. energies per spin.\\
+\end{tabular}
+\\
+Computes the weighted sum of s.p. energies as reference energy
+for DCMF. The sum is accumulated for each spin separately.
+
+
+\subsubsection*{\tt SUBROUTINE fermi1(ekmod,eref,occup,ispinact,T0i,T1i,T2,mu)}
+\begin{tabular}{lcl}
+ {\tt ekmod(1:kstate)} & in & given s.p. energies, spin up block first, then
+ spin down\\
+ {\tt eref}& in & reference energy = wanted sum of s.p. energies\\
+ {\tt ispinact}& in & spin for which routine is run\\
+ {\tt T0i, T1i}& in & lower and upper temperature for search\\
+ {\tt occup(1:kstate)}& in/out & occupation numbers, spin block-wise\\
+ {\tt T2} & out & final temperature for which Fermi distribution
+ matches {\tt eref} \\
+ {\tt mu} & out & final chemical potential\\
+\end{tabular}
+\\[4pt]
+Determines thermal Fermi occupation such that given sum of
+s.p. energies {\tt eref} and particle number is matched. Is done for
+each spin separately. Solution scheme is bracketing. Refers to 
+{\tt SUBROUTINE OccT1} while iterating temperatur {\tt T2}.
+\\
+\PGRcomm{Nr. of spin-up/spin-down states comes through {\tt m\_params}. 
+We should protocol all such entries. First step is to augment each
+{\tt USE} by {\tt ONLY} such that the explicitely communicated
+variables becomes visible. Important variables may then be listed
+explicitely.
+}
+\\
+\PGRcomm{Routine requires that arrays are sorted in continuous blocks of
+  spin. Do we have an initial check for that? And we need to address
+  that in the general part which explains the layout of arrays.}
+
+\subsubsection*{\tt SUBROUTINE OccT1(occrefloc,enerloc,Etotloc,muloc,occtotloc,n,T,occuploc)}
+\begin{tabular}{lcl}
+ {\tt enerloc(1:n)} & in & s.p. energies for actual spin\\
+ {\tt n} & in & number of s.p. states treated here\\
+ {\tt T} & in & temperature\\
+ {\tt occrefloc} & in & wanted total number of particles \\
+ {\tt occuploc(1:n)} & out & thermal occupation numbers for given {\tt
+   T} and s.p. energies\\
+ {\tt muloc} & out & chemical potential (Fermi energy)\\
+ {\tt occtotloc} & out& final total number of particles \\
+ {\tt Etotloc} & out& sum of s.p. energies \\
+\end{tabular}
+\\[4pt]
+Determines by bracketing chemical potential {\tt muloc} for given array of
+s.p. energies, temperature {\tt T}, and wanted number of particles
+{\tt occrefloc} with precision {\tt 1D-12}. Delivers with it
+thermal occupation numbers and corresponding total particle number and
+sum of s.p. energies.
+\\
+\PGRcomm{This routine is specific to {/tt SUBROUTINE ferm1}. Could we
+encapsulate it by a {/tt CONTAINS}?}
+
+\subsubsection*{\tt SUBROUTINE
+  Calc\_psi1(psi1,aloc,rhotot0,rhototloc,curr0,curr1,j,lambda,mu,
+\\
+lambdaj,muj,sumvar2,eal,ekmod)}
+\noindent
+combined with encapsulated {\tt SUBROUTINE calc\_hamiltonien}.
+\\
+\begin{tabular}{lcl}
+ {\tt j} & in & number of DCMF iteration, used here for print\\
+ {\tt lambda(1:kdfull2,1:2)} & in & Lagrange parameter for density for
+ spin up\&down\\
+ {\tt lambdaj(1:kdfull2,1:3)} & in & Lagrange parameter for current\\
+ {\tt mu, muj} & in & driving parameter for augmented Lagrangian\\
+ {\tt aloc(1:2*kdfull2)} & in & local potentials for spin up and down\\
+ {\tt rhoto0(1:kdfull2,1:2)} & in & initial density \PGRcomm{not used ??}\\
+ {\tt curr0(1:kdfull2,1:3)} & in & wanted current \\
+ {\tt psi1(1:kdfull2,1:kstate)} & in/out & set of s.p. wavefunctions iterated\\
+ {\tt rhototloc(1:kdfull2,1:2)} & out & actual density according to {\tt psi1}\\
+ {\tt curr1(1:kdfull2,1:3)} & out & actual current from {\tt psi1}\\
+ {\tt ekmod(1:nstate)} & out & final s.p. energies\\
+ {\tt eal} & out & final sum of s.p. energies\\
+ {\tt sumvar2} & out & variance of s.p. energies\\
+\end{tabular}
+\\[4pt]
+Performs one damped gradient step of with density \& current
+constrained Hamiltonian.
+\\
+\PGRcomm{The density array distinguishes spin up/down while the
+  current array does not. Reason?}
+\\
+PGRcomm{The IN \& OUT assignments in this subroutine have to be updated.}
+
+
+
+\subsubsection*{\tt SUBROUTINE eqstate(psi,aloc,rho,psi1,occuporth,iterat)}
+\begin{tabular}{lcl}
+ {\tt iterat} & in & actual iteration number (for printing)\\
+ {\tt psi(1:kdfull2,1:kstate)} & in & initial set of
+ s.p. wavefunctions\\
+ {\tt psi1(1:kdfull2,1:kstate)} & out & final set of s.p. wavefunctions\\
+ {\tt aloc(1:2*kdfull2)} & in/out & local part of potential, spin
+ up/down stacked in blocks\\
+ {\tt rho(1:2*kdfull2)} & in & initial density, spin
+ up/down stacked in blocks \\
+ {\tt occuporth(1:kstate)} & in & occupation numbers for {\tt psi} and
+ still the same for {\tt psi1}.\\
+\end{tabular}
+\\[4pt]
+DCMF iterations by reapeatedly calling {\tt Calc\_psi1},
+updating Lagrangian parameters for density \& current constraints, and
+occassionally tuning temperature to achieve correct energy. The
+latter is done by calling {\tt fermi1}. The local potential
+is kept constant during DCMF iteration and updated only at the very end.
+\\
+\PGRcomm{Fetches nr. of spin up/down from {\tt m\_params}.}
+\\
+\PGRcomm{Lagrange parameters are started from scratch. May it be
+  faster to recycle the previous Lagrange parameters?
+}
+\\
+\PGRcomm{Density {\tt rho} is entered via list and still recomputed
+as {\tt rhotot0}. Unnecessary doubling?}
+
+
+\subsubsection*{\tt SUBROUTINE OccupT0(occloc,esploc,Estar)}
+\begin{tabular}{lcl}
+ {\tt esploc(1:nstate)} & in & given s.p. energies\\
+ {\tt occloc(1:nstate)} & in & given occupation numbers\\
+ {\tt Estar} & out & excitation energy relative to T=0 distribution\\
+\end{tabular}
+\\[4pt]
+Computes thermal excitation energy as difference of actual energy to
+the energy obtained by Fermi distribution for $T=0$. The latter
+distributions  is computed for the given s.p. energies which are the
+same as used for the thermal state.
+
+
+
+\subsubsection*{\tt SUBROUTINE calcrhotot(rho,q0)}
+\begin{tabular}{lcl}
+ {\tt q0(1:kdfull2,1:kstate) } & in & set of s.p. wavefunctions for
+ which density is accumulated\\
+ {\tt rho(kdfull2,2)} & out & resulting density\\
+\end{tabular}
+\\[4pt]
+Computes local density for set of wavefunctions {\tt q0}. Note that
+two crucial information is communicated via module {\tt params}, namely
+{\tt occup}, the array of occupation numbers, {\tt ispin} the
+array assigning spin top each s.p. state, and {\tt nstate}, the number
+of s.p. states.
+\\
+\PGRcomm{Exploiting the sorting of spin in blocks of s.p. states, we
+  could rewrite the code with to {\tt SUM} statements.}
+
+
+\subsubsection*{\tt SUBROUTINE calc\_var(hpsi,psi1,sumvar2)}
+\begin{tabular}{lcl}
+ {\tt psi1(kdfull2,kstate)}& in & set of s.p. states for which
+ variance of s.p. energies of calculated\\
+ {\tt hpsi(kdfull2,kstate)} & in/out & array
+ $H\rightarrow\psi_\alpha$, on input in $k$-space, on output in $r$-space
+\\
+ {\tt sumvar2} & out  & summed variance of s.p. energies\\
+\end{tabular}
+\\[4pt]
+Computes the sum of variances of the s.p. energies,
+$\langle\hat{\Delta h}^2|rangle$. 
+\\
+PGRcomm{The routine projects from each $hat{h}\psi_\alpha$
+all s.p. states $\psi_\beta$ from the pool of states. That is too
+much. The s.p. variance should be
+$\sum_\alpha\langle|\psi_\alpha|(\hat{h}-\varepsilon_\alpha)^2|\psi_\alpha\rangle$
+where $\varepsilon_\alpha=\langle|\psi_\alpha|\hat{h}|\psi_\alpha\rangle$.}
+
+
+
+
+\subsubsection*{\tt SUBROUTINE forceTemp(amoy,occup,n,temp,mu)}
+\begin{tabular}{lcl}
+ {\tt amoy(1:n)} & in & given s.p. energies\\
+ {\tt occup(1:n)} & in & given thermal occupation\\
+ {\tt n} & in & number of s.p. states\\
+ {\tt temp} & in & temperature\\
+ {\tt mu} & out & emerging chemical potential\\
+\end{tabular}
+\\[4pt]
+Determines chemical potential for given s.p. energies and temperature
+by call to {\tt OccT1}.
+\\
+\PGRcomm{Obsolete and never used.}
+
+
+
+
+\subsubsection*{\tt SUBROUTINE fermi\_init(ekmod,T,occup,ispinact)}
+\begin{tabular}{lcl}
+ {\tt ekmod(1:nstate)} & in & given s.p. energies\\
+ {\tt T} & in & given temperature\\
+ {\tt ispinact} & in & actual spin\\
+ {\tt occup(1:kstate)} & in/out & initial occupation and resulting
+ Fermi distribution for {\tt T}.\\
+\end{tabular}
+\\[4pt]
+Determines Fermi distribution for given s.p. energies and
+temperature. Searches appropriate chemical potential {\tt mu} by
+bracketing. Use for repreated calls to {\tt FUNCTION occ}.
+\\
+\PGRcomm{This routine {\tt fermi\_init} and the related
+{\tt FUNCTION occ} are never used, thus obsolete. May be removed.}
+
+
+
+\subsubsection*{\tt SUBROUTINE srhomat(psi,aloc,psiorth,occuporth)}
+\begin{tabular}{lcl}
+ {\tt psi(1:kdfull2,1:kstate)} & in & set of s.p. wavefunctions, not orth-normalized\\
+ {\tt psiorth(1:kdfull2,1:kstate)} & out & ortho-normalized natural orbitals\\
+ {\tt aloc(1:2*kdfull2)} & in & actual local potential\\
+ {\tt occuporth(1:kstate)} & out & occupation numbers for
+ ortho-normalized states\\
+\end{tabular}
+\\[4pt] Computes the density matrix of initial state goiven by set of
+wavefunctions {\tt psi} together with their occupations {\tt occup},
+the latter communicated through module {\tt params}.  Then
+diagonalizes the density matrix and computes on {\tt psiorth} the new
+wavefunctions associated with diagonal representation of the density
+matrix.  
+\\
+Finally updates running transformation matrix {\tt psitophi} which is
+communicated and stored through module {\tt params}.
+\\
+\PGRcomm{Usage and propagation of  {\tt psitophi} is somewhat hidden
+  because it is handled through a module. Needs to be explained somwhere.}
+
+
+\subsubsection*{\tt SUBROUTINE scalar(tab1,tab2,scal,ispin, mess)}
+\begin{tabular}{lcl}
+ {\tt tab1(1:kdfull2,1:kstate)} & in & 1. set of s.p. wavefunctions\\
+ {\tt tab2(1:kdfull2,1:kstate)} & in & 2. set of s.p. wavefunctions\\
+ {\tt ispin(1:nstate)} & in & spin of s.p. states\\
+ {\tt mess} & in & message for print inside routine\\
+ {\tt scal(nstate,nstate)} & out & matrix of wavefunction overlaps\\
+\end{tabular}
+\\[4pt]
+
+
+\subsubsection*{\tt SUBROUTINE cdiagspin(mat, eigen, vect, N)}
+\begin{tabular}{lcl}
+ {\tt mat(N,N)} & in & complex Hermitean matrix to be diagonalized\\
+ {\tt N} & in & dimension of matrix\\
+ {\tt eigen(N)} & out & resulting eigenbvalues\\
+ {\tt Vect(N,N)} & out & resulting eigenstates\\
+\end{tabular}
+\\[4pt]
+Driver routine for diagonalization of a complex Hermitean matrix of
+dimension {\tt N} which consists in a two blocks for separate spin.
+Refers for each single block to routine {\tt cdiag} and subsequent
+library routines contained therein.
+
+
+\subsubsection*{\tt SUBROUTINE indexx (n,arrin,indx)}
+\begin{tabular}{lcl}
+ {\tt n} & in & length of array\\
+ {\tt arrin(1:n)} & in & array to be sorted\\
+ {\tt indx(1:n)} & out & pointer array \\
+\end{tabular}
+\\[4pt]
+Evaluates sorting of an array in ascending order.
+
+
+
+\subsubsection*{\tt SUBROUTINE occupPerSpin(mess,Occ)}
+\begin{tabular}{lcl}
+ {\tt mess} & in & character variable with comment printed inside routine\\
+ {\tt Occ(1:2)} & out & total number of particles in each spin\\
+\end{tabular}
+\\[4pt]
+Computes number of particles in each sin block. Uses {\tt nstate} and
+occupations {\tt occup} from module {\tt params}.
+
+
+
+\subsubsection*{\tt CorrectEnergy2(Wref,Eref,w,E,Wout,nloc)}
+\begin{tabular}{lcl}
+ {\tt W(1:nloc)} & in & initial occupations numbers\\
+ {\tt E(1:nloc)} & in & given s.p. energies\\
+ {\tt Wref} & in & reference particle number to be reached\\
+ {\tt Eref} & in &  reference sum of s.p. energies to be reached\\
+ {\tt nloc} & in & actual number of states\\
+ {\tt Wout(nloc)} & out  & readjusted occupation numbers\\
+\end{tabular}
+\\[4pt]
+Final energy correction by one step along Fermi distribution
+(using Taylor expansion about actual distribution),
+see appendix \ref{sec:corriter}).
+
+
+
+\subsubsection*{\tt SUBROUTINE ordo\_per\_spin(psi)}
+\begin{tabular}{lcl}
+ {\tt psi(1:kdfull2,1:kstate)} & in/out & s.p. wavefunctions before
+ and after reordering\\
+\end{tabular}
+\\[4pt]
+Reorder states  in two blocks of spin up and down.
+Applies that reshuffling to all relevant field of states,
+s.p. wavefunctions {\tt psi}, spin per state {\tt ispin},
+and occupations {\tt occup}. 
+\\
+\PGRcomm{Routine has been rendered obsolete by new initialization of
+  states which produces immediately the correct sorting. But routine
+  should be kept for possible later use (e.g., mixing states from
+  different sources.}
+
+\subsubsection*{\tt SUBROUTINE temperature(mu,T)}
+\begin{tabular}{lcl}
+ {\tt mu} & out & resulting chemical potential\\
+ {\tt T} & out & resulting temperature\\
+\end{tabular}
+\\[4pt]
+Takes s.p. energies {\tt amoy} and occupations {\tt occup} from module
+{\tt params} and fits a Fermi distribution to it. Temperature and
+chemical potentials of the fitted distribution are returned via list.
+Calls a fitting routine {\tt lmdif1} using subroutine {\tt ff} as argument.
+
+\subsubsection*{\tt SUBROUTINE ff(m,n,X,FVEC,IFLAG)}
+\begin{tabular}{lcl}
+ {\tt X(1:n)} & in & array handling chemical potential and temperature\\
+ {\tt Fvec(1:m)} & out & array of mismatches of distributions\\
+ {\tt n} & in & number of parameters of model, actually 2\\
+ {\tt m} & in & number of entries in array\\
+ {\tt iflag} & in & flaf possibly written (actually not used)\\
+\end{tabular}
+\\[4pt]
+Mismatch of {\tt occup} (via modules {\tt params}) from Fermi
+distribution to given chemical potential and temperature. To be used
+in fitting routine {\tt lmdef1}.
+
+
+\subsubsection*{\tt SUBROUTINE cproject(qin,qout,ispact,q0)}
+\begin{tabular}{lcl}
+ {\tt qin(1:kdfull2)} & in & s.p. wvaefunction to be projected\\
+ {\tt q0(1:kdfull2,1:kstate)} & in & set of s.p. wavefunctions which
+ is projected out from {\tt qin}\\
+ {\tt ispact} & in & spin associated with {\tt qin}\\
+ {\tt qout(1:kdfull2)} & out & projected s.p. wavefunction \\
+\end{tabular}
+\\[4pt] Projects away from {\tt qin} all contributions of the set 
+{\tt q0}.  
+\\ 
+\PGRcomm{This routine may become obsolete if we recode the
+  the variance in routine {\tt calc\_var} to meet the
+  standard definition.}
+
+
+
+
+
+
+
+
+
+
+\bibliographystyle{elsarticle-num}                                                        
+\bibliography{dissip,cluster,relaxtime}             
+
+\end{document}

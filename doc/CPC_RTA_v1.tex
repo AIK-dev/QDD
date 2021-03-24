@@ -1,0 +1,4350 @@
+\documentclass[final,1p]{elsarticle}
+\usepackage{amssymb}
+\usepackage{stackrel}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{rotating}
+\usepackage{color}
+\usepackage{caption}
+%\usepackage{ulem}
+\usepackage{tikz}
+\usepackage{epic}
+% \usepackage{caption,subcaption}
+%\usepackage{subeqnarray}
+\usepackage{titlesec}
+\usepackage{etoolbox}
+\usepackage{hyperref}
+\usepackage{xr}
+\usepackage{xr-hyper}
+
+\externaldocument[man:]{User_manual}
+
+\newcommand{\scn}[1]{Section~\ref{#1}}	   % \scn{label} --> Section 1.2
+
+\makeatletter
+\patchcmd{\ttlh@hang}{\parindent\z@}{\parindent\z@\leavevmode}{}{}
+\patchcmd{\ttlh@hang}{\noindent}{}{}{}
+\makeatother
+
+\setcounter{secnumdepth}{4}
+
+\titleformat{\paragraph}
+{\normalfont\small\scshape}{\theparagraph}{1em}{}
+%{\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
+\titlespacing*{\paragraph}
+{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+
+
+\newcommand\encircle[1]{%
+  \tikz[baseline=(X.base)] 
+    \node (X) [draw, shape=circle, inner sep=0] {\strut #1};}
+
+\newcommand{\I}{\mathrm{i}}
+\newcommand{\D}{\mathrm{d}}
+
+\newcommand{\PGR}[1]{{\color{blue} #1}}
+\newcommand{\PGRcomm}[1]{{\color{blue}\small\em PGR2all: #1}}
+\newcommand{\PGRfoot}[1]{{\color{blue}\footnote{\color{blue} #1}}}
+\newcommand{\ES}[1]{{\color{red} #1}}
+\newcommand{\EScomm}[1]{{\color{red}\small\em ES2all: #1}}
+\newcommand{\ESfoot}[1]{{\color{red}\footnote{\color{red} #1}}}
+\newcommand{\bmu}{{\mbox{\boldmath{$\mu$}}}}
+\newcommand{\MD}[1]{{\color{magenta} #1}}
+\newcommand{\MDcomm}[1]{{\color{magenta}\small\em MD2all: #1}}
+\newcommand{\MDfoot}[1]{{\color{magenta}\footnote{\color{magenta} #1}}}
+\newcommand{\MVG}[1]{{\color{green} #1}}
+
+\newcounter{denselistcounter}
+\newenvironment{denselist}[1]
+{ \begin{list}
+  {#1{denselistcounter})}{\usecounter{denselistcounter}
+  \setlength{\topsep}{-0pt}
+  \setlength{\partopsep}{-0pt}
+  \setlength{\itemsep}{-0pt}
+  \setlength{\parsep}{-0pt}
+  \setlength{\labelwidth}{6pt}
+  \setlength{\labelsep}{4pt}
+  \setlength{\leftmargin}{20pt}
+  \setlength{\rightmargin}{20pt}
+  }
+}
+{\end{list}}
+
+\unitlength 1mm
+\thicklines
+
+\renewcommand{\topfraction}{0.8}
+\renewcommand{\textfraction}{0.2}
+\renewcommand{\floatpagefraction}{0.8}
+
+
+\begin{document}
+
+
+\begin{frontmatter}
+
+\title{Quantum Dissipative Dynamics (QDD):\\
+A real-time real-space approach to far-off-equilibrium dynamics in finite electron systems}
+
+\author{F.~Coppens$^{a,b,c}$}
+\author{P. M. Dinh$^{a,b,*}$}
+\author{P.-G.~Reinhard$^c$}
+\author{E.~Suraud$^{a,b,d}$}
+\author{M.~Vincendon$^{a,b}$}
+\cortext[author]{Corresponding author:
+  dinh@irsamc.ups-tlse.fr} 
+\address{$^a$Universit\'e de Toulouse; UPS; Laboratoire de Physique Th\'{e}orique, IRSAMC; F-31062 Toulouse Cedex, France}
+\address{$^b$CNRS; UMR5152; F-31062 Toulouse Cedex, France}
+\address{$^c$IRT Saint Exup\'ery, Institut de Recherche Technologique}
+\address{$^d$Institut f{\"u}r Theoretische Physik, Universit{\"a}t
+  Erlangen, Staudstrasse 7, D-91058 Erlangen, Germany}
+\address{$^e$School of Mathematics and Physics, Queen's University Belfast, Belfast, UK}
+
+\date{\today}
+\begin{abstract}
+In this paper, we present ``QDD" (Quantum Dissipative Dynamics), a code package 
+for simulating the dynamics of finite electron
+systems (atoms, molecules, clusters) excited by strong electromagnetic fields
+as delivered by lasers or highly charged ions. Basis of the description is
+Time-Dependent Density Functional Theory (TDDFT) at the level of the
+Time-Dependent Local-Density Approximation (TDLDA) augmented by an
+approximate Self-Interaction Correction (SIC), the latter being crucial for
+proper description of electron emission. The novel feature of the
+present code is that it allows one to track the dissipative dynamics
+induced by dynamical correlations following the earliest times of
+excitation. This is done here at a fully quantum mechanical level within the
+Relaxation-Time Approximation (RTA). Electron dynamics is also
+coupled to ionic motion treated by classical molecular dynamics.
+\\
+The numerical representation uses a 3D coordinate-space grid for
+electronic wave functions and fields. The kinetic energy operator is
+evaluated in momentum space connected by a Fast Fourier
+Transform (FFT).
+Standard schemes for electronic ground state, ionic ground state, and
+propagation of TDLDA in real time as well as ionic dynamics are used. The RTA
+time propagation is evaluated in a large space of occupied and unoccupied
+single-electron states.
+\\
+The code package allows sequential and parallel (OpenMP and MPI)
+computation. 
+\end{abstract}
+
+\begin{keyword}
+%\PACS{05.30.Fk,31.70.Hq,34.10.+x,36.40.Cg}
+time-dependent density functional theory, electronic dissipation, 
+photoelectron spectra, electron emission, beyond mean field
+\end{keyword}
+\end{frontmatter}
+
+\tableofcontents
+
+
+\section{Introduction}
+
+The theoretical description of dynamics far off equilibrium in quantum
+many-body systems has been for decades a widely open problem in
+numerous fields of science.  Non-equilibrium and dissipative quantum
+many-particle dynamics has a long history which can be traced back all
+the way to Bohr's early pioneering work on charged-particle
+penetration and stopping in matter \cite{Boh37,Boh39}. The nuclear physics
+domain has been explored over the last four decades in connection with
+the rich empirical material from heavy-ion collisions. This was done
+mostly with classical or semi-classical approaches \cite{Abe96, Ber88,
+  Bon94, Dur00, Fel90, Nap13, Ono04}.  Non-equilibrium dynamics has
+also become a key issue in transport processes in solids \cite{Bie15}.
+It is an equally important issue for ultracold bosonic and fermionic
+gases (“quenches”) \cite{Bon98, Str07, Sch12, Lan15} as well as for
+the electronic dynamics in atoms, molecules, and condensed matter
+driven by ultrashort and strong laser fields \cite{Cai05, Ehr17,
+  Gre10, Hoc12, Hoc14, Lap98, Roh06a, Roh06b, Sat16, Ull12, Wil07}.
+Multi-differential observables such as vectorial single- or
+multiple-electron emission patterns or density-density correlation
+functions and phase shifts of many-particle wave functions
+\cite{Lan15} can now be experimentally probed in unprecedented detail
+and provide benchmarks for state-of-the-art theories.
+
+The electronic case is especially challenging in finite systems with
+its numerous irradiation scenarios by lasers or charged particles.
+Early stages of irradiation dynamics proceed at short time scale,
+predominantly at electronic level.  For example, proper analysis of
+ultrafast processes in clusters and molecules is crucial for
+understanding microscopic mechanisms underlying radiation damage as
+manifested in tumor cell destruction in oncology \cite{Sol17} or in
+shielding electronic devices \cite{Aut15}. Irradiation by charged
+particles (swift ion, electron) can deliver a violent electromagnetic
+kick to the system driving it far off equilibrium. Laser irradiation
+with the high versatility to design pulse profiles adds new
+possibilities. It is now possible to explore sub-fs (1 fs $=
+10^{-15}$~s) dynamics down to the attosecond (1 as $= 10^{-18}$~s)
+domain, hence opening the door to fully time-resolved analysis of
+irradiation effects at the electronic level
+\cite{Kra09aR}. Photo-induced ultrafast processes are also involved in
+many other mechanisms such as vision, photo-synthesis or solar cells.
+Up to now, most investigations focused on ionization of atoms
+\cite{Kra09aR} and only recently on small molecules
+\cite{Lep14}. Forthcoming experiments will address ultrafast processes
+in complex systems such as e.g. C$_{60}$.  A challenging aspect lies
+here in the expected impact of electronic correlations \cite{Rem06}
+possibly driving relaxation pathways prior to decoherence and ionic
+relaxation. This implies both the development of new dedicated
+(coincidence \cite{Doe00}) experiments using elaborate observables and
+new theories properly including correlations.
+
+Understanding violent irradiation processes requires to describe
+far-off-equilibrium dynamics, involving ionization, electron transport
+and strong electron dynamical correlation effects leading to dissipation and
+thermalization.  The immediate electron response to irradiation kicks
+the system far off equilibrium but leaves it still fully quantum.
+Initially (coherent) quantum correlations dominate at very short times. But
+sooner or later, the phase space for electrons collisions
+progressively opens up leading to a dominance of incoherent
+correlations tractable with tools of statistical physics. On even
+longer time scales, electrons couple to ionic degrees of freedom
+(molecular vibrations, dissociation). The intermediate time window
+(from coherent excitation to statistical electron correlations) is
+the pivotal link from microscopic excitation to long-time evolution,
+which also gives access to  larger systems then unfolding to macroscopic scale.
+
+Today, the most widely used microscopic theoretical approaches
+addressing such intermediate time scales in realistic systems rely on
+Time-Dependent Density Functional Theory (TDDFT) \cite{Ull12}.  They
+are efficient and reliable at early times and/or low
+excitation. However, they do not include dynamical correlations and
+associated dissipative effects which come into play at intermediate
+times. It is the aim of this paper to describe the first open source
+package based on electronic TDDFT augmented by dynamical correlations
+and dissipative effects for applications in finite electronic systems
+such as atoms, molecules and clusters.  To indicate the combination of
+quantum treatment and dissipative dynamics, the code package is named
+Quantum Dissipative Dynamics (QDD).  As often done with TDDFT,
+electrons are coupled to ionic motion described by classical molecular
+dynamics \cite{Cal00,Rei04aB}. A word of caution is in order. This way
+of coupling to ionic dynamics, coined Ehrenfest dynamics, misses
+proper energy transfer at even longer times scales.  This can only be
+cured by ionic correlations \cite{Tod01a} which, however, is far beyond
+the scope of the present project.
+
+
+\begin{figure}[htbp!]
+\begin{center}
+ \includegraphics[width=0.78\columnwidth]{figures/qdd_examples}
+% \includegraphics[width=0.78\columnwidth]{figures/H2O-C3}
+% \includegraphics[width=0.78\columnwidth]{figures/Na41p-C60}
+\caption{Ground state properties of 4 typical systems attainable with
+  our open package : H$_2$O, C$_3$, Na$_{41}^+$ and C$_{60}$. We show
+  ionic structure and electronic cloud, sequence of single particle
+  energies (with the HOMO emphasized in blue and the LUMO in red dashes) and
+  the optical response in some specific spatial directions as indicated. }
+\label{fig:systems}
+\end{center}
+\end{figure}
+
+Typical examples of systems attainable in this package are
+demonstrated in figure \ref{fig:systems}.  We show there the structure
+properties of four typical examples of clusters and molecules which
+correspond to various system's sizes and kinds of binding
+\cite{Wop14aR}. We show for all of them the ionic structure dressed by
+the associated electron cloud. More details on the ground state
+properties are accessible via the sequence of single electron states
+on the left side of each panel. Two specific levels are especially
+important for dynamical applications, the Highest Occupied Molecular
+Orbital (HOMO) and the Lowest Unoccupied Molecular Orbital (LUMO)
+one. They are respectively plotted in blue (HOMO) and red (LUMO) while
+other occupied levels are black. We also show the optical response of
+each system in the bottom part of each panel. This is a crucial system
+property (optical response) which characterizes the coupling of the
+electrons cloud to photon fields.  We compute it directly in real time
+from the electronic dipole response Fourier transformed to frequency
+domain (section \ref{sec:specan}). Note that the computed ground state
+properties of the four presented cases reproduce rather well the
+experimentally known data.
+
+
+The paper is organized as follows. Section \ref{sec:formal} gathers
+formal theoretical aspects underlying the theory.  We describe
+numerical methods and tools in section \ref{sec:numerics} with details
+on computed observables and outputs.  Section \ref{sec:examples}
+provides a few typical examples of applications in various systems
+(clusters, molecules).  Conclusions and perspectives are given in
+section \ref{sec:concl}.
+To complement this document, we provide a supplementary material
+that should be taken as a user manual. At several places, cross-references
+to the user manual can be found; they are indicated by a heading
+letter ``M'' to avoid any confusion with a section or an equation of the present paper.
+
+\section{Formal background: electronic DFT coupled to ionic motion}
+\label{sec:formal}
+
+\subsection{Brief review: mean-field theory and correlations}
+
+
+In the ground state of a system, correlations are defined as
+deviations from mean field, such as Hartree-Fock (HF).  In electronic
+systems, numerous well established methods treat ground-state
+correlations at various levels such as Density-Functional Theories
+(DFT) \cite{Dre90}, wave function-based methods as Configuration
+Interaction or Coupled-Cluster methods \cite{Sch98,Jen17}, Green’s
+functions \cite{Mar16}, etc.  Much less developed are descriptions of
+correlations in the time domain, which range from particle-particle
+correlations in electron emission to energy relaxation towards thermal
+equilibrium.  As with DFT for the ground state, Time-Dependent
+  DFT (TDDFT), mostly treated at the level of the Time-Dependent
+  Local-Density Approximation (TDLDA),  approximately accounts for some
+  correlations and so provides a reliable and efficient starting point
+  for the real-time simulation of electronic dynamics in large systems
+  \cite{Mar06, Mar12, Shi12, Ull12, Wac14, Wac15,Yab12}.  TDLDA
+  practically carries forth the ground-state correlations from LDA
+  assumed to follow instantaneously the changing situations. This is
+  why this approach is also called Adiabatic LDA \cite{Gro95a}.
+  Still, at high excitation energies and long times, new correlations
+  from electron-electron collisions build up. These ``Dynamical
+  Correlations'' (DC) correspond to deviations from time-dependent
+  mean field, here described by TDDFT at the level of TDLDA.
+
+The theoretical treatment of DC in finite Fermion systems far off equilibrium 
+is still under development.  Fully coherent
+  descriptions of DC are often developed from time-dependent
+  extensions of correlated ground state approaches.
+Wave function-based techniques such as Multi-Configurational
+Time-Dependent Hartree-Fock (MCTDHF) \cite{Kit04a,Cai05} or
+Time-Dependent Complete Active Space Self-Consistent Field (TD-CASSCF)
+\cite{Sat16}, can mostly access DC for short times (before dissipation
+sets in) and small systems \cite{Gre10,Ste13,Hoc14}, giving little
+hope to extend them directly to large systems and/or long times, because of their too demanding 
+computational scaling properties.  The
+Time-Dependent 2-particle Reduced Density Matrix (TD2RDM) method
+delivers a close-to-exact solution to the problem \cite{Lac17}, with
+better computational performances, although again very limited (small
+systems $\sim$ 10 electrons, short times $\sim$ 10 fs).  On the
+  other side are semiclassical and even fully classical
+  approaches. These simplify the rather involved DC by dismissing
+  coherent correlations and quantum features, thus delivering a robust
+  approach applicable to large systems and high excitation energies
+which often works reasonably well
+\cite{Dom98b,Gig02,Fen04,Saa06aR,Fen10}. Of course, they leave a
+large gap between the true quantum regime of low to moderate
+excitations and the regime of high excitation density  by
+collisions leading to relaxation and thermalization.  They thus miss
+many irradiation scenarios at intermediate energies/early stages
+dominated by quantum effects \cite{Han17}.
+
+
+To fill this gap, we have recently developed a set of quantum
+theories, coined QDD (Quantum Dissipative Dynamics) in which DC are
+treated incoherently while maintaining the quantum structure
+throughout the process \cite{Din18}. These theories can deal with
+large systems ($>$ 100 active electrons) on intermediate to long times
+($>$ 100 fs).  They are based on Stochastic TDHF (STDHF) \cite{Sur14}
+and different levels of approximation to it.  STDHF describes DC in
+terms of a stochastic treatment of electron-electron collisions
+leading to an incoherent ensemble of time-dependent mean-field
+states. The quantum collision term is evaluated in Markov
+approximation, thus neglecting memory effects. The latter depend on
+the spectral density and usually decrease with excitation energy
+\cite{Gre94}. STDHF has been validated (at high enough excitation
+energies) on an exactly solvable model \cite{Lac16b}.  At moderate
+excitation, STDHF can be reduced to an average version ignoring the
+fluctuations of the mean field \cite{Lac16}. A further simplification
+consists in approximating the collision term by a Relaxation-Time
+Approximation (RTA) \cite{Rei15}.
+%All these QDD approaches deliver (incoherently) correlated many-body
+%density matrices and subsequent observables.
+Whatever approach, dissipative dynamics thus neglects coherent DC.  Coherence may play a role at the very first
+  stages of building up DC, the longer the lower the excitation
+  energy. STDHF, ASTDHF, and particularly RTA, are thus best suited to sufficiently
+  strong perturbations (as delivered by a swift charged particle or a
+  fs laser) and analysis of long time spans with a bias on relaxation
+  toward equilibrium. A detailed description of pre-equilibrium
+  processes stays outside the scope of these approaches.
+
+In the present paper, we present our QDD code, an open source implementation of
+the RTA on top of a 3D coordinate-space code for TDLDA augmented by a
+various versions of Self-Interaction Correction (SIC) \cite{Leg02}.  TDLDA is
+formulated at standard Kohn-Sham level \cite{Koh65} using single
+particle wave functions as building blocks. Dissipative features at
+RTA level are formulated in terms of the one-body density matrix built
+from a large set of single particle wave functions with fractional
+occupation numbers. Ionic degrees of freedom are treated classically
+in a standard manner, as usually done in real-time implementations of TDDFT
+\cite{Mar06,Mar12}. We formulate TDLDA starting from the total energy
+(section \ref{sec:Etot}) from which stationarity of action delivers i)
+standard Kohn-Sham TDLDA equations for single electron wave functions
+and ii) classical Molecular Dynamics (MD) equations for ions (section
+\ref{sec:mf}). This altogether leads to standard combined
+TDLDA-MD. RTA is built on top of the TDLDA evolution by making
+occupation numbers time-dependent according to the RTA kinetic
+equation (section \ref{sec:RTA}). RTA is thus coupled to ionic MD in
+the same standard manner as TDLDA.
+
+
+\subsection{The total energy of the model}
+\label{sec:Etot}
+
+The basic dynamical variables in mean-field theory and in QDD are the
+set of single particle (s.p.) wave functions with their occupation
+numbers at the side of {\rm valence} electrons, and classical
+coordinates and momenta for the ions:
+\begin{equation}
+\begin{array}{lcl}
+  \mbox{s.p. wave functions:} && 
+  \varphi_\alpha\;,\;\alpha=1...\Omega
+  \quad,
+\\
+  \mbox{s.p. occupation numbers:} && 
+  w_\alpha\;,\;\alpha=1...\Omega
+  \quad,
+\\
+  \mbox{ionic coordinates:} &&
+  \mathbf{R}_I\;,\; I=1...N_\mathrm{ion}
+  \quad,
+\\
+  \mbox{ionic momenta:} &&
+  \mathbf{P}_I\;,\; I=1...N_\mathrm{ion}
+  \quad.
+\end{array}
+\label{eq:gen_nbrs}
+\end{equation}
+Note that $\alpha$ 
+also accounts for spin (up, $\uparrow$ and down, $\downarrow$) degrees of freedom.
+$\Omega$ denotes the total number of s.p. wave functions. 
+It must be $\Omega\geq N_{\rm el}$ for a system with $N_{\rm el}$ valence
+electrons.  Later on, we will denote by $Z_I$ the charge of ion $I$
+and by $M_I$ its mass.  The term valence electrons needs explanation:
+Electrons in a cluster or a molecule have very different energetic
+properties. For the kind of excitation that can be dealt with in
+TDLDA and QDD, we only need to handle the least bound electrons which
+are commonly coined ``valence'' electrons.  The ``core''
+electrons remain practically inert because they are energetically too
+far away.  They form together with the corresponding atomic nucleus
+an ionic core.  The coupling of the core electrons to the valence
+electrons is described in terms of pseudopotentials, see section
+\ref{sec:practPsP}.
+
+
+A key quantity in connection with energy-density functionals
+is the electronic local density which covers, in fact, two separate densities for spins up and
+spins down
+\begin{subequations}
+\begin{equation}
+  \varrho_\uparrow(\mathbf{r},t)
+  =
+  \sum_{\alpha\in\uparrow}w_\alpha
+ % \varphi_\alpha^+(\mathbf{r},t)
+   \varphi_\alpha^*(\mathbf{r},t)
+ \varphi_\alpha^{\mbox{}}(\mathbf{r},t)
+  \quad,\quad
+  \varrho_\downarrow(\mathbf{r},t)
+  =
+  \sum_{\alpha\in\downarrow}w_\alpha
+%  \varphi_\alpha^+(\mathbf{r},t)
+  \varphi_\alpha^*(\mathbf{r},t)
+  \varphi_\alpha^{\mbox{}}(\mathbf{r},t)
+  \quad,
+\label{eq:locdens}
+\end{equation}
+which sum up to the total density
+\begin{equation}
+\varrho(\mathbf{r},t) = \varrho_\uparrow(\mathbf{r},t) + \varrho_\downarrow(\mathbf{r},t) = \sum_{\alpha}w_\alpha \varphi_\alpha^*(\mathbf{r},t)
+  \varphi_\alpha(\mathbf{r},t).
+\label{eq:totrho}
+\end{equation}
+\end{subequations}
+%To simplify the presentation of the formalism, we
+%ignore this distinction in the following and use simply
+%a single local density $\varrho(\mathbf{r},t)$.
+
+\subsubsection{The energy in Local-Density Approximation (LDA)}
+
+Starting point is an expression for the total energy of the coupled
+electronic and ionic system:
+\begin{subequations}
+\label{eq:Etotal}
+\begin{eqnarray}
+  E_\mathrm{total}
+  &=&
+  E_\mathrm{kin}
+  +
+  \underbrace{E_\mathrm{C}
+  +
+  E_\mathrm{xc}}_{E_\mathrm{LDA}}
+  +
+  E_\mathrm{ext}
+  +
+  E_\mathrm{el,ion}
+  +
+  E_\mathrm{kin.ion}
+  +
+  E_\mathrm{pot,ion}
+  \;,
+\\
+  E_\mathrm{kin}[\{\varphi_\alpha\}]
+  &=&
+  \int \textrm d\mathbf{r}\,\sum_\alpha w_\alpha
+  \varphi_\alpha^+\frac{\hat{p}^2}{2m_e}\varphi_\alpha^{\mbox{}}
+  \quad,
+\label{eq:Ekin}
+\\
+  E_\mathrm{C}[\varrho]
+  &=&
+  \frac{e^2}{2}\int \textrm d \mathbf r\, \textrm d \mathbf r'\,
+  \frac{\varrho(\mathbf{r},t)\varrho(\mathbf{r}',t)}{|\mathbf{r}-\mathbf{r}'|}
+\\
+  E_\mathrm{xc}[\varrho_\uparrow, \varrho_\downarrow]
+  &=&
+  \int \textrm d\mathbf{r}\,\varrho_\uparrow(\mathbf{r},t)
+  \epsilon_\mathrm{xc}\left(\varrho_\uparrow(\mathbf{r},t)\right)
+  +
+  \int \textrm d\mathbf{r}\,\varrho_\downarrow(\mathbf{r},t)
+  \epsilon_\mathrm{xc}\left(\varrho_\downarrow(\mathbf{r},t)\right)
+  \quad,
+\\
+  E_\mathrm{ext}[\varrho,t]
+  &=&
+  \int \textrm d\mathbf{r}\,\varrho(\mathbf{r},t)V_\mathrm{ext}(\mathbf{r},t)
+  \quad,
+\\
+  E_\mathrm{el,ion}[\{\varphi_\alpha\},\{\mathbf{R}_I\}]
+  &=&
+  \sum_I\int \textrm d\mathbf{r}\,\sum_\alpha w_\alpha
+  \varphi_\alpha^+
+  \hat{V}_\mathrm{PsP}(\mathbf{r}-\mathbf{R}_I)\varphi_\alpha^{\mbox{}}
+  \quad,
+\\
+  E_\mathrm{kin,ion}(\mathbf{P}_I)
+  &=&
+  \sum_I\frac{\mathbf{P}_I^2}{2M_I}
+  \quad,
+\\
+  E_\mathrm{pot,ion}(\mathbf{R}_I)
+  &=&
+  \frac{1}{2}\sum_{J\neq I}\frac{e^2 Z_I Z_J}{|\mathbf{R}_I-\mathbf{R}_J|}
+  +
+  V_\mathrm{ext,ion}(\mathbf{R}_I,t)
+  \quad,
+\end{eqnarray}
+\end{subequations}
+where functionals of density are  indicated by square
+brackets, and functions of coordinates by round brackets.  
+
+$E_\mathrm{C}$ is the direct part of the electronic Coulomb energy.
+$E_\mathrm{xc}$ is the energy-density functional for electronic
+exchange and correlations computed from the exchange correlation functional $\epsilon_\mathrm{xc}$.
+The sum of $E_{\rm C}$ and $E_{\rm xc}$ constitute the LDA energy $E_{\rm LDA}$.
+We use in the code two options:
+the  Perdew-Wang functional of \cite{Per92} or the older 
+Gunnarsson-Lundqvist functional from  \cite{Gun76}. These 
+two options correspond to a Local Density Approximation (LDA). We furthermore 
+use the stationary expression of the functionals  in dynamical simulations 
+(adiabatic approximation). 
+The LDA exchange-correlation term then becomes a function of the density:
+$E_\mathrm{xc}[\varrho] \rightarrow E_\mathrm{xc}(\varrho)$; and the resulting 
+DFT approach becomes an effective mean field theory. 
+
+$E_\mathrm{ext}$ stands for the excitation mechanisms by external
+sources, either from a laser pulse or from the Coulomb field
+of a fast bypassing ion, see section \ref{sec:laser}. This part is, of
+course, absent in static calculations of the ground state.
+$E_\mathrm{el,ion}$ carries the interaction of the electrons with the
+ions which is usually described by a pseudopotential
+$\hat{V}_\mathrm{PsP}$, see section \ref{sec:practPsP}, or may be
+simplified in terms of the jellium model, see section \ref{sec:jell}.
+Ionic kinetic and potential energy are described by the obvious
+classical expressions.  $V_\mathrm{ext,ion}$ in the ionic potential
+energy describes the action of an external field on the ions.
+
+\subsubsection{Self-Interaction correction (SIC)}
+\label{sec:SIC}
+
+
+The LDA approximation  introduces a self-interaction (SI) error because
+the total energy  employs the total density which
+also includes the electron on which the interaction acts. The effect 
+for the long-range Coulomb term is to shift the  s.p. energy spectrum. This
+leads to a wrong ionization potential if estimated from the energy 
+of the HOMO. This is a crucial effect in a real-time 
+simulation in which electron emission is evaluated on the fly. To overcome the SI
+error, the energy-density functional can be  augmented by a SI Correction
+(SIC) \cite{Per81}
+\begin{equation}
+\label{eq:ESIC}
+   E_\mathrm{LDA}
+   \longrightarrow
+   E_\mathrm{LDA}[\varrho_\uparrow,\varrho_\downarrow]
+   - \sum_\alpha
+   E_\mathrm{LDA}[\varrho_\alpha]
+\end{equation}
+where $\varrho_\alpha$ labels the density associated to s.p. $\alpha$,
+that is $\varrho_\alpha(\mathbf{r},t) =
+\left|\varphi_\alpha(\mathbf{r},t)\right|^2$.  In this formulation of
+SIC, the price to pay is to deal with a non-hermitean and
+state-dependent Hamiltonian (see section \ref{sec:mf}). The difficulty
+is especially severe in the time domain as the non-hermiticity of the
+Hamiltonian requires extra measures to guarantee unitary propagation,
+for tractable strategies see \cite{Mes2008TLSa,Mes2008TLSb}.
+
+Still, a solution of full dynamical SIC equations remains
+computationally expensive and there is still no universally accepted
+solution to the SIC problem, especially in the time domain.
+Fortunately, there are many situations in which simplified
+implementations of SIC are possible and justified. The Average Density
+SIC (ADSIC), which was proposed already in the 1930s~\cite{Fer34} and
+applied since the 2000s in clusters~\cite{Leg02}, provides a
+simple and robust SIC. The idea underlying ADSIC is to assume that all
+valence electrons contribute about equally to the SI error.  This
+amounts to replace Eq.~(\ref{eq:ESIC}) by
+\begin{equation}
+   E_\mathrm{LDA}
+   \longrightarrow
+   E_\mathrm{LDA}[\varrho_\uparrow,\varrho_\downarrow]
+  \ - 
+  \sum_{\sigma\in\{\uparrow\,\downarrow\}}
+  {N_\sigma} E_\mathrm{LDA}[\varrho_\sigma/{N_\sigma}]
+\quad.
+\label{eq:ADSIC}
+\end{equation}
+where $N_\sigma$ is the number of electrons with spin $\sigma$.  
+ADSIC delivers again a functional of the local density only and thus can be
+treated in the same manner as any LDA scheme. It turns out that ADSIC
+works remarkably well in a wide class of compact atomic/molecular
+systems \cite{Klu13} and especially well for metal clusters.  The
+major difficulty with ADSIC lies in the total number $N_{\rm el}$ of
+electrons which explicitly enters the functional.  It is thus not
+applicable to situations with fragmented electron density such as in
+dissociation and to bulk systems (the latter because $N_{\rm el}$
+grows infinite). Ionization is manageable as long as it remains
+moderate as compared to $N_{\rm el}$.  And this is typically the
+physical situations we are interested in.   There is also another
+  case for which  ADSIC is not suited, namely if the system combines
+  various types of binding. This is the situation for instance in
+  Na(H$_2$O)$_n$ complexes in which metallic and covalent bonding are
+  at play~\cite{Din14}.  Such cases require a full SIC treatment which
+  is feasible with some formal and algorithmic effort
+  ~\cite{Mes2008TLSa,Mes2008TLSb}.  However, this is much more
+  elaborate and more involved than ADSIC.  The present release of QDD
+  does not contain full SIC.  It is, nevertheless, our plan to
+  include it in a future release.
+
+There exist more elaborate approaches to full SIC. 
+%Some of them are incorporate in the QDD code, however with reduced functionality.  
+One option is to treat Coulomb exchange exactly, but then ignoring
+  correlations.  The other options belong to the class of optimized
+  effective potentials (OEP) which aim at best possible local
+  potentials simulating exchange-correlation effects
+  \cite{Tal76,Nor84,Kue08}.  The next simple after ADSIC is the
+  SIC-Slater approximation \cite{Sla51,Sha53} which accounts for the
+  local dominance of particular s.p. states. The method of
+  Krieger-Li-Ifrate (KLI) puts a feedback loop on top of SIC-Slater to
+  cure deficiencies of the mere SIC-Slater approach \cite{Kri92a}.
+  These three methods, SIC-Slater, KLI, and exact exchange, are also
+  implemented in QDD, however with reduced functionality: they  do not
+  work for fractional occupation numbers. A safe
+  application of SIC-Slater and KLI is confined to static calculation
+  because time-dependent simulations can easily run into
+  insurmountable difficulties \cite{Mun05,Mun07a}.  Nonetheless, we
+  find it useful to have these options available for occasional
+  checks. For the formal details, see the brief summary in \cite{Leg02}
+  or the extensive review on OEP \cite{Kue08}.
+
+\subsubsection{Pseudopotentials}
+\label{sec:practPsP}
+
+There is a great variety of pseudopotentials available.  The code
+employs two variants. Particularly efficient and simple to use are
+local pseudopotentials integrated from a pseudo-density which is
+represented as a sum of Gaussians.  The corresponding potential is then
+a sum of error functions
+\begin{subequations}
+\label{eq:softlocal}
+\begin{eqnarray}
+  V_\mathrm{PsP}(\mathbf{r})
+  &=&
+  Ze^2\sum_{i=1}^2 c_i 
+  \frac{\mbox{erf}(|\mathbf{r}|/(\sqrt{2}\sigma_i))}{|\mathbf{r}|}
+  \quad,
+\label{eq:locPsP}
+\\
+  \mbox{erf}(x) 
+  &=&
+  \sqrt{\frac{2}{\pi}}\int_0^x \textrm dy\,e^{-y^2}
+  \quad,
+\label{eq:erf}
+\end{eqnarray}
+where the $\sigma_i$ are widths and the strength parameters $c_i$ have
+to line up to the total charge of the ionic core
+$c_1+c_2=Z_\mathrm{ion}$. This pseudopotential is well suited for
+alkaline atoms for which it was originally developed \cite{Kue99}.
+\label{eq:locpseudo}
+\end{subequations}
+
+More involved, but also more versatile in the applicability, are the
+Goedecker-like pseudopotentials from \cite{Goe96} which are composed
+from a local and a non-local part as
+\begin{subequations}
+\label{eq:Goed}
+\begin{eqnarray}
+  \hat{V}_\mathrm{PsP}
+  &=&
+  {V}_\mathrm{loc}(\mathbf{r}-\mathbf{R})
+  +
+  \hat{V}_\mathrm{nloc}
+  \quad,
+\\
+  V_\mathrm{loc}(\mathbf{r}-\mathbf{R})
+  &=&
+  -\frac{Z_\mathrm{ion}}{x}\mbox{erf}\left(x\right)
+  +e^{-x^2}
+   \sum_{n=0}^3C_{n+1} 2^{n} x^{2n}
+  \quad,\quad
+  x
+  =
+  \frac{|\mathbf{r}-\mathbf{R}|}{r_\mathrm{loc}}
+  \quad,
+  \label{eq:loc}
+\\
+  \hat{V}_\mathrm{nloc}(\mathbf r,\mathbf r',\mathbf R)
+  &=&
+  \sum_{i,j} \sum_l\sum_{m=-l}^l {\cal G}^*_{ilm}(\mathbf{r}-\mathbf{R})\, h^l_{ij}
+  \, {\cal G}_{jlm}(\mathbf{r}'-\mathbf{R})
+  \quad,
+\label{eq:nonloc}
+\end{eqnarray}
+where $\mathbf{R}$ is the position of the ionic core with respect to
+which the pseudopotential is defined.  The non-local part
+\eqref{eq:nonloc} serves to project out the electronic states which
+are occupied in the ionic core. It involves a summation over the
+angular momentum $l$, its component $m=-l...\!+\!l$, and $i,j$. The projector
+functions ${\cal G}$ are defined as:
+\begin{equation}
+  \mathcal{G}_{ilm}(\mathbf{r})
+  =
+  \frac{\displaystyle\sqrt{2}\,|\mathbf{r}|^{l+2i-2}
+        \exp\left(-\frac{|\mathbf{r}|^2}{2r_l^2}\right)}
+       {\displaystyle r_l^{l+(4i-1)/2}\sqrt{\Gamma\left(l+\frac{4i-1}{2}\right)}}
+  Y_{lm}(\Omega_\mathbf{r}) \quad,
+\label{eq:Goeproj}
+\end{equation} 
+where $\Gamma$ is the gamma function and $Y_{lm}$ is the spherical
+harmonics, evaluated at the solid angle $\Omega_\mathbf{r}$ about the
+position vector $\mathbf{r}$. For the chemical elements we deal with, we use
+orders $i,j=1,2$ and $l$ runs from 0 up to 2. The parameters related
+to a given ionic core are thus: $r_{\rm loc}$, $C_{1...4}$, $r_l$,
+$h_{ij}^l$ with $i,j\in\{1,2\}$.  The projection looks expensive at
+first glance. However, one can exploit the fact that the Gaussian
+projectors cover only a small region of space, of order of a few multiples
+of the non-local radii $r_l$.  Thus one needs to evaluate the
+projectors only on a small sub-grid which reduces the expense
+dramatically.
+\label{eq:Goedecker}
+\end{subequations}
+
+\subsubsection{The soft jellium model for the ionic background}
+\label{sec:jell}
+
+The electronic wave functions of bulk metals and of metal clusters are spread
+softly over the whole system and hardly resolve the spatial structure of
+the ionic cores. This allows one to replace the detailed ionic background
+by a smooth, positive background density. 
+Such a jellium approximation
+is a standard approach in the theory of bulk metals \cite{Ash76} and the
+adaptation to a finite cluster is straightforward. One carves from
+bulk jellium a finite element of constant positive charge density
+corresponding to the average bulk density. The volume is chosen such
+that its total charge coincides with the given ionic charge.  For
+finite clusters, it is advantageous to use jellium with a soft surface
+profile. This is more suited for numerical handling and it improves
+the quality of the model, e.g., by producing a correct peak energy for
+the optical response of metal clusters \cite{Rub91}. Versatile and
+easy to handle in this respect is a Woods-Saxon profile for the
+jellium density
+\begin{subequations}
+\label{eq:softJ}
+\begin{eqnarray}
+  \varrho_\mathrm{jel}(\mathbf{r})
+  &=&
+%  \frac{3}{4\pi r_s^3}
+  \varrho_{\mathrm{jel},0}
+  \left[1+
+     \exp\left(\frac{|\mathbf{r}|-R(\theta,\phi)}
+                    {\sigma_\mathrm{jel}}\right)
+  \right]^{-1}
+  \quad,
+\label{eq:rhojell}\\
+\noindent \mathrm{with}  \qquad R(\theta,\phi)
+  &=&
+  R_\mathrm{jel}\left(1+\sum_{lm}\alpha_{lm}Y_{lm}(\theta,\phi)\right)
+  \quad,
+\label{eq:defjell}
+\\
+  \int \textrm d\mathbf{r}\, \varrho_\mathrm{jel} 
+  &=&
+  N_\mathrm{ion}
+  \quad.
+\label{eq:R0cond}
+\end{eqnarray}
+\end{subequations}
+The jellium radius $R_\mathrm{jel}$ is determined by
+Eq. (\ref{eq:R0cond}), the normalization to the desired number of ions.
+The central density is determined by the bulk density
+$\varrho_{\mathrm{jel},0}={3}/({4\pi r_s^3})$ and the Wigner-Seitz radius $r_s$ is a
+genuine material parameter \cite{Ash76}. $\sigma_\mathrm{jel}$
+parametrizes the surface width and the transition from 90\% to 10\%
+bulk density is achieved within $4\sigma_\mathrm{jel}$. 
+
+The model also allows one to describe deformed clusters by angular
+dependence $R(\theta,\phi)$ of the extension. This is achieved through
+the deformation coefficients $\alpha_{lm}$ weighting the impact of the
+spherical harmonics. Actually, we use in the code only the quadrupole
+deformations $\alpha_{20}$ and $\alpha_{2\pm2}$ as well as the
+hexadecapole deformation $\alpha_{40}$.  Axially symmetric shapes are
+obtained if $\alpha_{2\pm2}=0$ where then positive $\alpha_{20}$
+produce prolate shapes and negative $\alpha_{20}$ oblate ones. The
+hexadecapole moment plays a role for fine-tuning the shape
+\cite{Mon95b}.
+%
+The cluster radius
+$R_\mathrm{jel}$ is fixed by the other parameters through
+Eq. (\ref{eq:R0cond}) which is to be solved numerically by a root
+finding procedure, see the Supplemental material, section \ref{man:sec:jelliter}.
+
+After all, the leading parameters of the soft
+jellium model (\ref{eq:softJ}) are the Wigner-Seitz radius $r_s$
+and the surface thickness $\sigma_\mathrm{jel}$.  They are universal
+for a given material. Typical values are $r_s\sim 4\,\mathrm{a}_0$
+with $\sigma_\mathrm{jel}\sim 0.9\,\mathrm{a}_0$ for Na clusters,
+$r_s\sim 2.66\,\mathrm{a}_0$ and $\sigma_\mathrm{jel}\sim
+0.76\,\mathrm{a}_0$ for {Mg clusters}, or $r_s\sim 3\,\mathrm{a}_0$
+and $\sigma_\mathrm{jel}\sim 0.78\,\mathrm{a}_0$ for Ag clusters.  The
+deformation parameters $\alpha_{lm}$ depend on the actual cluster and
+strongly vary with system and size.
+
+
+The jellium approximation then consists in discarding the ionic
+contribution to the total energy (\ref{eq:Etotal}), i.e. the terms
+$E_\mathrm{kin,ion}$ and $E_\mathrm{pot,ion}$, and to replace the
+pseudopotential background in $E_\mathrm{el,ion}$ by the Coulomb
+potential of the jellium density (\ref{eq:softJ}). There is no
+dynamics associated with the jellium. The model thus applies to
+situations where ionic motion can be ignored. Note that QDD offers the
+possibility to consider an even simpler modeling option by means of
+phenomenological electronic shell models of harmonic-oscillator or
+Woods-Saxon type \cite{Bra93,Rei04aB}. This can be done in very
+flexible manner by supplying the shell model choice in form of an
+explicit 3D field and reading it as background potential, for details,
+see the Supplemental material, section~\ref{man:sec:perio}.
+
+
+
+
+\subsubsection{External excitation fields and excitation mechanisms}
+
+
+The total energy (\ref{eq:Etotal}) contains a contribution
+$E_\mathrm{ext}$ from (time-dependent) external electromagnetic
+fields. These are supposed to come from external sources and they
+serve as dynamical excitation mechanisms. The code contains explicit
+entries for laser pulses or the Coulomb field of a by-passing charged
+ion. The excitation reduces to an instantaneous dipole boost in the
+limit of extremely short pulses. This constitutes an alternative way
+of excitation which we will also discuss at the end of this
+subsection, together with two further instantaneous
+excitation schemes for more subtle modes (spin dipole, scissors).
+
+\paragraph{Laser fields}
+\label{sec:laser}
+
+
+
+Lasers are the most important and very flexible means for a dedicated,
+well tuned excitation of electronic systems.  They produce a strong
+coherent electromagnetic field which can be well approximated by a
+classical time-dependent electromagnetic field. Typical wavelengths are
+in the range of several hundreds of nm. This is a huge distance as
+compared to the spatial extension of atoms, molecules, and (most)
+clusters.  One can thus treat the laser field in the limit of long
+wavelengths ($k \rightarrow 0$). This amounts to deal with a spatially
+homogeneous electrical field $\mathbf{E}$ at the cluster site and we
+can also neglect the effect of the magnetic field for the laser 
+intensities of relevance here.  The coupling
+Hamiltonian leaves the freedom of gauge transformation \cite{Jac62}.
+The external field operator in velocity gauge reads:
+\begin{equation}
+  V_\mathrm{ext}
+  =
+  e\mathcal{\mathbf{E}}_0F(t) \cdot \hat{\mathbf{p}}
+  \quad,\quad
+  F(t)
+  =
+  \int_0^t \textrm dt'\,f(t')\exp{(-\mathrm{i}\omega_\mathrm{las}t')}
+  \quad,
+\label{eq:laserp}
+\end{equation}
+where $f(t')$ is the envelop of the laser pulse.
+The same pulse in space gauge becomes
+\begin{equation}
+  V_\mathrm{ext}
+  =
+  e{\cal\bf E}_0f(t)\!\cdot\!\hat{\mathbf{r}}
+  \exp{(-\mathrm{i}\omega_\mathrm{las}t)}
+\label{eq:laserr}
+\end{equation}
+which is simpler to handle because the laser field acts here simply as
+a time-dependent local operator. QDD thus uses the external field
+in space gauge. Transformation to velocity gauge, if needed, can
+be performed a posteriori by standard rules of gauge transformation
+\cite{Mes95aB}.
+
+The laser pulse is characterized by frequency
+$\omega_\mathrm{las}$, peak field strength $E_0=|\mathbf{E}_0|$,
+polarization $\mathbf{E}_0/E_0$, and time profile $f(t)$. The
+field strength is usually parametrized in terms of the laser intensity
+$I$ as
+\begin{equation}
+  E_0
+  =
+  c_{\rm EI}
+  I^{1/2}
+  \quad,\quad
+  c_{\rm EI}
+  =
+  1.07\times10^{-8}\ 
+  \frac{\mathrm{eV}}{\mathrm{a}_0}
+  \left(\frac{\mathrm{W}}{\mathrm{cm}^2}\right)^{-1/2}
+  \quad.
+\end{equation}
+Even if numerous works on the characterization of the time profile
+of the laser pulse do exist~\cite{Tre97,Pau01,Mos11,Gau17}, this profile is very often not precisely known
+experimentally, and is usually taken as a Gaussian with a certain
+Full Width at Half Maximum (FWHM).  Gaussians require long
+simulation times to cover the outer wings of the pulse. To avoid
+that, we shape a pulse with finite support by using a sin$^2$
+envelop instead:
+\begin{equation}
+  f(t)
+  =
+  \left\{\begin{array}{ll}
+    \sin^2{\left(\displaystyle \pi\frac{t}{2T_\mathrm{pulse}}\right)}
+        &\mbox{for}\quad t\in\{0,2T_\mathrm{pulse}\}  \\
+    0  &\mbox{else}
+  \end{array}\right.
+  \quad.
+\label{eq:sinpulse}
+\end{equation}
+%\end{subequations}
+It is close to a Gaussian pulse in the vicinity of peak field strength
+and combines high spectral selectivity with finite bounds. Note that
+the form (\ref{eq:sinpulse}) is scaled such that the pulse parameter
+$T_\mathrm{pulse}$ is identical with the FWHM of a Gaussian pulse.
+
+
+\paragraph{Charged projectiles}
+
+Probing electronic systems by beams of charged particles is a standard
+tool in atomic and molecular physics \cite{Bra92} and is also used in
+cluster physics.  Fortunately enough there exists a class of cases
+which can be addressed in a simplified, more robust way: highly
+charged ions, protons and, to some extent, also electrons can be
+considered as being structureless. What only counts is their Coulomb
+field.  Charged ions are heavy and can be treated with classical
+trajectories
+%
+$\mathbf{R}_\mathrm{ext}(t)$.
+%
+For sufficiently heavy and fast projectiles, one can approximate
+these trajectories by straight lines and that is what is done in 
+QDD.  In any case, the effect of the ion, of charge $Z_\mathrm{ext}$, on
+the system can be described by a time-dependent external field \cite{Wan11}:
+\begin{subequations}
+\label{eq:ionext}
+\begin{eqnarray}
+  V_\mathrm{ext}(\mathbf{r},t)
+  &=&
+  \frac{Z_\mathrm{ext}e^2}{|\mathbf{r}-\mathbf{R}_\mathrm{ext}(t)|}
+  \quad,
+\\
+  \mathbf{R}_\mathrm{ext}(t)
+  &=&
+  \mathbf{R}_\mathrm{ext}(0)+\dot{\mathbf{R}}_\mathrm{ext}(0) t
+  \quad.
+\end{eqnarray}
+\end{subequations}
+Magnetic effects are neglected. They may play a role only for extremely
+fast ions in the relativistic domain.
+%
+The ionic trajectories are characterized by the ion velocity
+$v_\mathrm{ion}$ and the impact parameter $b_\mathrm{ion}$ \cite{Can13}.
+The velocity is more or less well
+defined by the experimental setup. But the impinging ion beam will
+cover a broad range of impact parameters. From the theoretical side,
+one has then to run several calculations with systematically varied
+impact parameters.  Reaction cross-sections are then computed by
+integration of the reaction probability over impact parameters, for
+examples see \cite{Rei98a,Bae06a}.
+
+More involved projectiles come into play when considering atomic
+collisions. Such scenarios could, in principle, also be treated in QDD
+and it had been investigated in the past in connection with collisions
+on surfaces \cite{Din09aR}. However, the preparation of the initial
+condition is much handwork because it has too many degrees of freedom
+and has to be done in several steps. We thus do not discuss this
+option further in this public version of the QDD code.
+
+\paragraph{Instantaneous boost}
+\label{sec:boost}
+
+If the time of impact from a laser pulse or a charged projectile is
+shorter than the typical response time of  occupied electron states, the
+pulse just  instantaneously imprints a certain phase profile onto the
+s.p. wave functions which then unfolds in the subsequent
+electron dynamics. 
+The leading mechanism here is a dipole boost which
+initializes dynamics as
+\begin{equation}
+  \varphi_\alpha(\mathbf{r},t\!=\!0)
+  =
+  e^{\mathrm{i}\mathbf{p}_0\cdot\mathbf{r}}
+  \varphi_{\alpha,\mathrm{g.s.}}(\mathbf{r})
+\label{eq:boost}
+\end{equation}
+where $\mathbf{p}_0$ is the boost momentum related to the boost energy
+$E_\mathrm{boost}=\displaystyle \frac{N_\mathrm{el}}{2m_e} |\mathbf p_0|^2$. Such an excitation
+mocks up realistic irradiation either through a very short
+laser pulse or a collision with a bypassing swift charged
+projectile. In both cases, the shortness of the excitation practically
+means that the initial boost delivers a perturbation covering all
+frequencies.  As  a consequence, the response of the system is
+dominated by the coupling to its eigenfrequencies and only depends on
+the amplitude of the boost. This considerably reduces the possibly
+large set of parameters in the case of a laser pulse or a charged
+projectile to explore various scenarios.  Actually, very small boosts
+are typically used for evaluating the optical absorption spectrum, see
+section \ref{sec:specan}. The code also provides  the option of an
+instantaneous displacement of the electron cloud which is a
+zero-time excitation as the boost, but with bias to higher
+energies.
+
+\subsubsection{Further instantaneous excitations}
+\label{sec:iniexo}
+
+There are two more instantaneous excitations schemes built into the QDD code
+which trigger less prominent modes, namely spin-dipole and scissors
+oscillations. The spin-dipole mode is initiated by a spin-dipole boost
+(Eq. (\ref{man:eq:spindipboost}) in the Supplemental material)
+similar as the dipole boost
+in Eq.~(\ref{eq:boost}), however spin-up and spin-down boosted in
+opposite directions. The mode is tracked by spin-dipole moment,
+see section \ref{sec:obsexo}.
+
+The scissors mode is an orbital $J=1^-$ excitation representing a
+rotational oscillation of one principle axis of the electron cloud
+against the corresponding ionic axis \cite{Lip89,Nes99}.  It is
+initialized by an instantaneous rotation (\ref{man:eq:rotboost}) of the ionic background
+relative to the electron cloud. This mode is tracked by the angular
+momentum of the electron cloud, see  section \ref{sec:obsexo}.
+
+\subsection{Equations of motion}
+\label{sec:mf}
+
+The degrees of freedom of the theory are the s.p. wave functions
+$\varphi_\alpha$, their occupation number $\omega_\alpha$, and ionic
+positions and momenta ${\bf R}_I,{\bf P}_I$. We derive in this section
+equations of motion for each of them.  Those for the
+$\varphi_\alpha$'s as well as for the ${\bf R}_I$'s and ${\bf P}_I$'s
+are obtained from a variational principle on the total energy
+$E_\mathrm{total}$. For fixed $\omega_\alpha$, the resulting equations
+of motion finally deliver coupled TDLDA-MD equations in which
+electrons are propagated according to TDLDA equations and ions
+according to classical Molecular Dynamics (MD). Such coupled dynamics
+is often quoted Ehrenfest dynamics \cite{Tod01a}.  The dynamical
+equations for the $\omega_\alpha$'s requires a dedicated sequence of
+approximations well documented in the literature \cite{Bal75}.  We
+shall not enter those details here and just recall briefly the path
+towards the RTA we use to effectively
+propagate the $\omega_\alpha$'s.
+
+\subsubsection{Equations of motion for single particle electronic wave functions : TDLDA}
+
+\paragraph{Electronic Kohn-Sham equations and TDLDA}
+
+Static and dynamical equations determining structure and dynamics of
+the electron cloud are determined by variation of the total energy
+with respect to the s.p. wave functions $\varphi_\alpha$.  This yields
+what is called the Kohn-Sham (KS) equations \cite{Koh65}.  We use
+energy-density functionals \cite{Per92,Gun76} i.e. functionals in
+Local Density Approximation (LDA).  The dynamical application is
+called Time-Dependent LDA (TDLDA) and we use this acronym also in
+cases where we add SIC (see section \ref{sec:SIC}) to the treatment.
+
+The time-dependent KS equations determining the propagation of
+electronic  wave functions are:
+\begin{subequations}
+\label{eq:KS}
+\begin{eqnarray}
+  \hat{h}_{\sigma_\alpha}\varphi_\alpha
+  &=&
+  \mathrm{i} \hbar \partial_t\varphi_\alpha
+  \quad\mbox{for}\quad
+%  \alpha\in\{1,...,N_\mathrm{el}\}
+  \alpha\in\{1,...,\Omega\}
+  \quad,
+\label{eq:TDKS}
+\\
+  \hat{h}_{\mathrm{KS},\sigma}
+  &=&
+  \frac{\hat{p}^2}{2m}
+  +
+  \underbrace{
+    V_\mathrm{C}(\mathbf{r},t)
+    +
+    \hat{V}_{\mathrm{xc}}[\rho_\sigma]
+    +
+    \hat{V}_\mathrm{el,ion}
+    +
+    V_\mathrm{ext} (\mathbf{r},t)
+  }_{V_\mathrm{KS}}
+  \quad,
+\\
+  V_\mathrm{C}(\mathbf{r},t)
+  &=&
+  e^2\int \textrm d \mathbf r'\,
+  \frac{\varrho(\mathbf{r}',t)}{|\mathbf{r}-\mathbf{r}'|}
+  \quad,
+\\
+  \hat{V}_{\mathrm{xc},\sigma} %(\mathbf{r})
+  &=&
+  \epsilon_\mathrm{xc}\left[\varrho_\sigma(\mathbf{r},t)\right]
+  +
+  \varrho_\sigma(\mathbf{r},t)
+  \left.\frac{\delta\epsilon_\mathrm{xc}[\rho]}
+             {\delta\rho}\right|_{\rho=\varrho_\sigma(\mathbf r,t)}
+  \quad,
+\label{eq:Uxc}
+\end{eqnarray}
+where $\hat{h}$ is the KS mean-field Hamiltonian and
+$\sigma\in\{\uparrow,\downarrow\}$.  The exchange-correlation
+potential $\hat{V}_{\mathrm{xc}}$ involves the construction
+$\delta\epsilon_\mathrm{xc}[\rho]/{\delta\rho}$ which is the
+functional derivative of the exchange-correlation energy per particle
+$\epsilon_\mathrm{xc}$ with respect to the local density $\rho$
+considered as an independent variable. This functional derivative is
+then evaluated at $\rho=\varrho_\sigma(\mathbf r,t)$.
+$\hat{V}_\mathrm{el,ion}$ is the potential describing the interaction
+of the electrons with the ions, and is either a pseudopotential
+$\hat{V}_\mathrm{PsP}$, see section \ref{sec:practPsP}, or stems from
+the jellium model, see section \ref{sec:jell}.
+
+
+The stationary KS equations analogously read
+\begin{equation}
+  \hat{h}_{\sigma_\alpha} \, \varphi_\alpha
+  =
+  \varepsilon_\alpha\varphi_\alpha
+  \quad\mbox{for}\quad
+%  \alpha\in\{1,...,N_\mathrm{el}\}
+  \alpha\in\{1,...,\Omega\}
+  \quad,
+\label{eq:statKS}
+\end{equation}
+\end{subequations}
+where $\hat{h}$ is composed in the same manner as in the
+time-dependent case (instantaneous approximation for $V_\mathrm{xc}$).
+The KS equations (\ref{eq:statKS}) pose a stationary eigenvalue
+problem. They provide the electronic ground state of a system.  The
+time-dependent KS equations (\ref{eq:TDKS}) pose an initial
+value problem. The natural starting point is the ground state as
+obtained from the stationary KS equation. The numerical
+solution of the KS equations is explained in section
+\ref{sec:numerics}.
+%
+The time evolution delivered by the dynamical KS equations (\ref{eq:TDKS})
+can be expressed formally by the unitary one-body time-evolution
+operator
+\begin{subequations}
+\begin{equation}
+  \hat{U}(t,t')
+  =
+  \hat{\mathcal{T}}\mathrm{ exp}\left(-\frac{\mathrm i}{\hbar}
+  \int_t^{t'} \hat{h}_{\rm KS}(t'') \textrm dt''\right)
+\label{eq:KSpropag}
+\end{equation}
+where $\hat{\mathcal{T}}$ is the time-ordering operator.
+This yields a closed expression for the time-evolution of s.p. states
+\begin{equation}
+  |\varphi_\alpha(t)\rangle
+  =
+  \hat{U}(t,t')|\varphi_\alpha(t')\rangle \quad.
+\label{eq:KSpropag2}
+\end{equation}
+\end{subequations}
+This compact form will be used later on in connection with the
+extension of the propagation by dissipation, see section
+\ref{sec:RTA}.
+
+\paragraph{LDA and TDLDA with mixed states}
+\label{sec:mix}
+
+So far, we dealt with the equations for pure states.  In the case of
+stationary states at finite temperature and in the case of dissipative dynamics, we
+encounter mixed states.  This is described by associating an
+occupation number $w_\alpha$ with each s.p. state
+$\varphi_\alpha$ as provided already in the initial set-up in section
+\ref{sec:Etot}.  Even if the $w_\alpha$'s become crucial in the dissipative
+dynamics, see section \ref{sec:RTA}, they are by definition kept
+frozen during a TDLDA propagation.  They matter again for stationary
+states at finite temperature, in which case they are determined by:
+\begin{equation}
+  w_\alpha
+  =
+  \frac{1}{1+\exp[(\varepsilon_\alpha-\mu)/T]}
+\label{eq:Fermi0}
+\end{equation}
+where $\varepsilon_\alpha$ is the s.p. energy of state $\alpha$ obtained
+from the stationary KS equations (\ref{eq:statKS}), and $\mu$ is the chemical
+potential tuned such that the total electron number is reproduced by
+$\sum_\alpha w_\alpha=N_\mathrm{el}$.
+
+In case of a mixed state, it is advantageous to express the
+entity $\{\varphi_\alpha,w_\alpha\}$ in compact manner by the one-body
+density operator:
+\begin{equation}
+  \hat{\rho}
+  =
+  \sum_{\alpha=1}^\infty|\varphi_\alpha\rangle w_\alpha\langle\varphi_\alpha|
+   \simeq 
+   \sum_{\alpha=1}^\Omega|\varphi_\alpha\rangle w_\alpha\langle\varphi_\alpha|
+ \quad.
+\label{eq:rhodiag}
+\end{equation}
+The solution of the thermal KS equations, i.e. Eqs. (\ref{eq:statKS})
+together with (\ref{eq:Fermi0}), provides the density operator
+immediately in this form which is called natural orbital
+representation (diagonal in the s.p. states). In general, the
+one-body density operator can be non-diagonal with respect to given
+s.p. states. This will play a role later on.
+
+As said above, the occupation numbers $w_\alpha$ are kept frozen
+during TDLDA.  The KS equations (\ref{eq:TDKS}) then can be written
+compactly as
+\begin{equation}
+  \I\hbar\partial_t\hat{\rho}
+  =
+  \left[\hat{h},\hat{\rho}\right]
+\label{eq:KSrho}
+\end{equation}
+where $\hat{h}[\varrho_\uparrow,\varrho_\downarrow]$ is the KS
+Hamiltonian as above.  This pure mean-field propagation
+(\ref{eq:KSrho}) leaves the occupation numbers $w_\alpha$'s unchanged
+and propagates only the s.p. states.  The mean-field propagation of an
+initial state (\ref{eq:rhodiag}) then reads:
+\begin{eqnarray}
+  \hat{\rho}(t)
+  &=&
+  \sum_{\alpha=1}^\infty
+  |\varphi_\alpha(t)\rangle w_\alpha\langle\varphi_\alpha(t)|
+  \simeq \sum_{\alpha=1}^\Omega|\varphi_\alpha\rangle w_\alpha\langle\varphi_\alpha|
+%\nonumber\\  
+%  &=&
+  =
+  \hat{U}(t,0)\hat{\rho}(0)\hat{U}^{-1}(t,0)
+\label{eq:KSrhoevol}
+\end{eqnarray}
+where $\hat{U}$ is the mean-field evolution operator (\ref{eq:KSpropag}).
+
+\subsubsection{Relaxation-Time Approximation}
+\label{sec:RTA}
+
+\paragraph{Formal background}
+
+To simplify the rather involved notations, we drop the spin index
+  throughout this RTA part.
+  
+The quantum Boltzmann equation is the quantum mechanical counterpart
+of the semiclassical Vlasov-Uehling-Uhlenbeck equation
+\cite{Ber88,Abe96}.  It complements the self-consistent TDLDA
+propagation of the one-body density operator $\hat{\rho}$ by dynamical
+correlations through a collision term. It reads in general
+\cite{Rei85f,Goe86a}
+%\begin{eqnarray}
+$\mathrm{i}\hbar\partial_t\hat{\rho}
+  -
+  \big[\hat{h},\hat{\rho}\big]
+  =
+  \hat{I}[\hat{\rho}]
+%  \quad.
+$
+%\label{eq:EoMfull}
+%\end{eqnarray}
+where the left-hand side contains the mean-field propagation. $\hat{I}$ 
+in the right-hand side stands for the
+quantum-mechanical collision term which, however, is extremely hard to
+handle for finite fermion systems. A great simplification can be
+achieved by the Relaxation-Time Approximation (RTA) which was used
+successfully in a wide variety of homogeneous systems
+\cite{Pin66,Ash76}. The RTA equations for the present case of finite
+fermion systems read~\cite{Rei15a}:
+\begin{subequations}
+\label{eq:EoMbasic}
+\begin{eqnarray}
+  \partial_t\hat{\rho}
+  &=&
+  -\frac{\mathrm{i}}{\hbar} \big[\hat{h},\hat{\rho}\big]
+  -
+  \frac{1}{\tau_\mathrm{relax}}
+  \left(\hat{\rho}-\hat{\rho}_\mathrm{eq}[\varrho,\mathbf{j},E_\mathrm{sp}]\right)
+  \;,
+\label{eq:EoMbasicrho}
+\\
+  \varrho(\mathbf{r},t)
+  &=&
+  \sum_\alpha \left|\varphi_\alpha(\mathbf{r},t)\right|^2 w_\alpha
+  \;,
+\label{eq:locdens1}\\
+  \mathbf{j}(\mathbf{r},t)
+  &=&
+  \frac{\hbar}{m_e}
+  \sum_\alpha w_\alpha\, \varphi_\alpha^*(\mathbf{r},t)
+     \frac{\stackrel{\rightarrow}{\nabla}-\stackrel{\leftarrow}{\nabla}}
+          {2\mathrm{i}}
+     \varphi_\alpha(\mathbf{r})
+  \;,
+\label{eq:current}\\
+%  E_\mathrm{sp}
+%  &=&
+%  \sum_\alpha w_\alpha\,\varepsilon_\alpha
+%  \;,
+%\\  
+  \frac{\hbar}{\tau_\mathrm{relax}}
+  &=&
+  {0.40}\frac{\sigma_{ee}}{r_s^2}\frac{{E}^*_\mathrm{intr}}{N_{\rm el}}
+  \;,\;
+  r_s^\mathrm{(el)}=\left(\frac{3\bar{\varrho}}{4\pi}\right)^{-1/3}
+  \;,\;
+  \sigma_{ee}=\sigma_{ee}(\bar{\varrho})
+  \;,
+\label{eq:relaxtime}
+\end{eqnarray}
+\end{subequations}
+where $\hat{\rho}_\mathrm{eq}$ is the density operator of the thermal
+equilibrium for local density $\varrho(\mathbf{r},t)$ current
+distribution $\mathbf{j}(\mathbf{r},t)$, and total energy $E$.
+The computation of $E$ is often simplified by replacing it
+through a computation of the total s.p. energy $E_\mathrm{sp}$. This
+is justified for changes of energy at frozen local density
+$\varrho(\mathbf{r},t)$. To see that, we decompose the energy as~\cite{Mar10aB}:
+\begin{equation}
+  E
+  =
+  E_\mathrm{sp}+E_\mathrm{rearr}[\varrho]
+  \quad,\quad
+  E_\mathrm{sp}
+  =
+  \sum_\alpha w_\alpha\varepsilon_\alpha =  \sum_\alpha w_\alpha \langle \varphi_\alpha | {\hat h}| \varphi_\alpha \rangle
+  \quad.
+\end{equation}
+The rearrangement energy $E_\mathrm{rearr}$ is a functional of local
+density and remains unchanged. Thus $\delta E=\delta E_\mathrm{sp}$,
+in other words, changes in total energy $E$ at frozen $\varrho$ are
+identical to changes in s.p. energy $E_\mathrm{sp}$. Thus we will use
+$E_\mathrm{sp}$ in many of the subsequent equations whenever
+evaluating changes of $E$, but not always write it explicitely.
+
+A crucial parameter is the relaxation time
+$\tau_\mathrm{relax}$ which is taken over from semi-classical Fermi
+liquid theory, for details see \cite{Rei15a}.  Key entries are: the
+intrinsic (thermal) energy of the system $E^*_\mathrm{intr}$ (defined
+later on in Eq. (\ref{eq:Estar}), the actual number of valence electrons $N_{\rm
+  el}$, the in-medium electron-electron cross-section $\sigma_{ee}$,
+the effective Wigner-Seitz radius $r_s^\mathrm{(el)}$ of the electron cloud, and the
+average electron density $\bar{\varrho}$.  Note that $r_s^\mathrm{(el)}$
+ and
+$\sigma_{ee}$ depend on the average density $\bar{\varrho}$ because a
+spatially varying $\tau_\mathrm{relax}$ would be very cumbersome to
+implement in a quantum mechanical expression.  The average density is
+deduced from the r.m.s. radius $r_\mathrm{rms}$ of the actual electron
+cloud as
+$\bar{\varrho}=3N_\mathrm{el}/\left[4\pi(\sqrt{5/3}\, r_\mathrm{rms})^3\right]$.
+
+The RTA equation (\ref{eq:EoMbasicrho}) is rather involved because its
+entries depend in various ways on the actual state $\hat{\rho}(t)$.
+The most expensive piece is the instantaneous equilibrium density
+operator:
+\begin{subequations}
+\label{eq:DCMF}
+\begin{equation}
+  \hat{\rho}_\mathrm{eq}\left[\varrho,\mathbf{j},E\right]
+  =
+  |\varphi_\alpha^\mathrm{(eq)}\rangle
+  w_\alpha^\mathrm{(eq)}\langle\varphi_\alpha^\mathrm{(eq)}|
+\end{equation}
+which minimizes LDA energy with constraint on the actual
+$\varrho(\mathbf{r},t)$, $\mathbf{j}(\mathbf{r},t)$ and energy
+$E(t)$.  
+It is determined by the Density-Constrained
+mean-Field (DCMF) equation
+\begin{eqnarray}
+  \hat{h}_\mathrm{DCMF}[\varrho,\mathbf{j}]
+  \varphi_\alpha^\mathrm{(eq)}
+  &=&
+  \varepsilon_\alpha^\mathrm{(eq)}\varphi_\alpha^\mathrm{(eq)}
+  \label{eq:hDCMFeq}
+\\
+  \hat{h}_\mathrm{DCMF}[\varrho,\mathbf{j}]
+  &=&
+  \hat{h}[\varrho,\mathbf{j},E]
+  -
+  \int \textrm d \mathbf r\lambda(\mathbf{r})\hat{\varrho}(\mathbf{r})
+  -
+  \int \textrm d \mathbf r\,\mbox{\boldmath$\lambda_\mathbf{j}$}(\mathbf{r})
+  \cdot
+  \hat{\mathbf{j}}(\mathbf{r})
+\nonumber\\
+  &\quad&
+  -
+  \mu\int \textrm d \mathbf r(\hat{\varrho}(\mathbf{r})-{\varrho}(\mathbf{r},t))^2
+  -
+  \mu_j\int \textrm d \mathbf r
+  \,(\hat{\mathbf{j}}(\mathbf{r})-{\mathbf{j}}(\mathbf{r},t))^2
+\label{eq:hDCMF}
+\end{eqnarray}
+where $\hat{h}[\varrho,\mathbf{j}]$ is the KS mean-field Hamiltonian
+at the given instant. The $\hat{\varrho}(\mathbf r)$ is the
+  operator of local density at the space point $\mathbf{r}$ and
+  $\hat{\mathbf{j}}(\mathbf r)$ the operator of local current.  The
+wanted energy $E$ (or $E_\mathrm{sp}(t)$ equivalently) and electron
+number $N_\mathrm{el}$ are tuned by adjusting chemical potential
+$\mu^\mathrm{(eq)}$ and temperature $T^\mathrm{(eq)}$ in the
+Fermi-Dirac distribution:
+\begin{eqnarray}
+  w_\alpha^\mathrm{(eq)}
+  &=&
+  \left(1+
+  \exp\left[ 
+  \frac{\langle\varphi_\alpha^\mathrm{(eq)}|\hat{h}|\varphi_\alpha^\mathrm{(eq)}\rangle
+  - \mu^\mathrm{(eq)}} {T^\mathrm{(eq)}}
+  \right]
+  \right)^{-1}
+\label{eq:Fermi}\\
+  &&\hspace*{-4em}
+  \mu^\mathrm{(eq)}\leftrightarrow
+  \sum_\alpha w_\alpha^\mathrm{(eq)}=N_{\rm el}
+  \quad ,\quad
+  T^\mathrm{(eq)}\leftrightarrow
+  \sum_\alpha w_\alpha^\mathrm{(eq)}
+  \langle\varphi_\alpha^\mathrm{(eq)}|\hat{h}|\varphi_\alpha^\mathrm{(eq)}\rangle
+  =
+  E_\mathrm{sp}(t)
+\label{eq:muT}
+\end{eqnarray}
+\end{subequations}
+%
+Although cumbersome to evaluate, it is important to use exactly this
+local, instantaneous equilibrium in the relaxation term. This
+guarantees that the dissipative step conserves local density, 
+current, and energy as it is mandatory for a correct collision term
+\cite{Gue88a}.
+
+
+
+\paragraph{Summary of the RTA procedure}
+\label{sec:summaryRTA}
+
+\begin{figure}
+%\setlength\unitlength{0.91mm}
+\thicklines
+\begin{center}
+%\begin{sideways}
+\fbox{\small%\footnotesize
+%\begin{picture}(130,92)(0,108)
+\begin{picture}(132,175)(-5,-175)
+\put(0,-5){\mbox{
+\begin{minipage}[t]{8cm}
+\begin{flushleft}
+$\;$starting point: 
+\\[4pt]
+  $\hat{\rho}(t_0)
+  =
+  \sum_\alpha|\varphi_\alpha(t_0)\rangle w_\alpha(t_0)\langle\varphi_\alpha(t_0)|$
+\end{flushleft}
+\end{minipage}
+}}
+\put(5,-19){\encircle{1}}
+\put(3,-11.5){\vector(0,-1){25}}
+%\put(6,-30){\fbox{\tt tstep}}
+\put(7,-25){\mbox{mean-field propagation: 
+$%\begin{array}{l}
+ |\varphi_\alpha^\mathrm{(mf)} (t_1)\rangle=\hat{U}(t_1,t_0)|\varphi_\alpha(t_0)\rangle
+\;,\;
+%\\
+ w_\alpha^\mathrm{(mf)}=w_\alpha(t_0)=\mbox{const.}
+%\end{array}
+$
+}}
+\put(0,-40){\mbox{
+  $ \hat{\rho}_\mathrm{mf} =\hat{\rho}_\mathrm{mf}(t_1) 
+  =
+  \sum_\alpha|\varphi_\alpha^\mathrm{(mf)}(t_1)\rangle 
+  \ w_\alpha^\mathrm{(mf)} \ \langle\varphi_\alpha^\mathrm{(mf)}(t_1)|$
+}}
+\put(5,-48){\encircle{2}}
+%\put(6,-54.5){\fbox{\tt srhomat}}
+\put(3,-41.5){\vector(0,-1){15}}
+\put(0,-52){\mbox{
+\begin{minipage}[t]{8cm}
+\begin{flushleft}
+\hspace*{1.8em}express $\varphi$ and $w$ through natural orbitals
+\\[20pt]
+  $\displaystyle
+  \hat{\rho}_\mathrm{mf}(t_1)
+  =
+  \sum_\alpha|\varphi_\alpha^\mathrm{(nat)}\rangle w_\alpha^\mathrm{(nat)}
+  \langle\varphi_\alpha^\mathrm{(nat)}|$
+\end{flushleft}
+\end{minipage}
+}}
+\put(45,-64){\vector(4,-1){24}}
+\put(57,-65){\encircle{3}}
+%\put(61,-64){\fbox{\tt calcrhotot,calc\_current}}
+%\put(69,-70){\mbox{  $\varrho_\mathrm{mf}(\mathbf{r},t_1)\,,\,\mathbf{j}_\mathrm{mf}(\mathbf{r},t_1),E_\mathrm{sp,mf}$}}
+\put(69,-70){\mbox{  $\varrho(\mathbf{r},t_1)\,,\,\mathbf{j}(\mathbf{r},t_1),E(t_1)$}}
+
+\put(87,-72){\vector(1,-1){12}}
+%\put(117,-103.5){\vector(0,-1){8}}
+%\dottedline{1}(117,-103.5)(117,-110.5)
+%\put(117,-110.5){\vector(0,-1){1}}
+\dottedline{1}(110,-103.5)(110,-110.5)
+\put(110,-110.5){\vector(0,-1){1}}
+\put(87,-80){\encircle{4}}
+%\put(97,-79){\fbox{\tt eqstate}}
+%\put(67,-87){\mbox{
+\put(60,-87){\mbox{
+\begin{minipage}[t]{8cm}
+\begin{flushleft}
+  density-constrained mean field (DCMF) %\\ $\hookrightarrow$ %$\Longrightarrow$
+\\[3pt]
+$\Rightarrow$ 1. 
+$\begin{array}[t]{rcl}
+  \hat{\rho}_{\rm eq}
+  &=&
+  \hat{\rho}_{\rm eq}[\varrho(\mathbf{r},t_1)\,,\,\mathbf{j}(\mathbf{r},t_1),E(t_1)]
+\\[3pt]
+  &=&
+  \sum_\alpha|\varphi^\mathrm{(eq)}_\alpha\rangle  w^\mathrm{(eq)}_\alpha
+     \langle\varphi^\mathrm{(eq)}_\alpha|
+\end{array}$
+\\[4pt]
+$\Rightarrow$ 2. intrinsic excitation energy $E^*_\mathrm{intr}$
+\end{flushleft}
+\end{minipage}
+}}
+%\put(79,-93.5){\vector(-4,-1){33}}
+%\dottedline{1}(77,-93.5)(47,-101.5)
+\dottedline{1}(70,-93.5)(47,-101.5)
+\put(47,-101.5){\vector(-4,-1){1}}
+%\put(83,-110){\mbox{
+\put(76,-110){\mbox{
+\begin{minipage}[t]{8cm}
+\begin{flushleft}
+relaxation time:
+\\[4pt]
+$\hbar\tau_\mathrm{relax}^{-1}=0.40\,\sigma_{ee}(r_s^\mathrm{(el)})^{-2}\,E^*_\mathrm{intr}/N_{\rm el}$
+\end{flushleft}
+\end{minipage}
+}}
+%\dottedline{1}(83,-114)(31,-106)
+\dottedline{1}(76,-114)(31,-106)
+\put(31,-106){\vector(-4,1){1}}
+\put(4,177){\vector(0,-1){39}}
+\put(0,-96){\mbox{
+\begin{minipage}[t]{8cm}
+\begin{flushleft}
+\hspace*{1.8em}compose with rate $\tau_\mathrm{relax}$:
+\\[4pt]
+$\displaystyle
+\hat{\rho}_\mathrm{mix}
+= 
+\hat{\rho}_\mathrm{mf} -
+\frac{\Delta t}{\tau_\mathrm{relax}}\left[\hat{\rho}_\mathrm{mf}-\hat{\rho}_\mathrm{eq}\right]
+$
+\end{flushleft}
+\end{minipage}
+}}
+\put(3,-104){\vector(0,-1){31}}
+\put(5,-121){\encircle{5}}
+%\put(6,-130.5){\fbox{\tt calcrhoeq}}
+\put(0,-126){\mbox{
+\begin{minipage}[t]{8cm}
+\begin{flushleft}
+\hspace*{1.8em}express new density through its natural orbitals
+\\[24pt]
+  $\displaystyle
+  \hat{\rho}_\mathrm{mix}
+  =
+  \sum_\alpha|\varphi_\alpha(t_1)\rangle \tilde{w}_\alpha
+  \langle\varphi_\alpha(t_1)|$
+\end{flushleft}
+\end{minipage}
+}}
+\put(3,-140){\vector(0,-1){21}}
+\put(5,-146.5){\encircle{6}}
+%\put(6,-155.5){\fbox{\tt temperature}}
+\put(0,-151){\mbox{
+\begin{minipage}[t]{8cm}
+\begin{flushleft}
+\hspace*{1.8em}final fine-tuning of $w_\alpha$ to reproduce %$E_\mathrm{mf}$
+$E$
+\\[24pt]
+  $\displaystyle
+  \hat{\rho}(t_1)
+  =
+  \sum_\alpha|\varphi_\alpha(t_1)\rangle w_\alpha(t_1)\langle\varphi_\alpha(t_1)|$
+\end{flushleft}
+\end{minipage}
+}}
+\dottedline{1}(3,-166)(3,-171)(-1.5,-171)(-1.5,-4.2)(0,-4.2)
+\put(0,-4.2){\vector(1,0){1}}
+\end{picture}
+}
+%\end{sideways}
+\end{center}
+\caption{\label{fig:summary} Sketch of the scheme for performing one
+  large time step $t_0\longrightarrow t_1=t_0\!+\!\Delta t$ in solving
+  the RTA equations.  The numbers in open circles indicate the steps
+  as outlined in the text. 
+  %The names in {\tt typewriter} font refer to
+  %subroutines in the code as detailed in section \ref{eq:RTApack}. 
+  }
+\end{figure}
+
+
+\begin{figure}
+%\setlength\unitlength{0.91mm}
+\thicklines
+\begin{center}
+%\begin{sideways}
+\fbox{\small%\footnotesize
+%\begin{picture}(130,92)(0,108)
+\begin{picture}(132,150)(-5,-150)
+\put(0,-5){\mbox{
+\begin{minipage}[t]{11cm}
+\begin{flushleft}
+Starting point:
+  $\varphi_\alpha^\mathrm{(nat)},{w}_\alpha^\mathrm{(nat)},\varepsilon_\alpha$ 
+  (after RTA step 2)
+ \\
+\hspace*{6.8em}
+%  $\varrho_\mathrm{mf}(\mathbf{r},t_1)\,,
+ %  \,\mathbf{j}_\mathrm{mf}(\mathbf{r},t_1)\,,\,E_\mathrm{sp,mf}$
+  $\varrho(\mathbf{r},t_1)\,,\,\mathbf{j}(\mathbf{r},t_1)\,,\,E(t_1)$
+  (after RTA step 3)
+\end{flushleft}
+\end{minipage}
+}}
+%\put(5,-19){\encircle{1}}
+\put(3,-7){\vector(0,-1){10}}
+%\put(71,-27){\fbox{\tt ferm1}}
+\put(0,-22){\mbox{
+\begin{minipage}[t]{11cm}
+\begin{flushleft}
+Fermi-Dirac distribution (\ref{eq:Fermi}):
+$
+\varepsilon_\alpha, N_{\rm el}, E%,mf}
+\longrightarrow
+w_\alpha^\mathrm{(eq)}, \mu^\mathrm{(eq)}, T^\mathrm{(eq)}
+$
+\end{flushleft}
+\end{minipage}
+}}
+\put(3,-25){\vector(0,-1){10}}
+\put(0,-39){\mbox{\begin{minipage}[t]{11cm}
+\begin{flushleft}
+Accelerated gradient step with constrained Hamiltonian:
+\\
+\hspace*{3em}$
+\varphi_\alpha^\mathrm{(new)}\longleftrightarrow
+\mathcal{O}\left\{
+\varphi_\alpha-\hat{\mathcal{D}}\left[
+ \hat{h}_\mathrm{DCMF}-
+ \langle\varphi_\alpha|\hat{h}_\mathrm{DCMF}|\varphi_\alpha\rangle
+\right]\varphi_\alpha
+\right\}
+$
+\end{flushleft}
+\end{minipage}
+}}
+%\put(10,-49){\fbox{\tt calc\_psi1}}
+\put(3,-40){\vector(0,-1){15}}
+\put(3,-59){\mbox{\begin{minipage}[t]{11cm}
+\begin{flushleft}
+$\Delta^2\hat{h}_\mathrm{DCMF}\stackrel{\mbox{?}}{<}\epsilon_1$
+%$\langle\Delta^2\hat{h}_\mathrm{DCMF}\rangle\stackrel{\mbox{?}}{<}\epsilon_1$
+\end{flushleft}
+\end{minipage}
+}}
+\put(3,-61){\vector(0,-1){15}}
+\put(4,-68){\mbox{yes}}
+\put(0,-80){\mbox{
+\begin{minipage}[t]{11cm}
+\begin{flushleft}
+Fermi-Dirac distribution (\ref{eq:Fermi}):
+\\
+\hspace*{2em}
+$
+\varepsilon_\alpha=
+\langle\varphi_\alpha|\hat{h}|\varphi_\alpha\rangle^\mathrm{(new)},
+N_{\rm el}, E%,mf}
+\longrightarrow
+w_\alpha^\mathrm{(eq)}, \mu^\mathrm{(eq)}, T^\mathrm{(eq)}
+$
+\end{flushleft}
+\end{minipage}
+}}
+%\put(10,-90){\fbox{\tt ferm1}}
+\put(29,-58.5){\vector(1,0){45}}
+\put(49,-57.5){\mbox{no}}
+\put(76,-59){\mbox{$w_\alpha^\mathrm{(eq)}$=const.}}
+\put(3,-82){\vector(0,-1){19}}
+\put(85,-61){\line(0,-1){31}}
+\put(85,-92){\vector(-1,0){82}}
+\put(3,-107){\mbox{\begin{minipage}[t]{11cm}
+\begin{flushleft}
+%$\sqrt{\langle\Delta^2\hat{h}_\mathrm{DCMF}\rangle}\stackrel{\mbox{?}}{<}\epsilon_0$
+$\sqrt{\Delta^2\hat{h}_\mathrm{DCMF}}\stackrel{\mbox{?}}{<}\epsilon_0$
+$\;\&\;$
+$|E_\mathrm{sp}^\mathrm{(new)}-E_\mathrm{sp}^{(n)}|\stackrel{\mbox{?}}{<}\epsilon_2$
+\\
+$\sum_\mathbf{\nu}|\rho_\mathrm{DCMF}(\mathbf{r}_\mathbf{\nu})-\rho(\mathbf{r}_\mathbf{\nu},t)|/\sum_\mathbf{\nu}
+\stackrel{\mbox{?}}{<}\epsilon_\rho$
+\end{flushleft}
+\end{minipage}
+}}
+\put(3,-116){\vector(0,-1){11}}
+\put(4,-123){\mbox{yes}}
+\put(3,-130){\mbox{\begin{minipage}[t]{11cm}
+\begin{flushleft}
+compute $E_{\rm intr}^*$, Eq. (\ref{eq:Estar}), and
+$\tau_\mathrm{relax}$,  Eq. (\ref{eq:relaxtime})
+\end{flushleft}
+\end{minipage}
+}}
+%\put(20,-135){\fbox{\tt occupT0}}
+\put(3,-132){\vector(0,-1){10}}
+\put(0,-145){\mbox{back to RTA loop}}
+\put(85,-112.5){\mbox{no}}
+\put(65,-110){\line(1,0){48}}
+\put(113,-110){\vector(0,1){7}}
+\put(72,-99){\mbox{\begin{minipage}[t]{11cm}
+\begin{flushleft}
+$
+\begin{array}{rcl}
+\lambda^{(n)}+2\mu(\varrho^\mathrm{(new)}-\varrho)%_\mathrm{mf})
+\!\!&=&\!\!
+\lambda^\mathrm{(n+1)}
+\\
+\boldsymbol\lambda_j^{(n)}
++
+2\mu_j(\mathbf{j}^\mathrm{(new)}-\mathbf{j})%_\mathrm{mf})
+\!\!&=&\!\!
+\boldsymbol\lambda_j^\mathrm{(n+1)}
+\end{array}
+$
+\end{flushleft}
+\end{minipage}
+}}
+\put(113,-93){\line(0,1){55}}
+\put(113,-38){\vector(-1,0){30}}
+\end{picture}
+}
+%\end{sideways}
+\end{center}
+\caption{\label{fig:summaryDCMF} Sketch of the scheme for solving the
+  DCMF equations (\ref{eq:DCMF}). This scheme expands 
+  %{\tt SUBROUTINE  eqstate} in 
+  step 4 from the RTA scheme presented in figure \ref{fig:summary}. 
+The symbol $\mathcal{O}$ stands for orthonormalization of the
+new set of s.p. wave functions and $\mathcal{D}$ for the damping
+operator in the accelerated gradient step, see
+Eqs.~(\ref{eq:dampstep}),
+however, with different damping parameters
+$E_{0,\mathrm{damp}}^{\mbox{}}\rightarrow
+E_{0,\mathrm{damp}}^\mathrm{(RTA)}$
+and  
+$\delta\rightarrow\delta^\mathrm{(RTA)}$.
+ }
+\end{figure}
+
+
+We briefly summarize the solution
+scheme for one step from $t\equiv t_0$ to $t_0\!+\!\Delta t\equiv t_1$,
+for more details, see \cite{Rei15a}.
+The TDLDA propagation runs at a much faster pace than the relaxation.  We
+resolve it by standard techniques \cite{Cal00,Rei04aB} on a time step
+$\delta t$ which is much smaller (by a factor 50--200) than the RTA step
+$\Delta t$. We summarize this TDLDA propagation in the evolution
+operator $\hat{U}$ from Eq.~(\ref{eq:KSpropag}) and only discuss the
+RTA step $t_0\rightarrow t_1$:
+\begin{enumerate}
+   \item\label{it:TDLDA} We first propagate $\hat{\rho}$ by pure
+     TDLDA.  The s.p. states in diagonal representation
+     (\ref{eq:rhodiag}) evolve as $|\varphi_\alpha(t_0)\rangle\rightarrow
+     |\varphi_\alpha^\mathrm{(mf)} (t_1)\rangle=\hat{U}(t_1,t_0)|\varphi_\alpha(t_0)\rangle$,
+     while the occupation numbers $w_\alpha(t_1)=w_\alpha(t_0)$ are
+     kept frozen (pure mean-field propagation).
+     
+   \item\label{it:natorb} Absorbing bounds (see section~\ref{sec:abso})
+    may have removed parts from
+     the s.p. wave functions and so destroy orthonormalization.  We
+     transform the propagated density operator to a representation in
+     terms of natural orbitals which has the diagonal representation
+     (\ref{eq:rhodiag}) with an orthonormal set of s.p. wave functions
+     together with corresponding occupation numbers
+     $\{\varphi_\alpha^\mathrm{(nat)},w_\alpha^\mathrm{(nat)}\}$, for
+     details on the procedure see appendix \ref{sec:natorb}.  This
+     step can be overridden if reflecting (or periodic) boundaries are
+     used, in which case TDLDA preserves orthonormalization.
+     
+   \item\label{it:newrho} We compute density
+     $\varrho(\mathbf{r},t_1)$, current
+     $\mathbf{j}(\mathbf{r},t_1)$, and %total energy $E_\mathrm{mf}$ 
+     total energy $E$,
+     associated to the TDLDA-propagated density matrix
+     $\hat{\rho}_\mathrm{mf}$.
+     
+   \item\label{it:DCMF} We determine the thermal mean-field
+     equilibrium state $\hat{\rho}_\mathrm{eq}$ constrained to the
+     given $\varrho$, $\mathbf{j}$, and %$E_\mathrm{mf}$ 
+     $E$ from step
+     \ref{it:newrho}.  This is achieved by the DCMF equations~(\ref{eq:DCMF}) 
+     with an iterative algorithm sketched
+     in figure \ref{fig:summaryDCMF}.  The equilibrium state
+     $\hat{\rho}_\mathrm{eq}$ is represented by new s.p. states
+     $\{|\varphi^\mathrm{(eq)}_{\alpha}\rangle\}$ and new occupation numbers
+     $w^\mathrm{(eq)}_\alpha$ in diagonal form (\ref{eq:rhodiag}).
+     Having these, we determine finally the excitation energy
+     as the energy relative to the zero-temperature state
+     \begin{equation}
+        E^*_\mathrm{intr}
+        =
+        E_\mathrm{sp}
+        -
+        \sum_\alpha w_\alpha^{(T=0)}
+        \langle\varphi_\alpha^\mathrm{(eq)}|\hat{h}|\varphi_\alpha^\mathrm{(eq)}\rangle
+     \label{eq:Estar}
+     \end{equation}
+     where $w_\alpha^{(T=0)}$ are the occupation numbers from a
+       Fermi distribution (\ref{eq:Fermi}) at temperature zero, i.e. a
+       step function. The chemical potential $\mu^\mathrm{(T=0)}$ is
+       tuned to match $\sum_\alpha w_\alpha^\mathrm{(T=0)}=N_{\rm el}$
+       using the given s.p. energies
+       $\langle\varphi_\alpha^\mathrm{(eq)}|\hat{h}|\varphi_\alpha^\mathrm{(eq)}\rangle$.
+This $E^*_\mathrm{intr}$ thus measures the
+     amount of thermal excitation energy in the
+     system, for details see \cite{Rei15d}.
+   \item \label{it:compo} We compose the new density operator as mixture
+     of TDLDA propagated state $\hat{\rho}_\mathrm{mf}$ and
+     equilibration driving term
+     $\hat{\rho}_\mathrm{mf}-\hat{\rho}_\mathrm{eq}$ with
+     weight $\Delta t/\tau_\mathrm{relax}$ as
+     \begin{equation*}
+        \hat{\rho}_\mathrm{mix}
+        = 
+        \hat{\rho}_\mathrm{mf} -
+        \frac{\Delta t}{\tau_\mathrm{relax}}
+        \left[\hat{\rho}_\mathrm{mf}-\hat{\rho}_\mathrm{eq}\right]
+     \end{equation*}
+     where the relaxation time $\tau_\mathrm{relax}$ requires the
+     actual intrinsic excitation energy $E^*_\mathrm{intr}$, see Eq.~\eqref{eq:Estar}
+     also obtained from DCMF.
+%   \item \label{it:natural} 
+     While evaluating the mixing, the new state is
+     expressed in natural orbital representation
+     (\ref{eq:rhodiag}).  This yields the final s.p. states
+     $\{|\varphi_\alpha(t_1)\rangle\}$ for this step and
+     preliminary new occupations $\tilde{w}_\alpha$. Technical details
+     of this mixing step are found in appendix \ref{sec:mix}.
+     
+   \item \label{it:therm} 
+     The mixing in step \ref{it:compo} may have slightly changed
+     the energy such that we remain with a small energy mismatch as
+     compared to the %goal $E_\mathrm{mf}$.  
+     aimed $E$. We now apply a small
+     iterative thermalization step to readjust the energy, as outlined
+     in Appendix \ref{sec:corriter}. This then yields the final
+     occupation numbers $w_\alpha(t_1)$ which comply with
+     energy conservation.
+\end{enumerate}
+The above steps are sketched in figure \ref{fig:summary} whereby the
+step numbers here correspond to those encircled in the figure. The
+most involved part is step \ref{it:DCMF} for the determination of the
+solution of the DCMF equations.  It is expanded in detail in figure
+\ref{fig:summaryDCMF}.  There are three termination criteria in DCMF
+iteration: convergence of the variance of s.p. energies $\epsilon_0$,
+energy convergence $\epsilon_2$, and convergence of average deviation
+of local density $\epsilon_\rho$.  These are given as input
+parameters, for details see the Supplemental material.  Note, that the
+actual thresholds for the values of these criteria may change with the
+system.  As a rough guide, energy criteria scale with Fermi energy and
+density with average density of a system. An explicit example of
+convergence is discussed in section~\ref{sec:dcmf}.
+
+As said above, the time step $\delta t$ for propagation of TDLDA is
+very small because it is limited from above by the maximal energy on
+the grid representation.  The stepping $\Delta t$ for the relaxation
+term needs only to resolve the changes in the actual mean field which
+allows much larger values.  Typically, we perform 50--200 TDLDA steps
+before calling one RTA step. For detailed values, see the examples
+discussed in the Supplemental material, see section
+\ref{man:sec:rtaparams} therein.
+
+
+
+A word is in order about the system for which the present form of RTA
+can be used. The relaxation time $\tau_\mathrm{relax}$ is one global
+number chosen according to the average electron density
+$\bar{\varrho}$, see Eq. (\ref{eq:relaxtime}).  This requires systems
+which can be characterized by such an average density, i.e., systems
+having only small density variations in the bulk as it holds typically
+for metallic bonds.  The RTA rate is insensitive to many details of
+the microscopic collision term as energy- and angle-dependent
+scattering cross-sections \cite{Gig03a} or a broad spectrum of
+relaxation rates. However, these details are usually resolved only (if
+at all) for fast and energetic processes which are anyway deep in the
+regime of semi-classical VUU. The grossly averaged treatment of RTA is
+acceptable for not too fast and not too energetic processes,
+preferably in compact systems.
+
+
+\subsubsection{Ionic dynamics}
+\label{sec:TDLDA-MD2}
+
+We finally add the ionic dynamics to complete the picture. Ions are
+described by classical Molecular Dynamics (MD), i.e.  classical
+equations of motion, under the influence of their mutual Coulomb
+force, the forces experienced from the electrons, and possibly
+external forces.  We start from the total energy (\ref{eq:Etotal})
+which serves as classical Hamiltonian in terms of $\mathbf{R}_I$ and
+$\mathbf{P}_I$. Standard variation yields the classical
+equations of motion for the ions of positions $\mathbf{R}_I$ and
+momenta $\mathbf{P}_I$
+\begin{subequations}
+\label{eq:propion}
+\begin{eqnarray}
+  \partial_t\mathbf{P}_I
+  &=&
+  -\nabla_{\mathbf{R}_I}\left[
+    E_\mathrm{pot,ion}(\mathrm{R}_I)
+    +
+    \sum_{\alpha=1}^{N_\mathrm{el}}
+    \langle\varphi_\alpha|V_\mathrm{PsP}^{\mbox{}}(\mathbf{r}-\mathbf{R}_I)|
+          \varphi_\alpha\rangle
+  \right]
+  \quad,
+\label{eq:propionP}
+\\
+  \partial_t\mathbf{R}_I
+  &=&
+  \frac{\mathbf{P}_I}{M_I}
+  \quad.
+\end{eqnarray}
+\end{subequations}
+They are to be propagated simultaneously with TDLDA for the electrons, here
+represented by wave functions $\varphi_\alpha$.
+%The ionic motion is coined molecular dynamics (MD).
+The simultaneous propagation scheme is called TDLDA-MD.
+It applies to all dynamical situations including those that are
+far from the adiabatic limit and embraces truly diabatic scenarios.
+The practical realization adds the (simple) classical propagation
+to the evolution of the electronic states. For solution schemes, see
+section \ref{sec:numerics}.
+
+
+\section{Numerical aspects: methods, inputs  and outputs}
+\label{sec:numerics}
+
+\subsection{General numerical schemes}
+
+\subsubsection{Grid representation and derivatives}
+\label{sec:grid}
+
+\paragraph{Grid definition}
+\label{sec:griddef}
+All wave functions and fields are defined on a three-dimensional (3D)
+equidistant Cartesian grid of $N_x\times N_y\times N_z$ grid points.
+The spacing between the points is given as $\delta x$, $\delta y$, and
+$\delta z$ in units of a$_0$. For reasons of equilibrated accuracy, it
+is highly recommended to give the same value to all of them.  Typical
+values depend on the atoms/ions involved.  The pseudopotentials (see
+section \ref{sec:practPsP}) set the pace. The $\delta x$, $\delta y$,
+and $\delta z$ must not be larger than $\sqrt{2\ln2}$ times the
+smaller radius in the pseudopotential min$(r_{\rm loc},r_{l})$ in
+Eqs.~\eqref{eq:loc} or~\eqref{eq:Goeproj}.  In case of the jellium
+model (see section \ref{sec:jell}), the spacing should be of order of
+the surface width $\sigma_\mathrm{jel}$.
+
+The grid is automatically arranged in such a way that in each
+direction the same number of grid points are located on both sides of
+the origin. The coordinate values for e.~g. the $x$ direction are
+thus:
+\begin{equation}%\begin{split}
+  \big(1-\frac{N_x}{2}\big)\delta x,\;
+  \big(2-\frac{N_x}{2}\big)\delta x,\;
+  \ldots,\;\big(\frac{N_x}{2}-1)\delta x,\;\frac{N_x}{2}\delta x \quad. 
+%\end{split}
+\end{equation}
+
+\paragraph{Derivatives}
+\label{sec:deriv}
+
+The computation of currents and the action of the kinetic energy
+operator need first and second derivatives.  We have two options for that
+in the code. Standard is the definition of derivatives via Fourier
+transform. This delivers high precision at affordable expense.
+For simplicity, we explain here the Fourier strategy for one
+dimension.
+
+Given are $N_x$ discrete grid points $x_\nu$, $\nu\in\{1,\ldots,N_x\}$, in coordinate space.
+They are mapped
+to the same number of grid points $k_n$ in Fourier space
+(physically equivalent to momentum space) as:
+\begin{subequations}
+\label{eq:FT}
+\begin{eqnarray}
+  x_\nu
+  &=&
+  \left(-\frac{N_x}{2}+\nu\right)\delta x
+  \quad,
+  \nu=1,\ldots,N_x
+  \quad,
+\\ \label{eq:kvalues}
+  k_n  &=&
+  (n-1) \delta k,\quad n=1,\ldots, N_x/2 \quad,
+\\ \nonumber
+  k_n&=&(n-N_x-1)\,\delta k,\quad n=N_x/2+1,\ldots,N_x \quad,
+\\
+  \delta k
+  &=&
+  \frac{2\pi}{N_x\ \delta x}
+  \quad.
+\end{eqnarray}
+Note the particular indexing for the $k$-values. In principle, the
+values $k_n=(n-1)\delta k$ for all $n$ are equivalent for the Fourier
+transform, but for the second half of this range the negative
+$k$-values should be chosen because of their smaller magnitude. For
+the Fourier expansion, $k=-\delta k$ and $k=(N_x-1)\delta k$ are
+equivalent because of periodicity in $k$-space.
+
+A function $f(x_\nu)$ in coordinate space is mapped to a
+function $\tilde{f}(k_n)$ in Fourier space by:
+\begin{eqnarray}
+  \tilde{f}(k_n)
+  &=&
+  \sum_{\nu=1}^{N_x}
+  \exp{\left(-\I k_nx_\nu\right)}f(x_\nu) 
+  \quad,
+\label{eq:FTforward}\\
+  f(x_\nu) 
+  &=&
+  \frac{1}{N_x}\sum_{n=1}^{N_x}
+  \exp{\left(\I k_nx_\nu\right)}\tilde{f}(k_n)
+\label{eq:FTbackward}
+\end{eqnarray}
+\end{subequations}
+This complex Fourier representation implies that the function $f$ is
+periodic: \mbox{$f(x+N_x\, \delta x)=f(x)$}. The appropriate
+integration scheme is the trapezoidal rule which complies with the above
+summations, adding up all terms with equal weight.
+The derivatives of the exponential basis functions are:
+\begin{equation}\label{eq:expbas}
+  \frac{\D^m}{\D x^m}\exp{(\I k_nx)}
+  =
+  (\I k_n)^m\exp{(\I k_nx)}
+  \quad.
+\end{equation}
+Computation of the $m$-th derivative thus becomes a trivial
+multiplication by $(\I k_n)^m$ in Fourier space. Time critical
+derivatives are best evaluated in Fourier space using the Fast Fourier
+Transform (FFT). To that end, a forward transform
+(\ref{eq:FTforward}) is performed, then the values $\tilde{f}(k_n)$
+are multiplied by $(\I k_n)^m$ as given in Eq.~(\ref{eq:expbas}), and
+finally we transform backward by applying (\ref{eq:FTbackward}) to
+$(\I{k}_n)^m\tilde{f}(k_n)$ to come back to coordinate space.
+
+A word is in order about the first derivative. The upper point in the
+$k$-grid, $\delta k\,N_x/2$, is ambiguous. Exploiting periodicity,
+it could be equally well $-\delta k\,N_x/2$. 
+Both choices introduce an unwanted bias. 
+We circumvent the problem by setting 
+$k_{N_x/2}=-k_{N_x/2}=0$. 
+
+
+\subsubsection{Handling of the pseudopotentials}
+\label{sec:numPsP}
+
+As exposed in section~\ref{sec:griddef}, the maximal value of the grid
+spacing is related to the smallest length scale entering the
+pseudopotential. Local pseudopotentials for metals, see
+Eq.~\eqref{eq:locpseudo}, are quite forgiving in the sense that their
+length scales $\sigma_i$'s are relatively large. For instance, in the
+case of Na clusters, one can safely use $\delta x=0.8$~a$_0$. For
+Goedecker-like pseudopotentials, the values of $r_{\rm loc}$ and
+$r_l$'s are often smaller, particularly for elements with covalent
+binding which can require a large amount of grid points, thus
+rendering the calculations more expensive.  The original values of
+$r_{\rm loc}$ and $r_l$'s for some chemical elements in the first,
+second and third rows \cite{Goe96,Har98a} are implemented by default
+in the source code of QDD and can be used as such, with the drawbacks
+mentioned just above. To circumvent them, we have for some elements
+refitted pseudopotential parameters with a unique and possibly large
+length scale for $r_\mathrm{loc}$ and $r_l$. These are given with the
+input files of the examples of QDD application in the supplemental material.
+
+
+\subsubsection{Electronic ground state}
+\label{sec:numstaticel}
+
+The quality of ground state convergence is essential for the time
+propagation as a poor static convergence will generate spurious
+dynamical behaviors. A typical example is provided by the box size which
+needs to be chosen as large as possible in a balanced way between
+accuracy and computational cost. Maximum mesh size is basically given
+by the extension of the frozen core electrons as practically delivered
+by radial extension of a pseudopotential or surface thickness in the
+case of a jellium background. Box size itself is basically a free
+parameter once the box extension covers the ionic configuration and
+some electron skin around. However static convergence can be reached
+even with too small computational boxes and the defect may even not be
+clearly visible on static properties. Indeed the static convergence
+procedure involves reorthonormalization of s.p. wave functions at each
+static iteration which may blur the biasing effect of too small a box
+size. The ultimate test allowing to ensure that the static convergence
+is properly reached in a sufficiently large box is a dynamical one in
+which the computed ground state is propagated in time with absorbing
+boundary conditions and without any excitation (see
+section~\ref{sec:abso}).  Too small a box becomes then immediately
+visible as the statically constrained electrons become free to fly
+away and can be absorbed at the boundaries of the computational box.
+
+
+The computation of the ground state amounts to diagonalize the KS
+Hamiltonian ${\hat h}$ (\ref{eq:TDKS}) under the constraint of
+orthonormality of s.p.  wave functions $\varphi_\alpha$, i.e.
+$\langle\varphi_\alpha|\varphi_\beta\rangle=\delta_{\alpha\beta}$.
+The static KS equations (\ref{eq:statKS}), optionally combined with
+thermal occupation (\ref{eq:Fermi0}) of s.p. states, are solved
+iteratively.  The wave functions are iterated with a gradient step
+which is accelerated by pre-conditioning with kinetic-energy
+damping~\cite{Rei82a,Blu92}.  The static iteration from step $n$ to
+step $n+1$ can be written in the following compact form:
+\begin{subequations}
+\label{eq:dampstep}
+\begin{eqnarray}
+  \varphi_\alpha^{(n+1)}
+  &=&
+  \mathcal{O}\left\{
+    \varphi_\alpha^{(n)} 
+    - 
+    \hat{\mathcal{D}}
+    \left( \hat{h}^{(n)} - 
+      \langle\varphi_\alpha^{(n)}|\hat{h}_{\rm KS}^{(n)}|\varphi_\alpha^{(n)}\rangle
+    \right)\varphi_\alpha^{(n)}\right\}
+\\
+  \hat{\mathcal{D}}
+  &=&
+  \frac{\delta}{\hat{T} + E_{0,\mathrm{damp}}}
+\label{eq:dampop}
+\end{eqnarray}
+\end{subequations}
+where $\hat{T}=\hat{p}^2/(2m)$ is the operator of kinetic energy,
+$\mathcal{O}$ means orthonormalization of the whole set of new
+s.p. wave functions and $\varepsilon_\alpha^{(n)} = \langle
+\varphi_\alpha^{(n)} |{\hat h}_{\rm KS}^{(n)}| \varphi_\alpha^{(n)}
+\rangle$ is the expectation value of the KS Hamiltonian on
+$\varphi_\alpha^{(n)}$ at static iteration $n$.  Because of self-consistency,
+the KS Hamiltonian is itself expressed as ${\hat h}_{\rm KS}^{(n)}=
+{\hat h}_{\rm KS}[\varphi_\alpha^{(n)}]$.  This sort of kinetic-energy
+damping is particularly suited for the fast Fourier techniques that we
+use in QDD.  The damped gradient step has two numerical parameters:
+the step size $\delta$ and the damping regulator $E_{0,\mathrm{damp}}$. The latter
+should be chosen typically of the order of the depth of the local
+potential $V_\mathrm{KS}$ ($E_{0,\mathrm{damp}}
+  \simeq|\varepsilon_1|$ where $\varepsilon_1$ is the lowest s.p. energy).  Typical values are
+$E_{0,\mathrm{damp}}=10, \ldots,50$ eV,
+depending on the material under consideration. After
+proper choice of $E_{0,\mathrm{damp}}$, the step size is of order of
+$\delta=0.1,\ldots,0.5$. Larger values yield faster iteration but can run
+more easily into pathological conditions.
+
+In some cases, an initial finite electronic temperature,
+  associated with Fermi distribution (\ref{eq:Fermi0}), can help the
+  convergence of the statics, see e.g. section
+  \ref{man:sec:open-shell}.  In that case, we have to realize that the
+  wave function step has produced a new set of s.p. energies
+  $\varepsilon_\alpha^{(n+1)}=\langle\varphi_\alpha^{(n+1)}|\hat{h}^{(n+1)}|\varphi_\alpha^{(n+1)}\rangle$,
+  which requires that we determine preliminarily new occupation
+  numbers $\tilde{w}_\alpha$ with Eq.  (\ref{eq:Fermi0}).  Using the
+  $\tilde{w}_\alpha$ immediately can occasionally lead to unstable
+  iteration. It is safer to mix old and new occupation numbers gently
+  as
+\begin{equation}
+  w_\alpha^{(n+1)}
+  =
+  \eta_\mathrm{occ}\tilde{w}_\alpha
+  +
+  (1-\eta_\mathrm{occ})w_\alpha^{(n)}
+  \quad.
+\label{eq:occmix}
+\end{equation}
+Typical values of mixing lie around $\eta_\mathrm{occ}=1/2$. Critical
+cases may be stabilized with smaller values and forgiving cases can
+cope with larger values.
+
+Having the new s.p. wave functions and occupation weights, the new local
+electron densities (\ref{eq:locdens}) are computed and then the new KS
+Hamiltonian (\ref{eq:KS}). This provides the starting point for
+the next iteration. The process is continued until sufficient
+convergence is achieved. We consider as the convergence criterion the
+averaged energy variance of the s.p. states at step $n$:
+\begin{subequations}
+  \label{eq:totvar}
+  \begin{eqnarray}
+    \overline{\Delta\varepsilon}^{(n)}
+    &=&
+    \sqrt{\frac{\sum_\alpha w_\alpha(\Delta\varepsilon_\alpha^2)^{(n)}}
+         {N_\mathrm{el}}}
+    \quad,
+    \\
+    (\Delta\varepsilon_\alpha^2)^{(n)}
+    &=&
+    \langle\psi_\alpha^{(n)}|(\hat{h}_{\rm KS}^{(n)})^2|\psi_\alpha^{(n)}\rangle
+    -
+    (\varepsilon_\alpha^{(n)})^2
+    \quad,
+    \label{eq:spvar}
+    \\
+    \varepsilon_\alpha^{(n)}
+    &=&
+    \langle\psi_\alpha^{(n)}|\hat{h}_{\rm KS}^{(n)}|\psi_\alpha^{(n)}\rangle
+    \quad.
+    \label{eq:spenerg}
+  \end{eqnarray}
+\end{subequations}
+Vanishing total variance $\overline{\Delta\varepsilon}^{(n)}$ signals
+that we have reached a stable energy minimum, i.e. a solution of the
+KS equations. However, this may be only a local minimum (isomeric
+state). It requires experience to judge whether one has found the
+absolute energy minimum. In case of doubt, one should redo a couple of
+static iterations from very different initial configurations.  It
+turns out that $\overline{\Delta\varepsilon}$ provides a stringent
+test of convergence, much superior to the mere decrease of total
+energy as often used. Alternative convergence criteria, also used in
+other codes, can be derived from checking the convergence of the local
+density distribution $\rho(\mathbf{r})$. We explore here two options
+\begin{subequations}
+\label{eq:densconv}
+\begin{eqnarray}
+  \delta^{(n)}\rho
+  &=&
+  \frac{\int \D\mathbf{r}\,\left|\rho^{(n+1)}(\mathbf{r})-\rho^{(n)}(\mathbf{r})\right|}
+       {\int\mathrm{d}\mathbf{r}}
+  \quad,
+\\
+  \delta_2^{(n)}{\rho}
+  &=&
+  \frac{\sqrt{\int \D\mathbf{r}\,\left(\rho^{(n+1)}(\mathbf{r})-\rho^{(n)}(\mathbf{r})\right)^2}}
+       {\int\mathrm{d}\mathbf{r}}
+  \quad.
+\end{eqnarray}
+\end{subequations}
+This yields the density change per grid point. As reference
+density, one should take the average density 
+$\bar\rho=3N_\mathrm{el}\big/\left[4\pi\displaystyle(\sqrt{5/3}\,r_\mathrm{rms})^3\right]$ with
+$r_\mathrm{rms}$ being the r.m.s. radius of the actual electron density. The dimensionless ratios $\delta^{(n)}\rho/\bar\rho$ or
+$\delta_2^{(n)}{\rho}/\bar\rho$ allow the comparison of the convergence between
+different systems.
+%
+Figure \ref{fig:H2O-convergence2} compares the three criteria
+  using H$_2$O as a test case.
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=0.6\linewidth]{figures/H2O-convergence2.pdf}
+\caption{\label{fig:H2O-convergence2} Logarithmic plot of three
+  different convergence criteria for static convergence: the variance of s.p. energy
+  (\ref{eq:totvar}) and the two density criteria (\ref{eq:densconv}),
+  versus iteration number $n$. Test case is the H$_2$O molecule.}
+\end{center}
+\end{figure}
+All three lines have exactly the same slope, although differing a bit
+in their offset.  This means that all three criteria are equally well
+suited to measure the degree of convergence.  The present code uses
+only the variance of s.p. energies as termination criterion (but
+prints the other criteria on demand).
+
+The initial guess for the s.p. wave functions can be done in two ways.
+One option is to start with the wave functions of the deformed
+harmonic oscillator, for details see e.g.~\cite{Mar10aB}. These are
+characterized by $\mathbf n=(n_x,n_y,n_z)$,  the number of
+nodes in each direction. We sort the states with increasing oscillator
+energy
+$\varepsilon_\alpha^{(0)}=\hbar\omega_xn_x^\alpha+\hbar\omega_yn_y^\alpha+\hbar\omega_zn_z^\alpha$
+and stop if the desired number of states is reached. The deformation
+of the initializing oscillator influences the initial state in two
+ways: first, through the deformation of the basis wave functions as
+such, and second, through the energy ordering of the
+$\varepsilon_\alpha^{(0)}$ and corresponding sequence of levels
+built. Variation of initial conditions means basically a variation of
+the oscillator radius and deformation. In particular, the initial
+deformation decides in which local minimum the KS iteration will
+terminate. This initialization by harmonic oscillators is well suited
+for metallic bonding where the wave functions spread over the whole
+system. Covalent bonding produces localized states and here it is more
+appropriate to start also from localized states. In that case, we
+place Gaussians at each ionic site and, if more is needed, higher
+harmonic oscillator wave functions. Bookkeeping is more involved then
+and will be explained in connection with the input to the code in the
+supplemental material.
+
+A word of caution is in order about open-shell systems, i.e. systems
+where the HOMO-LUMO gap is extremely small or zero.  There can occur
+situations which have no DFT solution. The C atom is an emblematic
+example in that sense. It has four valence electrons.  Two of them
+occupy the $1s$ state in the pseudo atom (frozen core
+electrons). There remain two spin up electrons (total spin has to be
+one) to be placed into the $1p$ shell with three available spin-up
+states.  However, any choice of placing the two electrons leads
+  to an unstable KS iteration.  Thus one should check not only the
+numerics but also the physics if a system refuses to converge. A
+finite initial electronic temperature can help sometimes but not
+systematically. An instructive example is given in the Supplemental
+material, see section \ref{man:sec:open-shell}.
+
+\subsubsection{Ionic ground state}
+\label{sec:numstaticion}
+
+
+Three strategies are implemented for the optimization of the ionic
+configuration: steepest descent, dynamical cooling, and simulated
+annealing. The simplest method is steepest descent. For a given
+electronic configuration, one computes the Hellmann-Feynman forces on
+the ions and follows their direction for a short step. One re-iterates
+to the new electronic ground state and repeats the steps until
+convergence. This is the fastest method but it is prone to get stuck in
+local minima. One should use it only if one knows a reliable starting
+configuration. 
+
+Dynamical cooling allows one to better explore the energy landscape and
+thus to avoid distraction by unimportant side minima. From a given
+starting configuration, one runs full TDLDA-MD and keeps a protocol of
+ionic kinetic energy. Starting from a non-minimal energy configuration, the
+kinetic energy will first increase, which is accompanied by a
+corresponding decrease of potential energy. As soon as the kinetic energy
+turns to decrease, we stop propagation and reset all ionic velocities
+to zero. This defines the new starting point for the next round.
+The procedure is stopped if gain in kinetic energy falls below a given
+level of precision. This method is more forgiving than steepest
+descent. Still, it is also often kept in isomeric minima. One has to
+rerun it from different initial configurations to explore the
+landscape of minima.
+
+
+The most elaborate, expensive, and reliable method is simulated
+annealing, for a detailed description see \cite{All87aB}.  Simulated
+annealing explores in Monte-Carlo fashion the energy landscape with a
+supposed thermal distribution of configurations thereby reducing the
+temperature successively which leads at the end to a ground state
+minimum for temperature zero. The method has several parameters which
+need to be tuned carefully to a given situation. It requires some
+experience to use it efficiently \cite{All87aB}, for details see
+section \ref{man:sec:basicDYN} in the Supplemental material.
+
+\subsubsection{Electronic propagation}
+\label{sec:numdynel}
+
+
+Electronic dynamics at the level of TDLDA is governed by the
+time-dependent KS equation (\ref{eq:TDKS}). 
+QDD offers two different ways of determining the solution. Both
+methods starts directly from the formulation of the propagator $\hat{U}$
+(\ref{eq:KSpropag}). The first method, called exponential evolution,
+ simply employs a Taylor expansion of the propagator:
+\begin{eqnarray}
+  |\varphi_\alpha(t\!+\!\delta t)\rangle
+  &=&
+  \hat{\mathcal{T}}\exp\left(-\frac{\I}{\hbar}
+   \int_t^{t+\delta t}\,\D t'\hat h_{\rm KS}(t')\right)
+  |\varphi_\alpha(t)\rangle
+\nonumber\\
+  &\approx&
+  \sum_{n=0}^m
+  \frac{1}{n!}\left(-\frac{\I\delta t}{\hbar}\right)^n \left(\hat{h}_{\rm KS}\right)^n
+  |\varphi_\alpha(t)\rangle \;,
+  \label{eq:timepower}
+\end{eqnarray}
+where $\hat{h}_{\rm KS}$ in the expansion is taken at fixed time.  At time $t$,
+only $\hat{h}_{\rm KS}(t)$ is known. However, using that in the approximate
+propagator (\ref{eq:timepower}) generates undue bias on $t$ with
+disastrous consequences for energy conservation. The solution is to
+use a predictor-corrector scheme. For the predictor, we perform a half-time 
+step, i.e. using Eq. (\ref{eq:timepower}) with $\hat{h}_{\rm KS}(t)$ and
+$\delta t/2$. This produces an intermediate set of wave functions
+$\varphi_\alpha(t +\delta t/2)$ with subsequent densities and
+KS Hamiltonian $\hat{h}_{\rm KS}(t+\delta t/2)$. For the corrector step, we
+perform a full time step (\ref{eq:timepower}) within using the
+intermediate KS Hamiltonian $\hat{h}_{\rm KS}(t + \delta t/2)$ in the
+expansion. Appropriate values for the order of expansion are
+$m=4$ for the predictor and $8$ for the corrector.
+Below that, conservation laws are at stake, and above that,
+we will not gain much because the time step is also limited by the
+speed of change of $\hat{h}(t)$. Altogether, this
+exponential evolution provides a reliable propagation with satisfying
+norm and energy conservation.
+
+An alternative propagation scheme is $TV$-splitting \cite{Fei82}
+which we extend here for use in connection with non-local
+pseudopotentials presented in section \ref{sec:practPsP}. 
+The KS Hamiltonian is split into three pieces:
+\begin{subequations}
+\begin{equation}
+  \hat{h}
+  =
+  \hat{T}_\mathrm{kin}
+  +
+  \hat{V}_\mathrm{nloc}
+  +
+  V_\mathrm{KS,loc}(\mathbf{r},t)
+\end{equation}
+where $\hat{V}_\mathrm{nloc}$ is the piece stemming from the
+non-local part of the pseudopotentials while
+$V_\mathrm{KS,loc}(\mathbf{r},t)$ collects all parts which form
+together a local potential. The latter is strongly time-dependent
+due to the self-consistent electronic contributions. 
+The non-local part depends only on ionic motion which is snail-slow 
+at electronic scale such that we can ignore time dependence during an
+electronic step. For going from $t_0$ to $t_1=t_0+\delta t$, 
+we define a propagator for each one of the three
+parts and factorize the full propagator as:
+\begin{eqnarray}
+  |\varphi_\alpha(t_1)\rangle
+  &=&
+  \hat{U}(t_1,t_0)|\varphi_\alpha(t_0)\rangle
+\nonumber\\
+  &\approx&
+%  e^{-\frac{\I}{\hbar}\,\frac{\Delta t}{2}{V}_\mathrm{KS,loc}(\mathbf{r},t_1)}
+%  \hat{U}_\mathrm{nloc}
+%  e^{-\frac{\I}{\hbar}\Delta t\hat{T}_\mathrm{kin}}
+%  \hat{U}_\mathrm{nloc}
+%  e^{-\frac{\I}{\hbar}\,\frac{\Delta t}{2}{V}_\mathrm{KS,loc}(\mathbf{r},t_0)}
+%  |\varphi_\alpha(t_0)\rangle
+%  \;,
+  \exp\left[-\frac{\I}{\hbar}\,\frac{\delta t}{2}{V}_\mathrm{KS,loc}(\mathbf{r},t_1)\right]
+  \hat{U}_\mathrm{nloc} \exp\left[-\frac{\I}{\hbar}\delta t\, \hat{T}_\mathrm{kin}\right]
+\hat{U}_\mathrm{nloc}
+  \times \qquad \cr
+  &&\quad \times
+    \exp\left[-\frac{\I}{\hbar}\,\frac{\delta t}{2}{V}_\mathrm{KS,loc}(\mathbf{r},t_0)\right]
+  |\varphi_\alpha(t_0)\rangle
+  \;,
+\label{eq:TVsplit}\\
+  \hat{U}_\mathrm{nloc}
+  &=&
+  \sum_{n=0}^m
+  \frac{1}{n!} \left(-\frac{\I\delta t}{2\hbar}\right)^n 
+  \left(\hat{V}_\mathrm{nloc}\right)^n
+  \quad.
+  \label{eq:nlocTaylor}
+\end{eqnarray}
+\end{subequations}
+The sequence (\ref{eq:TVsplit}) is built in symmetric manner to
+minimize the separation error. The quality of the $TV$-splitting method
+depends on the size of the commutators between the three pieces of
+$\hat{h}$. The smaller the commutators, the better it is.
+The advantage of the method is that the two crucial propagators,
+kinetic and potential energy, are performed exactly. The local
+potential energy operator can be easily exponentiated in coordinate
+space, while the kinetic energy operator is exponentiated in Fourier
+space for which we employ forward and backward FFT as for the
+evaluation of derivatives (see section \ref{sec:grid}). The propagator
+of the non-local potential could also be resolved exactly, however
+with considerable bookkeeping expense. It is thus handled by the Taylor
+expansion~\eqref{eq:nlocTaylor}. 
+The $TV$-splitting has a particular advantage concerning
+evaluations of the KS potential. Note that the separation
+(\ref{eq:TVsplit}) employs the potential at $t_0$ in the first
+potential step and at $t_1$ in the second. This avoids any bias by
+giving the same weight to both times. The key saving now comes with the
+fact that the local propagator
+$\displaystyle
+\exp\left[-\frac{\I}{\hbar}\,\frac{\delta{t}}{2}{V}_\mathrm{KS,loc}(\mathbf{r},t_1)\right]$
+only changes the complex phase of the wave function and does not change
+the local density. Thus we can evaluate the final new density for $t_1$
+already at the stage before applying this local propagator
+and no predictor-corrector strategy is needed any longer.
+
+We exemplify and compare the two propagation schemes for the case of
+the Na$_9^+$ cluster with explicit ionic structure described by local
+pseudopotentials (see section \ref{sec:practPsP}). We aim at testing
+the stability of the steppings and do that by propagating the
+electronic ground state of Na$_9^+$ with frozen ions.  
+
+Let us start
+with the exponential evolution (\ref{eq:timepower}). Besides time step
+$\delta t$, it has the order of Taylor expansion $m$ which appears
+twice: once in the predictor and once in the final step.  A fast
+scheme is obtained with $m=2$ for the predictor and $m=4$ for the
+corrector. Even if it can work for a while, it develops instabilities
+rather early (in the present test case, after a few 100 fs). A
+sensitive check is the conservation of the norm of the s.p. wave
+functions because the exponential step at finite $m$ is not exactly
+unitary, whereas an exact propagation is.  Insufficiencies then show
+up first in a slight drift of the norm that we observe for the cheap
+choice $m=4$ rather early, long before true instabilities pop up. A
+much better norm conservation is obtained with $m=4$ for the predictor
+and $m=8$ for the step. This is this choice that is shown in figure
+\ref{fig:Na9p-compsteps_2} for two different time steps.
+\begin{figure}[htbp]
+ \includegraphics[width=\columnwidth]{figures/Na9p-compsteps.pdf}
+\caption{Comparison of electronic propagation schemes taking as test
+  case the ground state of Na$_9^+$ with explicit ionic background. Lower
+  panels: time evolution of dipole moments. Upper panels: time
+  evolution of the total energy. Right panels: View over a long time
+  interval up to 2.4 ps. Left panels: zoom on a shorter time interval
+  usually sufficient for simulating electronic effects. The acronym
+  ``$TV$'' stands for the $TV$-splitting method (\ref{eq:TVsplit})
+  and ``exp'' for exponential evolution (\ref{eq:timepower}) of order
+  $m=8$. The numbers in the legend indicate the time step in units of
+  attoseconds.}
+\label{fig:Na9p-compsteps_2}
+\end{figure}
+The case $\delta t=3.53$~as (1~as~$=10^{-18}$~s) is rock stable for
+very long, the norm is conserved up to 12 digits, and energy as well
+as dipole stay solidly at the ground state value. The slightly larger
+$\delta t=3.54$~as, on the other hand, explodes after 500 fs. 
+Such a
+sudden transition is typical for the exponential propagation and has
+to do with the convergence radius of the expansion. The limit of
+stability is related to the maximal energy in the numerical
+representation. It may change in truly dynamical situations such that
+one must choose a smaller step size. With $\delta t=2.4$~as, we are on
+the safe side for all dynamical scenarios in Na$_9^+$. Larger
+values are possible if carefully checked.
+
+The situation is much different for the $TV$-splitting
+(\ref{eq:TVsplit}). This propagation is manifestly unitary (in that case without non 
+local pseudo potential) such that
+the norm of the s.p. wave functions is strictly conserved. But there
+is a slight error in dipole amplitude and energy from the onset
+(better visible in the left panels) which is due to the fact that we
+do not use the exact propagator $U$ but an approximate factorized
+expression of it.  The splitting error depends on the time step
+$\delta t$ as can be seen in the figure (mind the scales, though). Once we have accepted the
+initial error, the $TV$ propagation proceeds in stable manner for
+long. The larger $\delta t=4.8$~as produces gradually increasing
+deviations after 1~ps (see right panels). They are still rather small
+and may be acceptable when simulating hefty excitations with dipole
+amplitudes and energies larger than the deviations here and with the
+smaller $\delta t=2.4$ as one remains at the safe side for much
+longer.  It is also to be noted that the $TV$-splitting scheme allows
+a time step of $\delta t=4.8$~as, larger than the maximum value
+allowed for the exponential evolution (3.53~as).
+This indicates once
+more that the $TV$-splitting is more forgiving. Most importantly, the
+$TV$ scheme is an order of magnitude faster than exponential
+evolution. This therefore makes it by far the preferred option, even
+at the price of some small initial deviations.
+
+
+In any case, this example nicely demonstrates the commonly
+known fact that any numerical propagation scheme has a limited time
+span of reliability which depends on the numerical representation and,
+in case of self-consistent mean fields, on the actual dynamical
+scenario.  It is, therefore, strongly recommended to launch a few test
+runs for any new application before starting large scale production.
+
+
+
+\subsubsection{Absorbing boundary conditions}
+\label{sec:abso}
+
+
+A grid representation naturally leads to reflecting or periodic
+boundary conditions.  Reflection emerges for finite difference
+schemes.  A representation of the kinetic energy by complex Fourier
+transform is associated with periodic boundary conditions where
+flow leaving the box at one side is re-fed at the opposite side. Both
+can lead to artifacts if a sizable fraction of electronic flow hits
+the boundaries.  Proper handling of electron emission requires
+absorbing boundary conditions which hinder outgoing electrons from
+coming back into the simulation box.  There are several ways to
+solve the problem, for a detailed discussion see \cite{Rei06c}.  The
+QDD code employs the simple strategy of applying a mask function
+during time evolution \cite{Kra92a}.  This technique is particularly
+easy to implement and has been widely used in the past. Its robustness
+and efficiency allow one to develop advanced analyzing techniques on
+the grid as, e.g., the computation of Photo-Electron Spectra (PES) and
+Photo-Angular Distributions (PAD) \cite{Wop14aR,Rei06f}. We give below
+a short explanation.
+
+The left panel of figure~\ref{fig:mask} sketches the implementation of 
+absorbing boundary
+conditions with computation of PES and PAD on a coordinate space grid
+(as 2D cut of a 3D grid).
+\begin{figure}[htbp]
+\begin{center}
+%\centerline{\includegraphics[width=0.7\linewidth]{schem_abso}}
+%\centerline{\includegraphics[width=0.7\linewidth]{bounds}}
+\includegraphics[width=\linewidth]{figures/abso}
+\caption{Left: Schematic view of a coordinate space grid with an
+absorbing layer (red shaded zone), a sampling direction $\mathbf r_\mathbf{n}$
+for accumulating the Photo-Angular Distribution (PAD), see Sec.~\ref{sec:pad},
+and a measuring point $\mathbf{r}_\mathcal{M}$ for the computation of a
+Photo-Electron Spectrum (PES), see Sec.~\ref{sec:pes}. 
+Right: mask function $\mathcal M(\mathbf r)$
+plotted as a function of $r$,
+the distance to the center of the numerical grid.
+ \label{fig:mask}}
+ \end{center}
+\end{figure}
+The absorbing boundary conditions are indicated by the ring area in
+the figure in between the radii $R_{\rm in}$ and $R_{\rm out}$,
+covering here 3 grid points in each direction (actual calculations
+typically use 6 and more points). The absorption is performed in each
+time step as:
+\begin{subequations}
+\begin{eqnarray}
+  \varphi_\alpha(\mathbf{r},t)
+  &\longrightarrow&
+%  \tilde\varphi(\mathbf{r},t\!+\!\delta t)
+  \tilde\varphi_\alpha(\mathbf{r})
+  =
+  \hat{U}(t\!+\!\delta t,t)\, \varphi_\alpha(\mathbf{r},t)
+  \quad,
+\label{eq:KSpart}\\
+  \varphi_\alpha(\mathbf{r},t\!+\!\delta t)
+  &=&
+%  \mathcal{M}(\mathbf{r})\, \tilde\varphi(\mathbf{r},t\!+\!\delta t)
+  \mathcal{M}(\mathbf{r})\, \tilde\varphi_\alpha(\mathbf{r})
+  \quad,
+\label{eq:maskact}
+\\
+  \mathcal{M}(\mathbf r)
+  &=&
+  \left\{\begin{array}{lll}
+  1 & \mbox{for} &|\mathbf{r}|<R_\mathrm{in}
+  \quad,
+  \\
+  \displaystyle
+ \cos^{\gamma_\mathcal{M}}\left(
+  \frac{\pi}{2}\frac{|\mathbf{r}|-R_\mathrm{in}}{R_\mathrm{out}-R_\mathrm{in}}
+ \right)
+  &\mbox{for}&
+  R_\mathrm{in}<|\mathbf{r}|<R_\mathrm{out}
+  \quad,
+  \\
+  0 
+  &\mbox{for}&
+  |\mathbf{r}|>R_\mathrm{out}
+  \quad.
+  \end{array}\right.
+\label{eq:mask}
+\end{eqnarray}
+\end{subequations}
+%
+First comes one standard KS step (see section \ref{sec:numdynel})
+expressed here in terms of the TDLDA propagator $\hat{U}$ defined in
+\eqref{eq:KSpropag}, which yields the intermediate wave function
+$\tilde\varphi_\alpha(\mathbf{r})$. This is followed by the action
+(\ref{eq:maskact}) of the mask function $\mathcal{M}$ defined in
+(\ref{eq:mask}) and shown in the right panel of figure~\ref{fig:mask},
+which steadily reduces the norm of the wave functions from the inner
+mask radius $R_\mathrm{in}$ to the outer one $R_\mathrm{out}$.  We use
+here a spherically symmetric mask. The spherical profile is helpful to
+minimize griding artifacts when computing angular distributions
+\cite{Poh04b} (simpler rectangular masks may be used if PAD and PES are not of
+interest).  
+
+The limiting radii need yet to be specified. The outer radius is the
+smallest distance from the origin of the box to the bounds, formally
+$R_\mathrm{out}=\mbox{min}_{\mathbf{r}_\mathbf{\nu}\in\mathrm{bounds}}(|\mathbf{r}_\mathbf{\nu})|)$
+where the index $\mathbf{\nu}$ indicates that
+$\mathbf{r}_\mathbf{\nu}$ is a grid point. The inner radius is then
+\begin{equation}
+  R_\mathrm{in}
+  =
+  R_\mathrm{out}
+  -
+  N_\mathcal{M}\delta x
+  \quad,
+\label{eq:abspoints}
+\end{equation}
+where $\delta x$ is the grid spacing.
+The $N_\mathcal{M}$ characterizes the number of absorbing points in
+one direction.  It is a crucial numerical parameters, see table
+\ref{man:tab:dyn-input-params-general} in the manual.
+
+This looks simple and straightforward. However, the mask
+technique is not perfect. One will always encounter a small amount of
+reflected flow, particularly for electrons with low kinetic
+energy. One can minimize the back-flow by proper choice of the
+exponent $\gamma_\mathcal{M}$ entering the mask profile, see
+Eq.~(\ref{eq:mask}). This depends, however, on the actual numerics
+(number of absorbing points, size of time step). Typical values of
+$\gamma_\mathcal{M}$ are of order $1/8$ or lower.  A detailed
+description and discussion of this approach and its proper choice of
+numerical parameters is found in \cite{Rei06c}.
+
+Absorbing boundary conditions introduce a subtle difficulty in the
+time propagation.  Indeed, while electronic propagation is built such
+that it preserves orthonormality of s.p. wave functions (see section
+\ref{sec:numdynel}), orthonormality of s.p. wave functions is gradually
+lost as soon as absorbing boundary conditions are active. There are
+two ways to deal with that. The first is to assume that the
+wave functions in full space remain orthonormal and simply to carry
+on. Ionization is deduced in this case from the loss of norms of the
+s.p. wave functions. The second is to diagonalize the one-body density
+matrix in the simulation box which delivers the natural orbitals, for
+a detailed discussion see \cite{Vin17}.  In the natural orbital basis,
+the s.p. basis remains orthonormal by construction. The change of
+electron content caused by the absorbing boundary conditions then
+leads to a change of occupation numbers in the natural basis.  Both
+schemes to TDLDA yield exactly the same results (up to numerical
+accuracy), see e.g. \cite{Vin17}, but count ionization in different manner, from loss of
+norms for straightforward TDLDA propagation, or from changing occupation
+numbers in the basis of natural orbitals. RTA does not leave a
+choice. It uses natural orbitals by construction and it produces a
+genuine change of occupation numbers from relaxation. We conclude from
+this discussion that the change of occupation numbers in RTA with
+absorbing bounds has two sources: relaxation processes modeled by RTA
+and ionization induced by absorbing boundary conditions.
+
+
+
+
+\subsubsection{DCMF}
+\label{sec:dcmf}
+
+
+The solution of the DCMF equations (\ref{eq:DCMF}) was already
+sketched in figure \ref{fig:summaryDCMF}. We add here a few more
+explanations. The basic ingredient is the solution of the mean-field
+equation (\ref{eq:hDCMFeq}) for which we use again the accelerated
+gradient step (\ref{eq:dampstep}) with its own damping parameters
+however, with different damping parameters
+$E_{0,\mathrm{damp}}^{\mbox{}}\rightarrow
+E_{0,\mathrm{damp}}^\mathrm{(RTA)}$ and
+$\delta\rightarrow\delta^\mathrm{(RTA)}$. New is the iteration of the
+Lagrangian parameters $\lambda(\mathbf{r})$ and
+$\boldsymbol{\lambda}_j(\mathbf{r})$ for density and current
+constraint in the DCMF mean-field Hamiltonain (\ref{eq:hDCMF}). These
+are driven by the mismatch of density and current as
+\begin{equation}
+\begin{array}{rcl}
+  \lambda^\mathrm{(n+1)}
+  &=&
+  \lambda^{(n)}+2\mu(\varrho^\mathrm{(new)}-\varrho)%_\mathrm{mf})
+  \\
+  \boldsymbol\lambda_j^\mathrm{(n+1)}
+  &=&
+  \boldsymbol\lambda_j^{(n)}
+  +
+  2\mu_j(\mathbf{j}^\mathrm{(new)}-\mathbf{j})%_\mathrm{mf})
+\label{eq:iterconstr}
+\end{array}
+\end{equation}
+via the quadratic term whose coefficients $\mu$ and $\mu_j$ are
+numerical parameters kept constant throughout the calculations.  They
+should be large enough to drive efficiently. However too large values
+slow down iterations again.  A proper compromise for them has to be
+found and it depends on the actual system. For more details and an
+example, see the supplemental material, section~\ref{man:sec:RTA}.
+The constraint iteration adds one more termination criterion.  As in
+the accelerated gradient step, we check for convergence of energy in
+terms of energy change $\Delta
+E_\mathrm{sp}=|E_\mathrm{sp}^\mathrm{(n+1)}-E_\mathrm{sp}^\mathrm{(n)}|$
+and of variance of s.p. energies $\sqrt{\Delta^2h_\mathrm{DCMF}}=(1/N_e)(
+\sum_\alpha w_\alpha^{(n)}\langle \varphi_\alpha^{(n)} |
+(\hat{h}_\mathrm{DCMF})^2|\varphi_\alpha^{(n)}\rangle - \left(
+w_\alpha^{(n)}\langle \varphi_\alpha^{(n)} |
+\hat{h}_\mathrm{DCMF}|\varphi_\alpha^{(n)}\rangle \right)^2)$, see also
+figure~\ref{fig:summaryDCMF} in section~\ref{sec:summaryRTA}.  New is
+a check for convergence of density in terms of deviation from the
+goal
+\begin{subequations}
+\begin{eqnarray}
+  \delta\rho_\mathrm{DCMF}
+  &=&
+ N_\mathrm{el} \frac{
+   \int\mathrm{d}\mathbf{r}|\rho_\mathrm{DCMF}(\mathbf{r})-\rho(\mathbf{r},t)|}
+  {\int\mathrm{d}\mathbf{r}}
+  \quad,
+\label{eq:devrhoDCMF}\\
+  \delta j_\mathrm{DCMF}
+  &=& N_\mathrm{el}
+  \frac{
+  \int\mathrm{d}\mathbf{r}|\mathbf{j}_\mathrm{DCMF}(\mathbf{r})-\mathbf{j}(\mathbf{r},t)|
+  }
+  {\int\mathrm{d}\mathbf{r}}
+  \quad.
+\end{eqnarray}
+\end{subequations}
+In practice, we found that it suffices to check
+convergence of $\delta\rho_\mathrm{DCMF}$.
+
+
+
+The DCMF scheme also requires to tune the Fermi distribution to the
+given particle number and energy, see Eq. (\ref{eq:muT}). 
+This is solved by interlaced bracketing \cite{Pre92} which is
+reliable and robust, although not very efficient. But this is
+not an issue for this inexpensive part of the RTA scheme.
+
+
+%\begin{figure}[htbp]
+%\begin{center}
+%% \includegraphics[width=0.7\columnwidth]{figures/dcmf_cv}
+% \includegraphics[width=0.7\columnwidth]{figures/dcmf_H2O}
+%\caption{\PGR{Relative errors 
+%as functions of the number of DCMF iterations for the
+%following test observables:
+%$\rho\equiv$ normalized density deviation $\delta\rho_\mathrm{DCMF}/(N_xN_yN_z\rho_0)$,
+%$\mathbf{j}\equiv$ normalized current deviation 
+% $\delta j_\mathrm{DCMF}/(N_xN_yN_z\rho_0p_\mathrm{F})$,
+%$E\equiv$ energy change
+%\ES{$|E_\mathrm{sp}^\mathrm{(n+1)}-E_\mathrm{sp}^\mathrm{(n)}|$},
+%$\Delta E_\mathrm{sp}\equiv$ variance of s.p. energies
+%$\sqrt{\delta^2h_\mathrm{DCMF}}$.
+%Test case is H$_2$O excited by a laser pulse with frequency
+%$\omega=10.7$ eV, width $T_\mathrm{pulse}=36$ fs, and intensity
+%$I=5\,10^{13}$ W/cm$^2$.
+%The DCMF was computed at time $t=48$  fs.}
+%}
+%%}
+%\label{fig:dcmf}
+%\end{center}
+%\end{figure}
+The most critical and time consuming part in the RTA step is the
+solution of the DCMF equations (\ref{eq:DCMF}) to obtain the
+local instantaneous equilibrium state.  Figure \ref{fig:dcmf} shows an
+example of typical convergence pattern for DCMF during RTA evolution.
+\begin{figure}[htbp]
+\begin{center}
+% \includegraphics[width=0.7\columnwidth]{figures/dcmf_cv}
+ \includegraphics[width=\columnwidth]{figures/Na8-RTA-2}
+\caption{Illustration of convergence of the RTA step for the test
+    case Na$_8$ with jellium background excited by a laser pulse with
+    frequency $\omega_\mathrm{las}=2.6$ eV, duration $T_\mathrm{pulse}=25$ fs, and
+    intensity $I=5\times10^{11}$ W/cm$^2$.  Left column: as functions of time, 
+    $z$-dipole moment for RTA dynamics compared with mere TDLDA (bottom) and 
+    number of DCMF iterations in each RTA step (top). 
+    Right column: as functions of the number of DCMF iterations, deviation of local density from goal (bottom)
+    and average variance of s.p. energies (top), both for three times as
+    indicated and highlighted by vertical lines in the upper left panel.}
+%}
+\label{fig:dcmf}
+\end{center}
+\end{figure}
+The left lower panel shows the dipole response to the external laser
+field to demonstrate the dynamical regime in which the example works.
+The difference between RTA and TDLDA indicates the times at which
+dissipation is most active, namely in the early stages where the two
+curves start to deviate and where the impact of the laser amplitude
+(e.g. in terms of energy input) is large. 
+%
+The left upper panel shows the number of DCMF iterations which are
+needed until the required precision demands are fulfilled. This
+number changes dramatically along the dynamical path and it is, indeed,
+largest where dissipation has most work. It is to be noted that the
+needed number of iterations sensitively depends on the system and
+strength of excitation. In the present case, we could afford to set a
+limit at 1000 iterations. There are situations where one needs
+considerably more. 
+%
+The right column of the figure shows detailed convergence patterns  
+in the top panel, variance of s.p. energies $\sqrt{\Delta^2h_\mathrm{DCMF}}$
+and, in the bottom panel, deviation of density $\delta\rho_\mathrm{DCMF}/\bar\rho$, 
+see Eq.~(\ref{eq:devrhoDCMF}), at three different times. The convergence
+criteria are not simply going downward, particularly in the slowest
+case. The interplay of energy optimization and density matching in
+DCMF can lead to significant fluctuations in the iteration process.
+%
+After all, with diligent tuning of the convergence parameters and a
+bit of patience, we obtain the nice result in the left lower panel
+which demonstrates that proper dissipation eliminates the unphysical
+long-term oscillations of a resonantly excited system.
+
+
+\subsubsection{Ionic propagation}
+\label{sec:numdynion}
+
+Time propagation for ionic molecular dynamics (MD) is done with the
+robust and reliable Verlet algorithm \cite{Ver67,Pre92}, also known as
+leap-frog algorithm. We present it here for one ionic core described
+by the two vectors $\mathbf{R}$ and $\mathbf P$, and thus drop the
+subscript $I$ that labels the ionic core (we correspondingly label the ionic mass $M$). We denote by $\delta t_I$
+the ionic time step which is a multiple of the electronic time
+  step $\delta t$.
+
+Propagating the ionic equations of motion (\ref{eq:propion})
+raises the same problem with update of the forces as we had
+experienced in quantum mechanical propagation. The Verlet algorithm
+solves this by taking coordinate $\mathbf{R}$ and momentum
+$\mathbf{P}$ at different time grids, shifted by half a time step
+$\delta t_I/2$. More precisely, this proceeds as:
+\begin{subequations}
+\begin{eqnarray}
+  \mathbf{R}(t\!+\!\delta t_I)
+  &=&
+  \mathbf{R}(t) + \delta t_I \, \mathbf{P}\left(t\!+\!{\textstyle\frac{1}{2}}\delta t_I\right)/M
+  \quad,
+\label{eq:Verlet1}\\
+  \mathbf{P}\left(t\!+\!{\textstyle\frac{3}{2}}\delta t_I\right)
+  &=&
+  \mathbf{P}\left(t\!+\!{\textstyle\frac{1}{2}}\delta t_I\right)
+  + \delta t_I\, \mathbf F \big[\mathbf{R}(t\!+\!\delta t_I),t\!+\!\delta t_I\big]
+  \quad,
+\end{eqnarray}
+\end{subequations}
+where $\mathbf{F}$ denotes the total force acting on the ionic core.
+The advantage of this algorithm is that this force is needed only for
+propagating $\mathbf{P}$ and it uses the coordinate $\mathbf{R}$
+evaluated on the shifted time grid, thus readily available at the
+moment when it is needed, because it was  computed using the
+previous momentum $\mathbf{P}$.
+
+The disadvantage of the method appears at initialization and
+for computation of observables. In both cases, one has to move one of
+the variables $\mathbf{R}$ or $\mathbf{P}$ by half an ionic time step to have
+both at the same time.  This problem is avoided by slight modification
+of the Verlet algorithm, called velocity Verlet \cite{Pre92}. Here,
+both variables are handled at the same time grid.  The momentum
+$\mathbf{P}(t\!+\!{\textstyle\frac{1}{2}}\delta t_I)$ at intermediate
+time is estimated by a predictor and the force at intermediate
+time is taken as an average of the forces at $t$ and $t\!+\!\delta t_I$.
+This amounts to:
+\begin{subequations}
+\label{eq:velverlet}
+\begin{eqnarray}
+  \mathbf{R}(t\!+\!\delta t_I)
+  &=&
+  \mathbf{R}(t)
+  + \delta t_I\, \mathbf{P}(t\!+\!\delta t_I)
+  + {\textstyle\frac{1}{2}} (\delta t_I)^2 \mathbf {F}\left(\mathbf{R}(t),t\right)
+\label{eq:velverlet2R}
+\\
+  \mathbf{P}(t\!+\!\delta t_I)
+  &=&
+  \mathbf{P}(t)
+  +
+  \delta t_I\frac{1}{2}
+   \Big[\mathbf F(\mathbf{R}(t),t)
+          +\mathbf F(\mathbf{R}(t\!+\!\delta t_I),t\!+\!\delta t_I)\Big]
+  \quad.
+\label{eq:velverlet2P}
+\end{eqnarray}
+\label{eq:velverlet2}
+\end{subequations}
+Note that the force at the new time
+$\mathbf F(\mathbf{R}(t\!+\!\delta t_I),t\!+\!\delta t_I)$ is available for
+the $\mathbf{P}$ propagation \eqref{eq:velverlet2P}
+because the $\mathbf{R}$ propagation \eqref{eq:velverlet2R} has been
+completed before. 
+
+Typical values of $\delta t_I$ are a couple of $\delta t$, the latter
+being the electronic time step. There is no general rule for how large
+$\delta t_I$ can be.  This strongly depends on the system under study.
+For explicit examples, the reader can refer to the supplemental material.
+In any case, both schemes, Verlet and velocity Verlet, are
+equivalent in terms of precision, energy conservation, and stability.
+
+A typical example of ionic motion is given in
+figure~\ref{fig:H2O-ions}.  
+\begin{figure}[ht]
+ \includegraphics[width=\linewidth]{figures/H2O-ions-boosty}
+\caption{Illustration of ionic motion in H$_2$O following an
+  instantaneous electronic boost along $y$ direction with initial
+  energy $E_\mathrm{boost}=27.2$~eV, with the molecule lying in
+    the $xy$ plane (top middle inset).  Propagation was done with
+    $\delta t=0.6$~as and $\delta t_I = 40 \delta t = 24.2$~as.
+    Plotted as functions of time are: left column, ionization (top)
+    and electronic dipole moment in each spatial direction (bottom);
+    middle panel, ionic kinetic energy $E_{\rm kin}$, total and its
+    three spatial components; right column, ionic velocities (bottom)
+    and positions (top) in $x$ direction.}
+\label{fig:H2O-ions}
+\end{figure}
+Test case is the H$_2$O molecule where the
+electrons are excited initially by an instantaneous boost (see
+section~\ref{sec:boost}).  The electronic response (see left column)
+is very fast. The dominant part of the excitation energy is used up
+for ionization, leaving a charged molecule out of Coulomb equilibrium
+and still with a considerable amount of electronic excitation energy as
+visible from the ongoing remaining dipole oscillations. Coulomb
+pressure and dipole fluctuations drive, at a slower pace, ionic
+motion. In spite of the considerable excitation, the ionic amplitudes
+remain small, reflecting a small transferred energy, at least in the
+short initial time interval shown here (full thermal equilibration
+takes much longer). Indeed, the maximum total ionic kinetic energy is
+less than 1 eV, while the initial boost brings almost 30~eV in the
+system. Along with this small transferred energy, we plot in the right
+column of the figure the ionic velocities and positions in $x$
+direction. We observe small amplitude oscillations, rather regular and
+at a pace given by the leading ionic frequencies, much smaller than
+the electronic ones, visible in the bottom left panel which shows the
+electronic dipole response with very fast oscillations.  Through this
+example, we demonstrated the non-trivial cross-talk between electronic
+and ionic dynamics, made possible by the non-adiabatic coupling
+between electrons and ions in our TDLDA-MD at the level of the
+Ehrenfest approximation.
+
+\subsection{Observables}
+\label{sec:observ}
+
+
+\subsubsection{Energies}
+\label{sec:energies}
+
+We denote by $E(N_\mathrm{el},\mathbf{R}^{(N_\mathrm{ion})})$ the
+total binding energy of a system consisting of $N_{\rm el}$ TDLDA
+electrons and $N_{\rm ion}$ ionic cores. Energy is a most prominent
+observable and it naturally results from any calculation with
+energy-density functionals.  Comparison with measurements is usually
+done in terms of differences of energies, e.g., the monomer separation
+energy as the adiabatic energy difference
+%
+$E_\mathrm{mono}=E(N_\mathrm{el},\mathbf{R}^{(N_\mathrm{ion})})
+            -E(N_\mathrm{el}-1,\mathbf{R}^{(N_\mathrm{ion}-1)})$
+%
+where both energies are to be taken from fully relaxed ionic
+configurations, or the vertical ionization potential
+(IP)
+%
+$E_\mathrm{IP}=E(N_\mathrm{el},\mathbf{R}^{(N_\mathrm{ion})})
+            -E(N_\mathrm{el}-1,\mathbf{R}^{(N_\mathrm{ion})})$
+%
+where the new electronic state in the $N_\mathrm{el}-1$ system has
+relaxed but the ions are kept in their original configuration.
+
+
+As a byproduct of mean-field calculations, one also obtains the series
+of s.p. energies $\varepsilon_\alpha$.  But it is known that the
+$\varepsilon_\alpha$'s from (TD)LDA are spoiled by the
+self-interaction error. This defect can be cured by a SIC, see section
+\ref{sec:SIC}, after which the set of $\varepsilon_\alpha$ provides a
+fair map of electron separation energies, particularly of the IP
+\cite{Leg02,Klu13}. Experimental data on s.p. energies are mainly the
+IP and the sequence of peaks in a PES from one-photon processes with
+laser pulses of weak intensity. Note that the QDD code also offers the
+possibility to compute fully dynamically a PES in case of pure TDLDA,
+see section \ref{sec:pes}. Besides comparison with data, the
+s.p. energies are very instructive observables for theoretical
+interpretation as, e.g., analyzing electronic shell structure
+\cite{Hee93,Bra93}.
+
+Other ``theoretical'' observables are the separate energy
+contributions which are helpful to analyze the energy balance in
+dissipative dynamics \cite{Rei17a}.  We will address later on in this
+paper the intrinsic excitation energy $E^*_\mathrm{intr}$ and the
+energy absorbed from the laser field $E_\mathrm{abs}$.  The
+$E^*_\mathrm{intr}$ characterizes the amount of internal, so to say
+thermal, kinetic excitation of the electron cloud. This is a quantity
+which plays a key role in the model for dissipation, as was explained
+in section \ref{sec:summaryRTA}.  The absorbed energy is computed as
+\begin{equation}
+  E_\mathrm{abs}(t)
+  =
+  \int_0^t \textrm dt'\int\D\mathbf{r}\,
+  \mathcal{\mathbf{E}}(t')\cdot\mathbf{j}(\mathbf{r},t') 
+\label{eq:eabs}
+\end{equation}
+with an additional small correction for particle loss at the absorbing
+bounds (for details see  \cite{Rei17a}). It provides the total
+excitation  energy delivered to the system.
+
+
+
+\subsubsection{Densities and shapes}
+\label{sec:shapes}
+
+Energy-density functionals also produce the electronic local density
+$\varrho(\mathbf{r},t)$ as a natural outcome.  The electronic density
+together with the ionic configuration $\{\mathbf{R}_I\}$ constitutes
+the shape of a system in all detail. But this can become an
+overwhelming amount of information. The gross structure of a shape is
+more simply sorted in terms of its multipole moments.  Leading
+quantity is the root-mean-square (r.m.s.) radius which reads for the
+electrons:
+\begin{subequations}
+\label{eq:moments}
+\begin{equation}
+  r_\mathrm{rms}(t)
+  =
+  \sqrt{\frac{\int\mathrm{d}\mathbf{r}\,\varrho(\mathbf{r}+\mathbf{r}_\mathrm{cm},t)\,r^2}
+       {N_{\rm el}}}
+\end{equation}
+where $\mathbf{r}_\mathrm{cm}$ is the electronic center of mass. 
+Next come the quadrupole moments which quantify the deformation.
+The QDD code computes and prints the Cartesian quadrupole
+moments
+\begin{equation}
+  Q_{ij}
+  =
+  \int\mathrm{d}\mathbf{r}\,\varrho(\mathbf{r}+\mathbf{r}_\mathrm{cm},t)\,
+  \left(r_ir_j
+  -\frac{\delta_{ij}}{3}\mathbf{r}^2\right)
+  \quad.
+\label{eq:quadmom}
+\end{equation}
+\end{subequations}
+This is provided not only for the electronic density but also for the
+ionic configuration by replacing $\int\mathrm{d}\mathbf{r}\,\varrho
+...$ through $\sum_I ...$.
+
+The quadrupole moments (\ref{eq:quadmom}) as such change scale with
+system size. This inhibits simple comparison of shapes between systems
+of different size. To that end, it is advisable to work with
+dimensionless quadrupole moments which can easily be deduced from the
+above radius and quadrupole moments. This is outlined in appendix
+\ref{sec:dimlessquad}.
+
+
+\subsubsection{Polarizability}
+\label{sec:comppol}
+
+The static polarizability is a key observable of atoms, molecules, and
+clusters.  %Its computation is straightforward.  
+We discuss  here the
+most important case of dipole polarizability $\alpha_D$.  One applies
+a static external dipole field
+$V_\mathrm{ext}(\mathbf{r})=e\mathbf{E}_0^{({\rm stat})}\!\cdot\!{\bf r}$ and
+performs static calculations for a couple of $\mathbf{E}_0^{({\rm stat})}$.  This
+delivers an electric dipole moment
+$e\bar{\bf D}=e\langle \mathbf{r}\rangle=e\int \textrm d\mathbf{r} \, \mathbf{r} \varrho(\mathbf{r},t)$ as
+a function of $\mathbf{E}_0^{({\rm stat})}$. The tensor of static dipole
+polarizability is then
+\begin{equation}
+  (\alpha_D)_{ij}
+  =
+  e\frac{\partial\bar{D}_i}{\partial{E}_{0,j}^{({\rm stat})}}\Big|_{\mathbf{E}_0^{({\rm stat})}=0}
+  \quad \mathrm{for} \ i,j\in\{x,y,z\} \quad.
+\label{eq:comppolar}
+\end{equation}
+The polarizability matrix simplifies if the system has spatial
+symmetries. For example, an axially symmetric system aligned with the $z$-axis
+has $(\alpha_D)_{xz}=(\alpha_D)_{yz}=(\alpha_D)_{xy}=0$ and
+$(\alpha_D)_{xx}=(\alpha_D)_{yy}$. A spherically symmetric system
+has additionally $(\alpha_D)_{xx}=(\alpha_D)_{zz}$.
+
+\subsubsection{Optical response}
+\label{sec:specan}
+
+Optical response is a key observable in cluster physics.  In the limit
+of long wavelengths, the laser field at the system site is related to
+the dipole moment $\mathbf{D}=\mathbf{r}$ where $\mathbf{r}$ is
+taken with respect to the center-of-mass of the electron cloud.  Within
+QDD, the dipole excitation strength can be computed by
+spectral analysis of the dipole response to an instantaneous dipole
+excitation of the system. To that end, one starts from a well relaxed
+ground state and applies the instantaneous initial excitation by a
+small dipole boost 
+$ \varphi_\alpha(\mathbf{r},t\!=\!0^+) \leftarrow
+  \exp(\mathrm{i}\mathbf{p}_0\cdot\mathbf{r})
+  \varphi_{\alpha}(\mathbf{r},t\!=\!0)$, 
+see section~\ref{sec:boost}.  One then propagates
+electrons with TDLDA and samples a protocol of the dipole moment
+\begin{subequations}
+\begin{equation}
+  {\bf D}(t)
+  =
+  \int \textrm d{\bf r}\,{\bf r}\, \varrho({\bf r},t)
+  \quad.
+\end{equation}
+After a sufficient time, say $T_\mathrm{max}$, one multiplies the
+dipole signal $\mathbf D(t)$ with an appropriate window function
+$\mathcal{W}(t)$ \cite{Pre92}, Fourier transforms it into
+$\widetilde{\mathbf D}(\omega)$, and finally obtains the spectral
+strength $S_{D_i}(\omega)$ for $i \in \{x,y,z\}$ and corresponding
+spectral power $\mathcal{P}_{D_i}$ as:
+\begin{eqnarray}
+  S_{D_i}(\omega)
+  &=&
+  \frac{\Im\{\widetilde{D}_i(\omega)\}}{p_{0,i}}
+  \quad,\quad
+  \widetilde{D}_i(\omega)
+  =
+  \int \textrm dt\,\mathcal{W}(t)\,e^{\I\omega t}D_i(t)
+  \quad,
+\\
+  \mathcal{P}_{D_i}(\omega)
+  &=&
+  \frac{|\widetilde{D}_i(\omega)|^2}{p_{0,i}^2}
+  \quad,
+\label{eq:powerspec}
+\end{eqnarray}
+where $\mathbf p_0$ is the boost momentum initially applied.
+\end{subequations}
+We here ignore the posssibility of (small) cross-talk between 
+different channels $i$ and $j$ and concentrate on the diagonal
+elements of the strength tensor.
+The maximum possible {spectral resolution} is given by
+$\delta\omega=2\pi/T_\mathrm{max}$.
+%
+The window function $\mathcal{W}(t)$ serves to attenuate the dipole
+signal toward the end point $T_\mathrm{max}$ and to avoid
+artifacts from non-zero $\mathbf{D}(T_\mathrm{max})$
+\cite{Pre92}. Useful windows are
+$\mathcal{W}(t)=\cos^{2n}\big[t\pi/(2T_\mathrm{max})\big]$ where $n$ is an
+integer number. The choice $n=1$ produces often still a bit rough
+$\Im\{\tilde{D}_i(\omega)\}$ while $n=2$  usually performs satisfyingly
+well.  It is interesting to note that this treatment in connection
+with absorbing boundary conditions (see section \ref{sec:abso}) allows one
+to compute correctly the escape width of spectral states lying in
+the electron continuum. For details of spectral analysis and variants
+thereof, see \cite{Cal97b}.
+
+Spectral analysis can equally well be performed with other
+observables, as e.g. higher multipoles, spin modes, etc. The full
+TDLDA furthermore allows one to go beyond the linear regime. The more
+appropriate observable is then the power spectrum \ref{eq:powerspec}.
+
+
+The same principles of spectral analysis can also be applied for
+computing the vibration spectra of clusters and molecules. Here we concentrate on
+the MD part of TDLDA-MD.  The analyzing times are then to be
+taken much longer to supply sufficient spectral resolution for 
+excitation in the meV range, characteristic of ionic vibrational
+states, and the ionic multipole moments ought to be used for the
+spectral analysis of ionic motion \cite{Rei02d}.
+
+\subsubsection{Momenta probing exotic modes}
+\label{sec:obsexo}
+
+As explained in section \ref{sec:iniexo}, QDD also allows one to
+excite more subtle modes as spin-dipole and scissors
+oscillations. These modes require, of course, specific observables for
+proper analysis. The spin-dipole mode is tracked by the spin-dipole
+moment
+\begin{equation}
+  {\bf D}_S(t)
+  =
+  \int \textrm d{\bf r}\,{\bf r}\, \varrho_\uparrow({\bf r},t)
+  -
+  \int \textrm d{\bf r}\,{\bf r}\, \varrho_\downarrow({\bf r},t)
+  \quad.
+\end{equation}
+The observable related to the scissors mode is 
+the orbital angular momentum 
+\begin{equation}
+  \mathbf{L}
+  =
+  \sum_\alpha w_\alpha
+  \langle\varphi_\alpha|\hat{\mathbf{r}}\times\hat{\mathbf{p}}
+   |\varphi_\alpha\rangle
+\label{eq:angmom}
+\end{equation}
+where $\mathbf{r}$ is to be taken with respect to the center-of-mass
+of the electron cloud.
+
+\subsubsection{Ionization}
+\label{sec:ionization}
+
+Absorbing boundary conditions as explained in section \ref{sec:abso}
+provide a pertinent picture of electron emission.  There are several
+observables associated with emission from \mbox{(photo-)excited} systems: 
+total
+ionization, ionization probabilities, photo-electron angular distribution (PAD), and
+photo-electron spectra (PES). We discuss them in the next four
+paragraphs.
+
+\paragraph{Total ionization}
+\label{sec:netioniz}
+
+The first observable is the total ionization, i.e. the number of
+escaped electrons denoted by $N_\mathrm{esc}$. 
+The, now decreasing, norm of the s.p. wave function $\varphi_\alpha$ defines 
+the depletion $N_\alpha$ of state $\alpha$, from which one computes the ionization from this state,
+$N_{\mathrm{esc},\alpha}$, as the complement of $N_\alpha$:
+\begin{equation}
+N_\alpha(t)=\langle \varphi_\alpha(t)|\varphi_\alpha(t)\rangle \quad \mathrm{and} \quad
+N_{\mathrm{esc},\alpha}(t)=1-N_\alpha(t) \quad.
+\label{eq:depletion}
+\end{equation}
+The total ionization then reads as the sum of the level ionizations:
+\begin{equation}
+  N_\mathrm{esc}(t)
+  =
+  \sum_{\alpha=1}^{\Omega} \omega_\alpha N_{\mathrm{esc},\alpha}(t)
+\label{eq:nesc}
+\end{equation}
+%Eqs.~(\ref{eq:depletion}) and (\ref{eq:nesc}) shows} that we have access to more than the mere total
+%ionization. 
+Both, total ionization and detailed level
+depletion as functions of time, are very instructive observables \cite{Din12c}.
+
+\paragraph{Ionization probabilities}
+\label{sec:ionizprobab}
+
+Total ionization can be further analyzed in terms of detailed
+ionization probabilities. The probability to find the system at time
+$t$ in one of the possible (positive) charge states $k$ to which the system can
+ionize is denoted by $P^{(+k)}(t)$. 
+%
+A scheme to estimate the $P^{(+k)}(t)$ has been derived for
+pure mean-field states with integer occupation probabilities by
+combinatorial analysis \cite{Ull97a}. We summarize it here briefly.
+
+The physical change of charge state is related to ionization which
+is realized numerically by absorbing boundary conditions. From the time evolution of the 
+level depletions and ionizations per state, $N_\alpha(t)$ and $N_{{\rm esc},\alpha}(t)$ respectively, 
+defined in Eq.~\eqref{eq:depletion},
+%These reduce in the course of time the norm of s.p. wave function
+%leaving a particle content $N_{\alpha}$ in s.p. state $\alpha$ and its complement
+%\begin{equation} 
+%  N_{\alpha}(t) 
+%  = 
+%  \int d\mathbf{r}  |\varphi_{\alpha}(\mathbf{r},t)|^{2}
+%  \quad,\quad
+%  \tilde{N}_{\alpha}
+%  =
+%  1-N_{\alpha}
+%  \quad.
+%\end{equation}
+%Once having the $N_{\alpha}(t)$, the further steps proceed as
+%previously.
+one starts with the following relation
+\begin{equation}
+\label{eq:combi}
+  1 
+  = \sum_{k=0}^{\Omega} P^{(+k)}(t)
+  = 
+  \prod_{\alpha=1}^{\Omega}\Big[ N_\alpha(t) + N_{{\rm esc},\alpha}(t))\Big]
+  \quad.
+\end{equation}
+The product in the right-hand side is then expanded and the resulting
+terms are rearranged, collecting terms containing $k$ factors
+$N_{\alpha}^k\, \left(N_{{\rm esc},\alpha}\right)^{\Omega-k}$ which
+allows one to identify them to the ionization probability $P^{(+k)}$
+\cite{Ull97a}. For examples of application and details see, e.g.,
+\cite{Rei98a, Cal00}.
+
+The irradiation of the C$_3$ chain by an intense laser pulse is taken as an example
+and various time evolutions are shown in figure~\ref{fig:probab}.
+\begin{figure}[htbp]
+\centerline{
+%\includegraphics[width=0.3\columnwidth]{figures/H2O-sp}
+\includegraphics[width=\columnwidth]{figures/C3-probab-3}
+}
+\caption{The C$_3$ chain molecule excited by a laser pulse with
+  $\omega_\mathrm{las}=5.4$ eV, $I=10^{14}$ W/cm$^2$,
+  $T_\mathrm{pulse}=10$ fs, and with polarization along the $z$ direction ($=$ molecule axis), 
+  leading to an average ionization of 0.8
+  electrons. As functions of time: (bottom left) $D_z$, dipole moment in $z$ direction, (top left)
+  total ionization $N_\mathrm{esc}$ and ionizations per state $N_{{\rm esc},\alpha}$ 
+ and (right) charge-state probabilities $P^{(+k)}$ in logarithmic scale.}
+\label{fig:probab}
+\end{figure}
+The dipole moment (lower left panel) gives an impression of the
+dynamical response of the molecule.  It shows the typical pattern for
+an off-resonant excitation.  The dipole signal follows the laser
+profile and some small asymptotic oscillations remain, due to a small
+excitation of the system's eigenmodes. The total ionization (top red
+curve in upper
+left panel) increases in the region of large dipole amplitudes and then
+levels off. We also show the ionizations from the HOMO, HOMO$-1$ and
+two degenerate HOMO$-{2,3}$ levels.  These are the key ingredients in
+evaluating the charge-state probabilities $P^{(+k)}$.  The emerging
+$P^{(+k)}$ are shown in the right panel.  Their time evolution
+corresponds to the pattern of total ionization.  The neutral state loses
+probability with increasing ionization while all other take
+
+increasingly their share. Finally, the average charge state of $Q=0.8$,
+read off from the total ionization,
+is mainly distributed with 40\% 
+of charge state $Q=0$ and 40\% of charge state $Q=1$. Charge state $+2$
+gather appreciable 14\% and the higher charges share the leftovers
+with rapidly decreasing amounts (only visible on logarithmic
+scale). The distribution visualizes a subtle feature of TDLDA in
+connection with absorbing boundary conditions: it generates inevitably
+a mixed state (which becomes apparent in a natural-orbital
+representation \cite{Vin17a}) and this state embraces very different
+charge states when decomposed properly.  The different charges produce
+different Coulomb fields. TDLDA can describe only the average charge
+and an average mean field.
+
+So far, we have discussed the case of pure mean-field states with
+integer occupation. RTA inevitably produces mixed states with
+fractional occupations $w_\alpha$.  The extension to this situation
+is formally trivial and actually implemented in QDD, provided that we
+merely generalize the level depletion of state $\alpha$ as
+%
+$N_\alpha(t)=w_\alpha\langle \varphi_{\alpha}(t)|\varphi_\alpha(t)\rangle$
+%
+and apply the combinatorial decomposition as before.  Although
+technically simple, the physical interpretation of the resulting
+$P^{(+k)}$ is involved.  Fractional occupations $w_\alpha$ as generated
+by RTA produces also a spread in charge states which has nothing to do
+with ionization, but reflects a general weakness of a thermal
+mean-field state, namely that it represents unavoidably an ensemble
+covering different electron numbers \cite{Rei98aB}.  The resulting
+$P^{(+k)}$ of RTA with absorbing boundary conditions thus mixes effects
+from ionization with effects from thermalization. It is a task for
+future research to disentangle these two contributions.
+
+\paragraph{Photo-electron angular distributions}
+\label{sec:pad}
+
+Photo-angular distributions (PAD) 
+%$\mathrm{d}\sigma/\mathrm{d}\Omega(\vartheta,\varphi)$ 
+are evaluated in angular segments, see Fig.~\ref{fig:mask}.  An
+angular segment can be described by an azimuthal angle $\theta $ and a
+polar angle $\phi$.  The reference frame for these two angles is
+usually the $z$ axis identical with the laser polarization axis.  We
+collect all probabilities which were removed by the absorption step
+(\ref{eq:maskact}) and accumulate it.  The grid points in a given
+angular segment and in the absorbing zone are denoted
+$\mathbf{r}_\mathbf{n}$ in Fig.~\ref{fig:mask}, with $\mathbf{n}$
+an index vector that differs from one segment to the other.
+
+A straightforward collection of grid points in a segment $\mathbf{n}$ 
+tends to produce
+noisy results because the number of grid points per segment
+fluctuates. We therefore associate with each grid point a smoothing
+function $\mathcal{S}$ centered at $\mathbf{r}_\mathbf{n}$ which
+distributes the strength over a vicinity of order of grid spacing.
+This suffices to produce acceptably smooth distributions.  The total
+PAD $\mathcal A(\theta,\phi)$ and the state-specific PAD $\mathcal
+A_\alpha(\theta,\phi)$ are computed as~:
+\begin{subequations}
+\label{eq:PADfixed}
+\begin{eqnarray}
+%  \frac{d\sigma}{d\Omega}(\vartheta,\varphi)
+  \mathcal{A}(\theta,\phi)
+  &=&
+  \sum_{\alpha=1}^{N_{\rm el}}\mathcal{A}_{\alpha}(\theta,\phi)
+  \quad,
+\\
+  \mathcal{A}_{\alpha}(\theta,\phi)
+  &=&
+  \sum_{\mathbf{n}\in\scriptsize{\mbox{abso.zone}}}
+  \int \textrm dr\,r^2\,\mathcal{S}(r\mathbf{e}_r-\mathbf{r}_\mathbf{n})
+   \, n_{\mathrm{esc},\alpha}(\mathbf{r}_\mathbf{n})
+  \quad,
+\\
+  \mathcal{S}(\mathbf{r})
+  &=&
+  \frac{\mbox{max}(\delta x-|x|,0)}{\delta x} \, 
+  \frac{\mbox{max}(\delta y-|y|,0)}{\delta y} \,
+  \frac{\mbox{max}(\delta z-|z|,0)}{\delta z}
+  \quad,
+\\
+  n_{\mathrm{esc},\alpha}(\mathbf{r}_\mathbf{n})
+  &=&
+  \int \textrm dt\,\left|\varphi_\alpha(\mathbf{r}_\mathbf{n},t)\right|^2
+  \big[1-\mathcal{M}(\mathbf{r}_\mathbf{n},t)\big]
+  \quad,
+\end{eqnarray}
+\end{subequations}
+where $\mathbf{e}_r=\left(\sin\theta\cos\phi,
+\sin\theta\sin\phi,\cos\theta\right)$ is the unit vector in the
+direction of the wanted angles. The smoothing is done by tent
+functions which comply with the integration rule used in the
+normalization.  The angular segments in Fig.~\ref{fig:mask} schematically
+symbolize this smoothing which collects (weighted) information in the
+vicinity of a ray. An example of PAD is given in section \ref{sec:RTAPAD} in
+connection with RTA dynamics.
+
+
+\paragraph{Photo-electron spectra}
+\label{sec:pes}
+
+
+A Photo-Electron Spectrum (PES) can be deduced from the temporal phase
+oscillations of the s.p.  wave functions
+$\varphi_\alpha(\mathbf{r}_\mathcal{M},t)$ at measuring points
+$\mathbf{r}_\mathcal{M}$ close to the absorbing bounds, see
+Fig.~\ref{fig:mask} \cite{Poh00}.  The result for the PES sampled at
+$\mathbf{r}_\mathcal{M}$ is
+\begin{subequations}
+\label{eq:PESformula}
+\begin{eqnarray}
+  \mathcal{Y}(E_\mathrm{kin},\Omega_\mathcal{M})
+  &=&
+  \sum_\alpha w_\alpha
+  \mathcal{Y}_\alpha(E_\mathrm{kin},\Omega_\mathcal{M})
+  \quad,
+\\
+  \mathcal{Y}_\alpha(E_\mathrm{kin},\Omega_\mathcal{M})
+%  \propto
+%  \left|\widetilde{\varphi}^{(v)}_0(\sqrt{2\omega})\right|^2
+  &=&
+  \left|
+  \!\int\!\frac{\textrm dt}{\sqrt{2\pi}}\,e^{\mathrm{i}E_\mathrm{kin}t
+              -\mathrm{i}\delta q\sqrt{2E_\mathrm{kin}}
+              +\mathrm{i}\delta\Omega
+              +\mathrm{i}E_0F(t)\mathbf{e}_0\cdot\mathbf{r}_\mathcal{M}}
+               \varphi_\alpha(\mathbf{r}_\mathcal{M},t)
+  \right|^2
+  \;,
+\label{eq:solve-wf}
+\\
+  \delta q(t)
+  &=&
+  E_0 \int_0^t\mathrm dt'\,F(t')
+  \quad,
+\label{eq:delq}\\
+  \delta\Omega(t)
+  &=&
+  \frac{E_0^2}{2}\int_0^t\mathrm dt'\,F(t')^2
+  \quad,
+\label{eq:delOmega}
+\end{eqnarray}
+\end{subequations}
+Note that the formula does not only give the total PES, but also
+the PES $\mathcal{Y}_\alpha$ for emission specifically from state
+$\alpha$. In Eq.~\eqref{eq:solve-wf},
+$\mathbf{e}_0=\mathbf E_0/|\mathbf E_0|$ is the direction of (linear) polarization of the
+electrical field $\mathbf E_0$ and $\Omega_\mathcal{M}$ the solid angle associated with
+$\mathbf{r}_\mathcal{M}$. This form applies for the wave function
+$\varphi_\alpha(\mathbf{r}_\mathcal{M},t)$ in space gauge as computed in the
+code. 
+In Eqs.~\eqref{eq:delq} and \eqref{eq:delOmega}, 
+$F(t)=\int_0^t  \textrm dt'\,f(t')\exp{(-\mathrm{i}\omega_\mathrm{las}t')}$ is the
+time integrated laser pulse envelop introduced in
+Eq.~(\ref{eq:laserp}).  
+
+A detailed derivation of Eqs. (\ref{eq:PESformula}) is found in
+\cite{Din13a}.  We summarize here the ideas behind that compact
+formula.  It is deduced under the assumption that the measuring point
+$\mathbf{r}_\mathcal{M}$ is sufficiently far away from the system
+(placed around $\mathbf{r}=0$) such that an outgoing electron wave
+has direction
+$\mathbf{e}_{\mathbf{k}}=\mathbf{e}_\mathcal{M}=\mathbf{r}_\mathcal{M}/r_\mathcal{M}$.
+We expand the wave function at $\mathbf{r}_\mathcal{M}$ into outgoing
+waves with direction $\mathbf{e}_{\mathbf{k}}$ and momenta
+$k>0$. These are plane waves
+$e^{\mathrm{i}k\mathbf{e}_{\mathbf{k}}\cdot\mathbf{r}_\mathcal{M}}$
+for weak fields and for stronger fields the corresponding electron
+waves in the time-dependent laser field (Volkov states).  The fact
+that we have only outgoing waves in one direction allows one to identify
+uniquely energy and momentum as
+$\mathbf{k}=\mathbf{e}_{\mathbf{k}}\sqrt{2 m_e E_\mathrm{kin}}$. 
+The energy is read off from the phase oscillations of
+$\varphi(\mathbf{r}_\mathcal{M},t)$ 
+and the direction
+$\mathbf{e}_{\mathbf{k}}\Rightarrow\Omega_\mathcal{M}$ from the
+position of the measuring point.
+The practical evaluation of PES is done in a two-step
+process. QDD prints out the phase information at the measuring
+point to a file which is afterward analyzed by an auxiliary
+program, for details, see the Supplemental material, 
+section \ref{man:sec:PES} therein.
+
+The formula (\ref{eq:PESformula}) applies for weak and for strong
+fields, but still fails for extremely strong fields. The limits of
+validity depend on system and time structure of the pulse.  To give an
+order of magnitude, an intensity for long laser pulses impinging on Na
+clusters is $I\approx{10}^{15}$W/cm$^2$. For details, see
+\cite{Din13a}. 
+
+This evaluation of PES through the above explained phase sampling
+is extremely efficient. However, it is not yet applicable to
+dissipative dynamics as RTA, because that causes jumps in the
+wave functions and thus spoils phase information. A proper extension of
+the scheme has yet to be developed.
+
+An example of a PES is given in figure \ref{fig:PES}.
+\begin{figure}[htbp]
+\centerline{
+%\includegraphics[width=0.3\columnwidth]{figures/H2O-sp}
+%\includegraphics[width=0.8\columnwidth]{figures/PES-offres-lower_intensity-4}
+\includegraphics[width=0.8\columnwidth]{figures/PES_h2o}
+}
+\caption{Photo-Electron Spectrum obtained in H$_2$O, in the $xy$ plane (see inset of 
+Fig.~\ref{fig:H2O-ions}), irradiated by a laser pulse 
+with characteristics as indicated. The laser polarization is along the $z$ direction.
+The single particle energy spectrum is shown as an inset. The short vertical lines
+at the bottom indicate the single particle energies shifted by multiples of $\omega_\mathrm{las}$.}
+\label{fig:PES}
+\end{figure}
+Test case is the H$_2$O molecule, irradiated by an off-resonant laser
+pulse. In this off-resonant regime, the total ionization remains small
+($2\times 10^{-3}$). The values of the s.p. energies (see inset of the
+figure) thus remain almost constant in time. The PES clearly exhibits
+sharp peaks (mind the vertical log scale) above the background
+signal. These peaks correspond to a map of the s.p. energy spectrum,
+shifted by a multiple of the laser frequency $\omega_\mathrm{las}$. A
+PES is thus a standard tool to access the single particle energy spectrum of a
+system. For instance, the 1st, 3rd and 4th peaks, respectively at 2.6,
+5.5 and 7.7~eV, come from a 2-photon absorption of states 2, 3 and
+4. Analogously, the 2nd, 7th, 8th and 9th peaks, respectively at 1.7,
+13.1, 16.9 and 19.1~eV, come from a 3-photon absorption of the four
+states. As expected, the higher the multi-photon process, the smaller
+the peak height.
+
+A final word is in order on the peak widths. The longer the laser
+pulse, the better the resolution of the peaks.  Still, there is
+physics contained in the width of the peak. In particular, this way to
+obtain such a PES, that is from the calculation of the ionization
+dynamics, allows the encoding in the peak width of the dynamical
+coupling between electrons but also between the electrons and the
+ionic background.  In other words, a PES contains at the same time
+static information but also valuable dynamical ones at the side of the
+electron emission. This technique is therefore superior to the simple
+production of a PES by shifts of the energy spectrum and an artificial
+widening of the peaks by, e.g. convolution of a Gaussian with a
+constant width. Note also that this allows one to compute a PES also
+in the on-resonant regime (not shown here), then bearing all the
+impacts of a large electron emission can have on the irradiated
+system, in particular on the time evolution of the s.p. energy spectrum.  
+
+\subsubsection{Observables specific to relaxation}
+
+Most of the observables computed with RTA are exactly the same as for
+TDLDA, e.g., energy, density, excitation spectra, ionization, or PAD.
+New are observables related to the mixed character of the
+one-body operator which is characterized by the occupation
+numbers $w_\alpha$. 
+A specific quantity in that respect is the one-body
+entropy which is computed in diagonal representation
+(\ref{eq:rhodiag}) by the standard expression \cite{Rei98aB}
+\begin{equation}
+  S
+  =
+  - \sum_\alpha\left[
+    w_\alpha\log w_\alpha
+    +
+    (1\!-\!w_\alpha)\log (1\!-\!w_\alpha)
+  \right]
+\label{eq:entropy}
+\end{equation}
+in units of Boltzmann constant. 
+It serves as a direct indicator of thermalization and allows one to 
+read off the typical time scale of relaxation processes. An example
+will be discussed along with Fig.~\ref{fig:na11p}, when a comparison of
+a RTA and a TDLDA dynamics is performed.
+Note that $S$ remains strictly zero at TDLDA   level with 
+constant values of $w_\alpha$ = 0 or 1.
+
+\subsection{The structure of the TDLDA  and RTA packages}
+\label{sec:TDLDA_RTAnum}
+
+The QDD package, providing TDLDA as a basis with the more elaborate RTA
+on top, is a rather complex collection of routines.  
+\begin{figure}[htbp]
+\centerline{\fbox{
+\includegraphics[width=0.85\linewidth]{figures/flow.pdf}
+}}
+\caption{\label{fig:tree_main}
+Schematic flow diagram of the QDD code.
+}
+\end{figure}
+A rough schematic overview is given in Fig.~\ref{fig:tree_main}. It
+shows the basic structure and switches in a self-explaining manner. A
+more detailed tree structure for the code and its subroutines at a
+deeper technical level is given in the
+Supplemental material.
+
+\section{Examples of RTA dynamics}
+\label{sec:examples}
+
+A distinctive feature of RTA dynamics is that it accounts for
+electronic dissipation which manifests itself  by a
+gradual transformation of the available excitation energy into
+heat. We will illustrate this process with two of the initial
+excitations available in QDD, namely an initial instantaneous boost on
+the one hand and a femtosecond laser pulse on the other hand. In
+addition to the standard observables accessible in TDLDA, we will
+study the time evolution of the one-body entropy $S$ defined in
+Eq.~(\ref{eq:entropy}) as a specific quantity characterizing
+dissipative features. Indeed, $S$ is \emph{strictly} zero in a TDLDA
+evolution. Any non-vanishing value of $S$ thus provides a direct
+indicator of dissipation.
+
+%\subsection{Dissipative electron dynamics}
+\subsection{Electronic response to an initial boost}
+\label{sec:ex_boost}
+
+
+A simple way to visualize  RTA dynamics is to consider an
+instantaneous excitation and to follow in time the dynamics of
+relaxation of the electrons.  Such a perturbation can be delivered by
+an instantaneous initial boost of the electron cloud with respect to
+the ionic background, see section~\ref{sec:boost}.
+
+We  take here such an initial boost along the $z$ direction applied on
+Na$_{11}^+$ as an illustrative example.  The ionic background is here
+described by a soft jellium model, see section~\ref{sec:jell}.
+  Three different values of the boost are used,
+delivering three different initial  excitation energies $E^*$.
+\begin{figure}[htbp]
+\begin{center}
+ \includegraphics[width=0.6\columnwidth]{figures/na11p_lda_rta}
+\caption{Time evolution of the one-body entropy (bottom), the total
+  ionization (middle) and the envelop of the dipole moment in $z$ direction 
+  (top, vertical log scale) of
+  Na$_{11}^+$ after various initial boosts delivering different
+  excitation energies $E^*$ as indicated. Full curves are obtained in
+  RTA while dashed curves are obtained with TDLDA.}
+\label{fig:na11p}
+\end{center}
+\end{figure}
+We compare in figure \ref{fig:na11p} the time evolution of the
+one-body entropy, the total ionization and the dipole moment along $z$
+for the three $E^*$ as indicated, on the one hand obtained in TDLDA
+(dashed curves) and on the other hand in RTA (full curves).  Note
+that we chose to plot the envelop of the dipole amplitude rather than
+the full signal for a better readability and that we plot it in
+logarithmic scale to point out the attenuation of the signal.  Without
+entering details, which can be found elsewhere \cite{Rei15,Din18}, we
+briefly discuss the general outcomes.  The dipole signal (upper panel)
+shows a fast, near exponential decay in the early phase up to 10
+fs. This is the same for RTA and TDLDA thus having nothing to do with
+dissipation.  It stems from Landau damping which is already present in
+TDLDA \cite{Cal00}. Dissipation becomes effective in the second phase
+and here we see clear differences. The TDLDA signal goes on undamped
+while RTA leads to further, slow decrease.  The effect of dissipation
+is also seen in the ionization signal (middle panel).  It reduces electron emission because
+part of the excitation energy is converted into intrinsic energy thus
+being not available anymore for direct electron emission.  The most
+striking difference occurs in terms of the entropy $S$. It vanishes
+for TDLDA and acquires significant values for RTA.  One observes a
+clear increase of $S$ as a function of time, relaxing sort of
+exponentially toward an equilibrium value. This asymptotic value
+of $S$ increases with initially deposited excitation energy $E^*$ and
+the typical relaxation time needed to reach the asymptotics in turn
+decreases with $E^*$, features which are expected in such a
+dissipative theory.
+
+ 
+\subsection{Electronic response to a laser}
+\label{sec:ex_las}
+
+We here illustrate how RTA practically works in case of a realistic
+laser irradiation.  We take the H$_2$O molecule as test case and
+consider the electronic response to laser pulses at two different
+frequencies \cite{Vin18}. The water molecule has an optical response
+with a well identified strong transition around 10 eV, well below its
+IP (around 15 eV) followed by a highly fragmented response spectrum
+mostly in the continuum \cite{Vin18}. We compare RTA and TDLDA for
+two laser frequencies: one on resonance with
+$\omega_\mathrm{las}=11.4$~eV, and one off-resonance with
+$\omega_\mathrm{las}=10.2$ eV, the other laser characteristics
+being maintained.  The laser polarization axis goes
+along the $z$ direction, while the H$_2$O molecule lies in the $xy$ plane, see
+Fig.~\ref{fig:H2O-ions} for the orientation of the molecule in space.
+
+Figure \ref{fig:H2Oonoff} compares the time evolution in terms of
+three basic observables: electronic dipole, absorbed energy $E_\mathrm{abs}$
+as defined in Eq. (\ref{eq:eabs}), and ionization.
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=\textwidth]{figures/h2o_offonres_CPC}
+\caption{
+\label{fig:H2Oonoff}
+Comparison of TDLDA (blue) and RTA (red) time evolution of three
+basic observables for H$_2$O: dipole moment perpendicular to molecular
+plane (bottom), absorbed energy (middle) and total ionization
+(top). The water molecule was excited by a laser pulse with frequency
+$\omega_\mathrm{las}=11.4$~eV for the off-resonance case (left column)
+and $\omega_\mathrm{las}=10.2$ eV for the on-resonance case (right
+column). For both frequencies, the laser intensity is
+$I=5.6\times10^{13}$W/cm$^2$, and the total pulse length
+$T_\mathrm{pulse}=36$~fs. The water molecule is in the $xy$ plane and the 
+laser polarization is along $z$, see inset of figure~\ref{fig:H2O-ions}.}
+\end{center}
+\end{figure}
+Let us first discuss the resonant case (right panels) corresponding to
+a laser frequency slightly above the lowest excitation energy mode
+(10.2 eV).  The early stages of irradiation progressively ionize the
+molecule which produces a slight blue-shift of the resonance and thus
+places the system, still during the pulse, exactly on top of the
+resonance with all consequences of resonant excitation. These are
+particularly well visible in TDLDA, namely enhanced dipole response
+whose envelope deviates soon from the pulse envelope and which
+continues to oscillate long after the pulse is over leading also to
+ongoing electron emission. The mechanism is well known and was used to
+analyze expansion of clusters irradiation by strong lasers
+\cite{Hoh94,Koe99}.  Even if the mechanism is well understood, it has
+mostly been described theoretically using TDLDA-like approaches, see
+e.g. \cite{Sur00}.  The major interest of the case here is the
+striking difference between RTA and TDLDA dynamics during the second
+phase of the response.  While TDLDA dynamics leaves long lasting
+dipole oscillations, dissipation in RTA manages to curb down the
+dipole signal by turning energy away from the dipole channel and
+distributing it over the great manifold of other excitation modes. A
+remarkable feature is seen in the energy absorption from the laser
+field (right middle panel).  TDLDA shows strong oscillations between
+absorption and (induced) emission of energy very similar to Rabi
+oscillations \cite{Vin18b}.  RTA reduces these oscillations because
+attenuation of the dipole reduces emission. This, in turn, gives way
+to absorb more energy from the laser field. 
+
+The situation is clearly different in the off-resonance case
+illustrated in the left column of figure~\ref{fig:H2Oonoff}. The
+electron dipole follows the external laser field closely and dies out
+once the latter is over. Emission is reduced as compared to the
+resonant case.  Most striking is the comparison between TDLDA and
+RTA. At variance with the on-resonance case, differences between the
+approaches are much reduced. Dipole signals in particular are very
+similar.  A larger difference is seen for energy absorption where RTA
+allows the system to soak more energy from the laser, similar as in the resonant
+case.  Only small differences can  be spotted on ionization, with RTA
+emitting slightly more because it absorbs much more energy (most of
+that used up for internal heating). Altogether, dissipation effects
+are much more pronounced near resonance and less so off resonance.
+This example, varying laser frequency, shows that dissipation
+depends sensitively on the details of the dynamical scenario. The
+great versatility of laser pulses offers many more variations of
+properties and a rich field for explorations
+\cite{Rei17a}.
+
+\subsection{Impact of dissipation on PAD}
+\label{sec:RTAPAD}
+
+There is one more observable which we have not yet looked at in the
+context of RTA. This is the PAD introduced in section \ref{sec:pad}.
+To that end, we take up the test case from section \ref{sec:ex_boost}, 
+namely Na$_{11}^+$ described with a soft jellium model, 
+excited by an initial boost along the $z$ direction.
+The Na$_{11}^+$ cluster is a cylindrically deformed system and 
+the laser is aligned with the symmetry axis. Thus the PAD does not
+depend on the angle $\phi$ and it suffices to look at the $\vartheta$
+dependence. (less symmetric systems usually require some
+angular averaging \cite{Wop10a}).
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=0.75\linewidth]{figures/na11p_pad}
+\caption{Photo-Angular Distributions after initial boost along $z$ applied
+in Na$_{11}^+$, for three different boosts delivering three excitation energies $E^*$
+as indicated. The dashes show the results obtained in TDLDA, the solid curves 
+those obtained in RTA.}
+\label{fig:na11p_pad}
+\end{center}
+\end{figure}
+Figure~\ref{fig:na11p_pad} shows the PAD  in RTA (solid
+lines) and TDLDA (dashed curves), obtained after initial boost
+excitation in Na$_{11}^+$. 
+ Results from three different boost
+momenta, and consequently three different initial excitation energies $E^*$
+as indicated, are compared.  The stronger the excitation, the more
+forward peaked are the PAD.  This is a well known and plausible
+feature because the stronger the field, the more it pulls electrons
+along its direction \cite{Wop14aR}. Comparing RTA with TDLDA
+results, we see that dissipation modeled in RTA reduces the
+anisotropy (trend to forward peaking). But this is a rather weak
+effect for the extremely short excitation here. Two aspects are to
+be remarked here: First, dissipation requires
+time to unfold and the longer a process takes, the more effective it is.
+Second, we have not added the isotropic background from thermal
+emission coming much later. This contribution reduces the anisotropy
+substantially \cite{Wop14b}.
+
+\section{Conclusions and perspectives}
+\label{sec:concl}
+
+We have presented in this paper the first, to the best of our
+knowledge, open source package QDD (Quantum Dissipative Dynamics)
+allowing the account of dissipative electronic dynamics in finite
+systems, from atoms and molecules to clusters.  The present
+implementation of dissipation is realized at the simplest level of a
+quantum Relaxation-Time Approximation which nevertheless includes essential
+features of dissipative dynamics. QDD has been constructed as an
+extension of a real-time real-space TDLDA package developed over the
+past two decades, in order to study off-equilibrium dynamics in
+clusters and molecules. As such, and to comply with major experimental
+signals such as PES and PAD, the TDLDA package already contained these
+key observables characterizing electronic emission. One objective
+of this paper is to present in a practical manner how these observables
+can be computed at the TDLDA level. These observables
+can, for most of them, be exported to RTA dynamics. The evaluation of
+PES in RTA is still a pending question, the difficulty being due to
+the technique used for computing the PES. Work along that line will be
+pursued.
+
+In terms of physical properties, we have seen that the RTA dynamics
+displays the expected features of a dissipative approach. It has
+revealed quite different from TDLDA in many situations, the larger the
+excitation energy, the larger the effect. This is especially true
+when the system is driven towards one of its eigenfrequencies.  One
+then observes both quantitative and qualitative differences between
+RTA and TDLDA. Differences shrink in fully off-resonance scenarios,
+although simulations remain quantitatively different on some
+observables. The implementation of dissipative features via RTA on top
+of TDLDA thus definitely appears as a crucial step forward in the
+theoretical modeling of far-off equilibrium dynamics such as
+encountered in numerous irradiation scenarios. This is true for cases
+in which one observes significant differences between TDLDA and RTA,
+as is obvious. But it is also true for cases in which TDLDA and RTA
+deliver qualitatively comparable results. Indeed, if one can conclude
+that TDLDA is an acceptable approximation in such cases, it is
+impossible to draw this conclusion without the input of a more
+elaborate approach such as RTA.
+
+At variance with other open source real-time TDLDA packages, our QDD
+approach has not been focused on a large variety of otherwise well
+established parameters. By this, we mean a wide set of different DFT
+functionals or various kinds of pseudopotentials.  This is justified
+in many respects. First, the whole spirit of the QDD project has
+always been to focus on far-off equilibrium scenarios for which
+structural details can be energetically overlooked. The set of parameters
+used in QDD have of course been checked against experimental or
+theoretical results when available, and allowed us to reproduce them
+in a perfectly acceptable manner. Such a reduced set of parameters
+thus allows us to focus on dynamical questions. It should also be
+noted that QDD routinely includes a simple strategy for the
+  Self-Interaction Correction (SIC) strategy, namely Average-Density
+  SIC (ADSIC). It restores key structural properties such as the IP which is
+  crucial to obtain correct electron emission properties in real-time
+  dynamics of irradiation scenarios.
+
+This first release of QDD contains the full capabilities of
+  TDLDA, particularly concerning all observables of electron emission.
+  In the regime beyond TDLDA, it concentrates on simple and robust
+  extensions, ADSIC for the self-interaction correction and RTA for
+  dissipative dynamics. Extensions are in preparation for both
+  approximations concerning SIC as well as dissipation. For the
+  latter, we work on an implementation of Stochastic Time-Dependent
+Hartree-Fock (STDHF) which deals with an ensemble of mean-field
+trajectories to represent incoherent dynamical correlations. It
+includes by construction mean-field fluctuations, which opens the door
+to elaborate dynamical scenarios involving dissociative processes and,
+generally speaking, bifurcation dynamics.  At the side of
+  technical developments, a move to GPU's looks extremely
+  promising. Implementation thereof is presently being explored.
+
+
+
+\appendix
+\renewcommand*{\thesection}{\Alph{section}}
+
+
+
+
+\section{Iterative correction of total energy}
+\label{sec:corriter}
+
+The RTA scheme as summarized in figure \ref{fig:summary}
+leaves as preliminary final result the new one-body density matrix
+%
+$\displaystyle
+  \hat{\rho}(t_1)
+  =
+  \sum_\alpha|\varphi_\alpha(t_1)\rangle\tilde{w}_\alpha\langle\varphi_\alpha(t_1)|
+$
+%
+which, however, may miss slightly the given energy $E$. The mismatch
+is corrected by a slight readjustement of the occupation numbers
+\begin{equation}
+  \tilde{w}_\alpha
+  \longrightarrow
+  w_\alpha=\tilde{w}_\alpha+\delta w_\alpha
+  \quad.
+\end{equation}
+The adjustment is done as if an equilibrium Fermi distribution (\ref{eq:Fermi})
+were to be changed slightly. The Fermi distribution is obtained
+by maximizing entropy 
+\begin{subequations}
+\begin{eqnarray}
+  S
+  &=&
+  \sum_\alpha s(w_\alpha)
+  \stackrel{!}{=}
+  \mbox{max.}
+  \quad,
+\nonumber
+\\
+  s(w_\alpha)
+  &=&
+  - w_\alpha\log w_\alpha-(1\!-\!w_\alpha)\log(1\!-\!w_\alpha)
+  \quad,
+\end{eqnarray}
+with the requirement (constraint) to match total particle number and
+s.p. energy
+\begin{equation}
+  N
+  =
+  \sum_\alpha w_\alpha
+  \quad,\quad
+  E_\mathrm{sp}
+  =
+  \sum_\alpha w_\alpha \varepsilon_\alpha
+  \quad,
+\label{eq:constrN}
+\end{equation}
+while the actual status is 
+\begin{equation}
+  \tilde{N}
+  =
+  \sum_\alpha \tilde w_\alpha
+  \quad,\quad
+  \tilde E_\mathrm{sp}
+  =
+  \sum_\alpha \tilde w_\alpha \varepsilon_\alpha
+  \quad.
+\label{eq:statusN}
+\end{equation}
+Linearizing this for small changes $\delta w_\alpha$ leads to a simply
+solvable system of linear equations. This scheme was used in our early
+implementations of RTA \cite{Rei15,Rei17a}.  However, that tends to
+overshoot occasionally which calls for costly re-iterations.
+%
+A more stable scheme is obtained by modifying the maximal entropy
+principle to a quadratic criterion calling for minimal change
+of entropy in the form
+\begin{equation}
+  \sum_\alpha\big(s(\tilde w_\alpha+\delta w_\alpha)-s(\tilde w_\alpha)\big)^2
+  \stackrel{!}{=}
+  \mbox{min.}
+  \quad,
+\end{equation}
+\end{subequations}
+together, again, with the constraints (\ref{eq:constrN}).
+This amounts to the variational condition
+\begin{equation}
+  \frac{\textrm d\qquad }{\textrm d \,\delta w_\alpha}
+  \left[
+     \sum_\alpha\big(s(\tilde w_\alpha+\delta w_\alpha)-s(\tilde w_\alpha)\big)^2
+     -
+     \lambda\sum_\alpha (\tilde w_\alpha+\delta w_\alpha)
+     -
+     \mu\sum_\alpha (\tilde w_\alpha+\delta w_\alpha)\varepsilon_\alpha
+  \right]
+  =
+  0
+  \quad.
+\end{equation}
+Linearizing that yields in straightforward manner the occupation
+change as
+\begin{subequations}
+\begin{equation}
+  \delta w_\alpha
+  \propto
+  -\frac{\lambda+\mu\varepsilon_\alpha}{(s'(w_\alpha))^2}
+\end{equation}
+with the Lagrangian parameters obtained by the solution of the linear equations
+\begin{eqnarray}
+  \delta N
+  &=&
+  \lambda\sum_\alpha(s'(w_\alpha))^{-2}
+  +
+  \mu\sum_\alpha(s'(w_\alpha))^{-2}\varepsilon_\alpha
+  \quad,
+\\
+  \delta E_\mathrm{sp}
+  &=&
+  \lambda\sum_\alpha(s'(w_\alpha))^{-2}\varepsilon_\alpha
+  +
+  \mu\sum_\alpha(s'(w_\alpha))^{-2}\varepsilon_\alpha^2
+  \quad.
+\end{eqnarray}
+\end{subequations}
+where $\delta N, \delta E_\mathrm{sp}$, are the differences between
+  status and target values of $N, E_\mathrm{sp}$, as outlined in Eqs.~\ref{eq:constrN} 
+  and \ref{eq:statusN}, and $s'$ denotes the derivative of $s$ with respect to $w$ ($s'=\textrm ds/\textrm dw$). 
+Note that this rather robust scheme is applied for the spin-up and
+spin-down subsets separately.
+
+
+\section{Dimensionless quadrupole moments}
+\label{sec:dimlessquad}
+
+In section \ref{sec:shapes}, we introduced the basic form parameters
+of a density distribution. They are plagued by the inconvenience to
+scale with system size. To concentrate on shape, the concept of
+dimensionless quadrupole moments was used since long in nuclear
+physics \cite{Hil53,Boh69}. It turned out also be useful in cluster
+physics \cite{Hee93,Bra93} and surely helps to sort the gross
+structure of molecules. We review here briefly the steps from Cartesian
+quadrupole moments to dimensionless ones.
+
+The first step is to map  Cartesian quadrupole moments into spherical 
+quadrupole moments $Q_{2\mu}$ \cite{Edm57}
+\begin{equation}
+  Q_{20}
+  =
+  \sqrt{\frac{5}{2\pi}}\,\frac{Q_{zz}}{3}
+  \;,\;
+  Q_{2\,\pm 1}
+  =
+  \mp\sqrt{\frac{15}{8\pi}}\,(Q_{zx}\pm\mathrm{i}Q_{zy)}
+  \;,\;
+  Q_{2\,\pm 2}
+  =
+  \sqrt{\frac{15}{32\pi}}\,(Q_{xx}-Q_{yy}\pm\mathrm{i}Q_{xy)}
+  \;.
+\end{equation}
+The dimensionless moments are then obtained as
+\begin{subequations}
+\begin{equation}
+  \alpha_{lm}(t)
+  =
+  \frac{4\pi}{5}
+  \frac{Q_{2\mu}}{N_\mathrm{el}\,r_\mathrm{rms}^2}
+  \quad,
+\label{eq:def_dimless}
+\end{equation}
+\end{subequations}
+A simple signature of shape can already be read off here: Axially
+symmetric systems aligned along $z$-axis are distinguished by
+$\alpha_{lm\!\neq\!0}=0$.
+
+However, the example of axial systems indicates a next problem, namely
+the orientation of the system.  The appearance of
+$\alpha_{lm\!\neq\!0}\neq 0$ can have two causes: first, the system is
+not aligned along $z$-axis, and second, there is a true breaking of
+axial symmetry. The first action is then to determine the principle
+axes of the system and to rotate the system such that the $z$-axis is
+identical with the dominant principal axis.  This leads by definition
+to $\alpha_{2\,\pm 1}=0$ and $\alpha_{2\,+2}=\alpha_{2\,-2}$. Axial
+symmetry is truly broken if we then still find
+$\alpha_{22\!\neq\!0}\neq 0$, signaling triaxial shapes. One
+often regroups the quadrupole deformation parameters into total
+deformation $\beta_2$ and triaxiality $\gamma$ as
+\begin{equation}
+  \beta_2
+  =
+  \sqrt{\sum_m\alpha_{2m}^2}
+  \quad,\quad
+  \gamma
+  =
+  \mbox{atan}\left(\frac{\sqrt{2}\alpha_{22}}{\alpha_{20}}\right)
+  \quad.
+\label{eq:triax}
+\end{equation}
+This convention has been originally introduced to characterize shapes
+of nuclei \cite{Hil53} and has been taken over for clusters at several
+places, e.g. \cite{Lau91,Rei95b,Yan95}. It is to be noted that
+$\gamma=0^\circ$ as well as $\gamma=60^\circ$ represent axially symmetric
+shapes. The case $\gamma=0^\circ$ corresponds  to prolate shapes and
+$\gamma=60^\circ$ to oblate ones.
+
+The same definitions apply to ionic shapes if we replace $\int \textrm
+d \mathbf r\,\varrho(\mathbf{r})\,r_ir_j$ by $\sum_I R_{I,i}R_{I,j}$
+in Eqs. (\ref{eq:moments}).
+
+\section{Handling of basis sets in RTA}
+\label{sec:basisRTA}
+
+
+\subsection{Transformation to natural orbitals}
+\label{sec:natorb}
+
+Before entering the RTA step, we have a one-body density matrix
+obtained from a couple of TDLDA steps
+\begin{equation}
+  \hat{\rho}
+  \equiv
+  \hat{\rho}_\mathrm{mf}
+  =
+  \sum_\alpha|\varphi_\alpha^\mathrm{(mf)}\rangle 
+  \ w_\alpha^\mathrm{(mf)} \ \langle\varphi_\alpha^\mathrm{(mf)}|
+  \;.
+\end{equation}
+The absorbing boundary conditions remove electron content from
+the wavefunctions which thus lose their strict ortho-normality
+leading to a non-unit norm matrix 
+\begin{equation}
+  \mathcal{N}_{\alpha\beta}
+  =
+  \langle\varphi_\alpha^\mathrm{(mf)}|\varphi_\beta^\mathrm{(mf)}\rangle 
+  \;.
+\end{equation}
+We first need to represent the actual one-body density matrix
+in terms of natural orbitals 
+\begin{equation}
+  \hat{\rho}
+  =
+  \sum_i|\varphi_i^\mathrm{(nat)}\rangle w_i^\mathrm{(nat)}
+  \langle\varphi_i^\mathrm{(nat)}|
+\end{equation}
+which are ortho-normal, i.e.
+$\langle\varphi_i^\mathrm{(nat)}|\varphi_j^\mathrm{(nat)}\rangle=\delta_{ij}$.
+The loss of electron content is taken up by a change of the
+occupations to $w_i^\mathrm{(nat)}$.
+
+The natural orbitals are defined by the eigenvalue equation
+\begin{equation}
+  \hat{\rho}|\varphi_i^\mathrm{(nat)}\rangle
+  =
+  |\varphi_i^\mathrm{(nat)}\rangle w_i^\mathrm{(nat)}
+  \;.
+\label{eq:eigenNat}
+\end{equation}
+We expand them in terms of the TDLDA obitals 
+\begin{equation}
+  |\varphi_i^\mathrm{(nat)}\rangle
+  =
+  \sum_\alpha|\varphi_\alpha^\mathrm{(mf)}\rangle W_{\alpha i}
+  \;.
+\label{eq:expandW}
+\end{equation}
+The task is now to determine the transformation matrix $W_{\alpha i}$.
+
+We insert the expansion (\ref{eq:expandW}) into the eigenvalue
+equation (\ref{eq:eigenNat}) and obtain a matrix equation
+\begin{eqnarray}
+  \rho_{\alpha\beta}W_{\beta i}
+  &=&
+  \mathcal{N}_{\alpha\beta}W_{\beta i}w_i^\mathrm{(nat)}
+  \;,
+\label{eq:eigenN}\\
+  \rho_{\alpha\beta}
+  &=&
+  \langle\varphi_\alpha^\mathrm{(mf)}|\hat{\rho}
+  |\varphi_\beta^\mathrm{(mf)}\rangle   
+  =
+  \sum_\gamma\mathcal{N}_{\alpha\gamma}w_\gamma^\mathrm{(mf)}\mathcal{N}_{\gamma\beta}
+  \;.
+\nonumber
+\end{eqnarray}
+We first determine eigenvalues and eigenvectors of $\hat{\mathcal{N}}$
+through
+\begin{equation}
+  \mathcal{N}_{\alpha\beta}V_{\beta l}
+  =
+  V_{\alpha l}n_l
+\end{equation}
+and use that to build the inverse root of  $\hat{\mathcal{N}}$ as
+\begin{equation}
+  (\mathcal{N}^{-1/2})_{\alpha l}
+  =
+  V_{\alpha l}n^{-1/2}_l
+  \;.
+\end{equation}
+With that, we can map the eigenvalue equation (\ref{eq:eigenN}) into
+standard form
+\begin{equation}
+  (\mathcal{N}^{-1/2})^\dagger_{l\alpha}\rho_{\alpha\beta}(\mathcal{N}^{-1/2})_{\beta l'}
+  U_{l'i}
+  =
+  U_{li}w_i^\mathrm{(nat)}
+  \;.
+\label{eq:eigenfin}
+\end{equation}
+Having determined the eigenvalues $w_i^\mathrm{(nat)}$ and
+eigenvectors $U_{li}$, we realize that
+\begin{equation}
+  \rho_{\alpha\beta}(\mathcal{N}^{-1/2})_{\beta l'}U_{l'i}
+  =
+  (\mathcal{N}^{+1/2})_{\alpha l}U_{li}w_i^\mathrm{(nat)}
+  =
+  \mathcal{N}_{\alpha\beta}\;(\mathcal{N}^{-1/2})_{\beta l}U_{li}w_i^\mathrm{(nat)}
+  \;.
+\end{equation}
+and conclude that the searched transformation for the expansion
+(\ref{eq:eigenN}) is finally composed as
+\begin{equation}
+  W_{\alpha i}
+  =
+  (\mathcal{N}^{-1/2})_{\alpha l}U_{li}
+  \:.
+\end{equation}
+The new occupation numbers $w_i^\mathrm{(nat)}$ were already given
+from solving the eigenvalue equation (\ref{eq:eigenfin})
+
+
+
+\subsection{Mixing of two one-body matrices}
+\label{sec:mix}
+
+At the end of one RTA step, we mix two one-body density matrices as
+\begin{equation}
+  \hat{\rho}_\mathrm{(mix)}
+  = 
+  (1-\eta)\hat{\rho}_\mathrm{(mf)} +\eta\hat{\rho}_\mathrm{(eq)}
+  \;,
+\end{equation}
+see step \ref{it:compo} in section \ref{sec:summaryRTA}. The aim is to
+produce eventually $\hat{\rho}_\mathrm{(mix)}$ in the basis of its
+natural orbitals. The problem is that the constituents
+\begin{eqnarray*}
+  \hat{\rho}_\mathrm{(mf)}
+  &=&
+  \sum_{\alpha=1}^\Omega|\varphi_\alpha^\mathrm{(mf)}\rangle 
+  \ w_\alpha^\mathrm{(mf)} \ \langle\varphi_\alpha^\mathrm{(mf)}|
+  \;,
+\\
+  \hat{\rho}_\mathrm{(eq)}
+  &=&
+  \sum_{\alpha=1}^\Omega|\varphi_\alpha^\mathrm{(eq)}\rangle 
+  \ w_\alpha^\mathrm{(eq)} \ \langle\varphi_\alpha^\mathrm{(eq)}|
+\end{eqnarray*}
+are represented on different sets of s.p. states from which
+$\{\varphi_\alpha^\mathrm{(mf)},\alpha=1...\Omega\}$ is not even
+ortho-normalized.
+
+We combine the two sets of s.p. states to one super-set
+$\{\phi_A,A=1...2\Omega\}$ as
+\begin{subequations}
+\begin{eqnarray}
+  \phi_A
+  &=&
+  \left\{
+  \begin{array}{lcl}
+    \varphi_\alpha^\mathrm{(mf)} &\mbox{for}& A=\alpha\in\{1...\Omega\}
+  \\
+    \varphi_{\alpha'}^\mathrm{(eq)} &\mbox{for}& A=\alpha'+\Omega
+     \;,\;\alpha'\in\{1...\Omega\}
+  \end{array}
+  \right.
+\\[8pt]
+  \mathcal{W}_A
+  &=&
+  \left\{
+  \begin{array}{lcl}
+    w_\alpha^\mathrm{(mf)} &\mbox{for}& A=\alpha\in\{1...\Omega\}
+  \\
+    w_{\alpha'}^\mathrm{(eq)} &\mbox{for}& A=\alpha'+\Omega
+     \;,\;\alpha'\in\{1...\Omega\}
+  \end{array}
+  \right.
+\end{eqnarray}
+\end{subequations}
+This yields a one-body density in double-space
+\begin{equation}
+  \hat{R}
+  =
+  \sum_{A=1}^{2\Omega}|\phi_A\rangle \mathcal{W}_A\langle\phi_A|
+\end{equation}
+with a basis $\{\phi_A\}$ which is not northo-normalized.  That is
+exactly the task to find natural orbitals which was solved in section
+\ref{sec:natorb}. We undertake the same steps (of course, in doubled
+space) and end up with
+\begin{equation}
+  \hat{R}
+  =
+  \sum_{A=1}^{2\Omega}|\phi_A^\mathrm{(nat)}\rangle {W}_A^\mathrm{(nat)}
+   \langle\phi_A^\mathrm{(nat)}|
+\end{equation}
+whereby we take care to order the states to a sequence of decreasing
+occupations ${W}_A^\mathrm{(nat)}$. This one-body density is still
+given in a space which is twice as large as the s.p. space before
+mixing. But the occupations for large $A$ are extremely small. This
+allows to reduce $\hat{R}$ back to standard size and in natural
+orbitals as
+\begin{equation}
+  \hat{\rho}_\mathrm{(mix)}
+  = 
+  \sum_{\alpha=1}^\Omega|\varphi_\alpha^\mathrm{(mix)}\rangle 
+  \ w_\alpha^\mathrm{(mix)} \ \langle\varphi_\alpha^\mathrm{(mix)}|
+  \;,\;
+  \varphi_\alpha^\mathrm{(mix)}
+  =
+  \phi_\alpha^\mathrm{(nat)}
+  \;,\;
+  w_\alpha^\mathrm{(mix)}
+  =
+  \mathcal{W}_\alpha^\mathrm{(nat)}
+  \;.
+\end{equation}
+
+
+\bigskip
+
+
+
+
+\bibliographystyle{elsarticle-num}                                                        
+\bibliography{QDD}             
+
+\end{document}
+

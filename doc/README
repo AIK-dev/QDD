@@ -1,0 +1,8 @@
+Explanation of LaTeX files in 'doc/':
+
+RTA.tex           main documentation, planned CPC paper
+User_manual.tex   documentation for test cases
+explain_init.tex  handling of code
+output_files.tex  preliminary summary of output files
+namelist.tex      preliminary summary of namelists (no up to date)
+notes.tex         outdated
